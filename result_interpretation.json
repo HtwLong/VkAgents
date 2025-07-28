@@ -1,0 +1,26 @@
+{
+  "problem": {
+    "task": "object detection and localization",
+    "application_domain": "wildlife monitoring",
+    "description": "Detect and localize each animal in camera trap images from African savanna."
+  },
+  "dataset": {
+    "name": "African Savanna Wildlife Dataset",
+    "classes": [
+      "elephants",
+      "lions",
+      "zebras"
+    ],
+    "description": "Dataset of camera trap images containing various animals in the African savanna.",
+    "preprocessing": "",
+    "augmentation": "",
+    "source": "",
+    "path_images": "",
+    "number_images_per_class": null,
+    "number_of_classes": 3,
+    "total_number_images": null,
+    "path_labels": ""
+  },
+  "model": [],
+  "performance_metrics": []
+}
