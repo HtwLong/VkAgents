@@ -33,8 +33,13 @@ class MetricItemModel(BaseModel):
     name: Optional[str] = None
     value: Optional[float]
 
+class HardwareConstraintItemModel(BaseModel):
+    name: Optional[str] = None
+    value: Optional[str]
+
 class StructuredOutputModel(BaseModel):
     problem: ProblemModel
     dataset: DatasetModel
     model: List[ModelItemModel]
     performance_metrics: List[MetricItemModel]
+    hardware_constraints: List[HardwareConstraintItemModel]
