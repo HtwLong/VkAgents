@@ -29,4 +29,4 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 ENV PATH="/app/.venv/bin:$PATH"
 
 # Replace `main.py` with whatever script starts your application
-CMD ["python", "main.py"]
+CMD ["python", "src/run.py"]
