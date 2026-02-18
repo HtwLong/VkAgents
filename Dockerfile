@@ -2,9 +2,11 @@ FROM ghcr.io/astral-sh/uv:python3.13-bookworm-slim
 
 WORKDIR /app
 
-# Install git because your dependencies require it
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
+    libgl1 \
+    libglib2.0-0 \
+    libxcb1 \
     && rm -rf /var/lib/apt/lists/*
 
 ENV UV_COMPILE_BYTECODE=1
