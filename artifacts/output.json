@@ -1,0 +1,15 @@
+{
+  "best_epoch": 12,
+  "best_metric": "val_acc",
+  "best_value": 0.8584474885844748,
+  "test_loss": 0.7464302217579324,
+  "test_acc": 0.8401826484018264,
+  "test_macro_f1": 0.8400871459694988,
+  "test_micro_f1": 0.8401826484018264,
+  "artifacts": {
+    "best_model": "/Users/longus/Studies/Masterthesis/vkg_llm_project/artifacts/best_model.pth",
+    "metrics_csv": "/Users/longus/Studies/Masterthesis/vkg_llm_project/artifacts/metrics_log.csv",
+    "test_report": "/Users/longus/Studies/Masterthesis/vkg_llm_project/artifacts/test_classification_report.txt",
+    "test_confusion_matrix": "/Users/longus/Studies/Masterthesis/vkg_llm_project/artifacts/test_confusion_matrix.csv"
+  }
+}

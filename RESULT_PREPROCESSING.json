@@ -1,0 +1,29 @@
+{
+  "task": "image classification",
+  "application_domain": ",",
+  "description": ",",
+  "dataset_name": ",",
+  "classes": [
+    "cat",
+    "dog",
+    "bird"
+  ],
+  "img_per_class": 50,
+  "number_of_classes": 3,
+  "total_number_images": 150,
+  "source": null,
+  "path_images": null,
+  "path_labels": null,
+  "preprocessing": null,
+  "augmentation": "Applying random horizontal flips, rotations (up to 15 degrees), and random zoom (up to 20%) to enhance variability in training, while also ensuring normalization for better convergence.",
+  "model": [
+    {
+      "model_architecture": "efficientnet_b0",
+      "architecture_family": "efficientnet",
+      "description": "Lightweight model for image classification with a good balance of accuracy and efficiency.",
+      "num_epochs": null,
+      "patience": null
+    }
+  ],
+  "user_change_requests": null
+}

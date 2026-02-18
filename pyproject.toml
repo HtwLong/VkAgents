@@ -1,3 +1,7 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "vkg-llm-project"
 version = "0.1.0"
@@ -14,7 +18,33 @@ dependencies = [
     "pydantic>=2.11.7",
     "requests>=2.32.4",
     "scikit-learn>=1.7.0",
+    "selenium>=4.39.0",
     "torch>=2.7.1",
     "torchvision>=0.22.1",
     "tqdm>=4.67.1",
+    "vision-utils",
+]
+
+# Console entry points (make files callable)
+[project.scripts]
+resnet-train = "cvmodellearning.examples.resnet_train:main"
+
+[tool.uv]
+package = true
+
+[tool.uv.sources]
+vision-utils = { git = "https://github.com/cqels/vision.git" }
+
+# Tell setuptools to use the src/ layout
+[tool.setuptools]
+package-dir = {"" = "src"}
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+# Include JSON data files inside the package wheel
+[tool.setuptools.package-data]
+cvmodellearning = [
+  "download_utils/*.json",
 ]

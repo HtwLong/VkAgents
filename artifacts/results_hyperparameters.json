@@ -1,0 +1,28 @@
+{
+  "classes": [
+    "cat",
+    "dog",
+    "bird"
+  ],
+  "img_per_class": 100,
+  "num_epochs": 20,
+  "patience": 5,
+  "batch_size": 32,
+  "image_size": 224,
+  "track_metric": "val_acc",
+  "model_name": "mobilenet_v2",
+  "model_weights": "default",
+  "optimizer_name": "adamw",
+  "learning_rate": 0.001,
+  "weight_decay": 0.0001,
+  "eps": 1.0,
+  "beta1": 0.9,
+  "beta2": 0.999,
+  "nesterov": false,
+  "momentum": 0.9,
+  "alpha": 0.99,
+  "centered": false,
+  "criterion_name": "cross_entropy",
+  "label_smoothing": 0.1,
+  "pos_weight": 1.0
+}

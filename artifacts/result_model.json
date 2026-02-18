@@ -1,0 +1,28 @@
+{
+  "task": "classification",
+  "application_domain": "computer vision",
+  "description": "Model that classifies an image into either cat, dog, or bird.",
+  "dataset_name": "Image dataset of cats, dogs, and birds",
+  "classes": [
+    "cat",
+    "dog",
+    "bird"
+  ],
+  "img_per_class": 100,
+  "number_of_classes": 3,
+  "total_number_images": 300,
+  "source": "Public dataset",
+  "path_images": "/path/to/images",
+  "path_labels": "/path/to/labels",
+  "preprocessing": "Resize images to 224x224 and normalize pixel values.",
+  "augmentation": "Random rotations, flips, and color adjustments.",
+  "model": [
+    {
+      "model_architecture": "mobilenet_v2",
+      "architecture_family": "mobilenet",
+      "description": "A lightweight model optimized for speed and efficiency.",
+      "num_epochs": 20,
+      "patience": 5
+    }
+  ]
+}
