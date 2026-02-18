@@ -1,0 +1,14 @@
+.venv
+.git
+__pycache__
+*.pyc
+.DS_Store
+# Data and model artifacts
+runs/
+src/yolov10m.pt
+src/yolov8n.pt
+src/yolov8s.pt
+src/yolo11n.pt
+yolo11n.pt
+src/cvmodellearning/.DS_Store
+artifacts/best_model.pth    
