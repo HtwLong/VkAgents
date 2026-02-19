@@ -1,6 +1,15 @@
-from typing import Dict, List, Optional, Literal
+from typing import List, Optional, Literal
 from pydantic import BaseModel, Field, ConfigDict, model_validator
 from typing_extensions import Self
+
+# --- Helper Models for Strict JSON Schema ---
+class DatasetSourceCount(BaseModel):
+    dataset_name: str = Field(..., description="The name of the dataset")
+    count: int = Field(..., description="Number of images selected from this dataset")
+
+class ClassDataSelection(BaseModel):
+    class_name: str = Field(..., description="The name of the class or subset")
+    sources: List[DatasetSourceCount] = Field(..., description="List of datasets and their counts")
 
 class VQAModelSpecModel(BaseModel):
     """
@@ -76,9 +85,19 @@ class VQAOutputModel(BaseModel):
     path_labels: Optional[str] = Field(None, description="Local/remote path to labels (Q&A pairs).")
     preprocessing: Optional[str] = Field(None, description="Preprocessing steps.")
     augmentation: Optional[str] = Field(None, description="Augmentation strategy.")
-    num_qa_pairs: Optional[int] = Field(None, ge=1, description="Number of question-answer pairs to generate per image.")
-    available_data: Optional[Dict[str, Dict[str, int]]] = Field(None, description="Map of answer classes/types to image counts.")
-    selected_data: Optional[Dict[str, Dict[str, int]]] = Field(None, description="The subset of available_data selected.")
+    
+    # NEW: Added num_qa_pairs as requested previously
+    num_qa_pairs: Optional[int] = Field(
+        None, ge=1, description="Number of question-answer pairs to generate per image."
+    )
+
+    # CHANGED: Replaced Dict with List of ClassDataSelection
+    available_data: Optional[List[ClassDataSelection]] = Field(
+        None, description="List mapping answer classes/types to image counts."
+    )
+    selected_data: Optional[List[ClassDataSelection]] = Field(
+        None, description="The subset of available_data selected."
+    )
 
     # Model candidates
     model: List[VQAModelSpecModel] = Field(

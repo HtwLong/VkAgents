@@ -1,7 +1,16 @@
 import math
-from typing import Dict, List, Literal, Optional
+from typing import List, Literal, Optional
 from pydantic import BaseModel, Field, ConfigDict, model_validator
 from typing_extensions import Self
+
+# --- Helper Models for Strict JSON Schema ---
+class DatasetSourceCount(BaseModel):
+    dataset_name: str = Field(..., description="The name of the dataset")
+    count: int = Field(..., description="Number of images selected from this dataset")
+
+class ClassDataSelection(BaseModel):
+    class_name: str = Field(..., description="The name of the class or subset")
+    sources: List[DatasetSourceCount] = Field(..., description="List of datasets and their counts")
 
 class VQAConfigModel(BaseModel):
     """
@@ -20,10 +29,13 @@ class VQAConfigModel(BaseModel):
         ..., 
         description="List of answer categories if treated as classification, or an empty list if purely open-ended generation."
     )
-    selected_data: Dict[str, Dict[str, int]] = Field(
+    
+    # CHANGED: Now uses the strict-compatible list structure
+    selected_data: List[ClassDataSelection] = Field(
         ..., 
-        description="Map of dataset sources and respective image/question counts. Format: {class_or_subset: {dataset_name: count}}."
+        description="List of dataset sources and respective image/question counts."
     )
+    
     train_data_ratio: float = Field(
         0.8, ge=0.0, lt=1.0,
         description="Proportion of the dataset allocated for training; must be in [0, 1)."
@@ -116,12 +128,10 @@ class VQAConfigModel(BaseModel):
 
     @model_validator(mode="after")
     def _validate_combinations(self) -> Self:
-        # Validate data split ratios
         total_ratio = self.train_data_ratio + self.val_data_ratio + self.test_data_ratio
         if not math.isclose(total_ratio, 1.0, rel_tol=1e-5):
             raise ValueError(f"train_data_ratio, val_data_ratio, and test_data_ratio must sum to 1.0. Current sum: {total_ratio}")
 
-        # Ensure learning rates aren't dangerously high for VLMs
         if self.learning_rate > 1e-3:
             raise ValueError("Learning rate is suspiciously high for a pre-trained VLM. It should typically be <= 1e-3 to avoid catastrophic forgetting.")
 
