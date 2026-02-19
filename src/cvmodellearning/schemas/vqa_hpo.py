@@ -5,10 +5,12 @@ from typing_extensions import Self
 
 # --- Helper Models for Strict JSON Schema ---
 class DatasetSourceCount(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     dataset_name: str = Field(..., description="The name of the dataset")
     count: int = Field(..., description="Number of images selected from this dataset")
 
 class ClassDataSelection(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     class_name: str = Field(..., description="The name of the class or subset")
     sources: List[DatasetSourceCount] = Field(..., description="List of datasets and their counts")
 
