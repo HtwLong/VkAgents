@@ -1,6 +1,15 @@
-from typing import Dict, List, Optional, Literal
+from typing import List, Optional, Literal
 from pydantic import BaseModel, Field, ConfigDict, model_validator
 from typing_extensions import Self
+
+# --- Helper Models for Strict JSON Schema ---
+class DatasetSourceCount(BaseModel):
+    dataset_name: str = Field(..., description="The name of the dataset")
+    count: int = Field(..., description="Number of images from this dataset")
+
+class ClassDataSelection(BaseModel):
+    class_name: str = Field(..., description="The name of the class or subset")
+    sources: List[DatasetSourceCount] = Field(..., description="List of datasets and their counts")
 
 
 class ModelSpecModel(BaseModel):
@@ -9,7 +18,6 @@ class ModelSpecModel(BaseModel):
     """
     model_config = ConfigDict(extra="forbid")
 
-    # Selector-style fields (use Literals when enumerating known options; keep optional to stay flexible)
     model_architecture: Optional[
         Literal[
             "resnet50", "vgg16", "mobilenet_v2", "mobilenet_v3_large",
@@ -27,14 +35,12 @@ class ModelSpecModel(BaseModel):
         description="High-level architecture family; if provided with model_architecture, must be consistent."
     )
 
-    # Descriptive and loop controls (kept as simple primitives)
     description: str = Field(..., min_length=1, description="Short model rationale/notes.")
     num_epochs: Optional[int] = Field(None, ge=1, description="Max training epochs when this model is used; must be ≥ 1.")
     patience: Optional[int] = Field(None, ge=0, description="Early stopping patience (epochs without improvement); must be ≥ 0.")
 
     @model_validator(mode="after")
     def _check_family_consistency(self) -> Self:
-        # Enforce family consistent with architecture when both are provided
         if self.model_architecture and self.architecture_family:
             family_map = {
                 "resnet50": "resnet",
@@ -60,10 +66,7 @@ class ModelSpecModel(BaseModel):
 
 class ClassificationOutputModel(BaseModel):
     """
-    Union-free schema designed for LLM structured outputs:
-    - Forbids unknown keys.
-    - Flattens nested content into simple primitives where possible.
-    - Uses a post-parse validator for cross-field consistency.
+    Union-free schema designed for LLM structured outputs.
     """
     model_config = ConfigDict(extra="forbid")
 
@@ -73,7 +76,7 @@ class ClassificationOutputModel(BaseModel):
     description: str = Field(..., min_length=1, description="Problem description and objectives.")
     user_query: str = Field(..., min_length=1, description="Original user prompt or query for context.")
 
-    # Dataset (flattened; no unions)
+    # Dataset
     dataset_name: str = Field(..., min_length=1, description="Dataset name or identifier.")
     classes: List[str] = Field(..., min_length=1, description="Class names in label order; list must be non-empty.")
     source: Optional[str] = Field(None, description="Dataset source (URL, paper, registry, or internal ID).")
@@ -81,10 +84,12 @@ class ClassificationOutputModel(BaseModel):
     path_labels: Optional[str] = Field(None, description="Local/remote path to labels if applicable.")
     preprocessing: Optional[str] = Field(None, description="Text description of preprocessing steps.")
     augmentation: Optional[str] = Field(None, description="Text description of augmentation strategy.")
-    available_data: Optional[Dict[str, Dict[str, int]]] = Field(None, description="Map of class names to dataset sources and their respective image counts. Format: {class: {dataset_name: image_count}}.")
-    selected_data: Optional[Dict[str, Dict[str, int]]] = Field(None, description="The subset of available_data selected for training. Format: {class: {dataset_name: image_count}}.")
+    
+    # CHANGED: Replaced Dicts with Strictly Typed Lists
+    available_data: Optional[List[ClassDataSelection]] = Field(None, description="List mapping class names to dataset sources and their respective image counts.")
+    selected_data: Optional[List[ClassDataSelection]] = Field(None, description="The subset of available_data selected for training.")
 
-    # Model candidates (kept as a simple list of a non-union spec)
+    # Model candidates
     model: List[ModelSpecModel] = Field(
         ..., min_length=1, description="One or more candidate model specs."
     )
@@ -99,4 +104,3 @@ class ClassificationOutputModel(BaseModel):
         ..., 
         description="A clear explanation of why you've chosen specific field values. Cite sources or dataset characteristics if possible."
     )
-

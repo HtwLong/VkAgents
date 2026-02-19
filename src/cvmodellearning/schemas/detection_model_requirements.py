@@ -1,16 +1,23 @@
-from typing import Dict, List, Optional, Literal
+from typing import List, Optional, Literal
 from pydantic import BaseModel, Field, ConfigDict, model_validator
 from typing_extensions import Self
 
-# --- Model Specification ---
+# --- Unified Helper Models for Strict JSON Schema ---
+class DatasetSourceCount(BaseModel):
+    dataset_name: str = Field(..., description="The name of the dataset")
+    count: int = Field(..., description="Number of images from this dataset")
 
+class ClassDataSelection(BaseModel):
+    class_name: str = Field(..., description="The name of the class or subset")
+    sources: List[DatasetSourceCount] = Field(..., description="List of datasets and their counts")
+
+# --- Model Specification ---
 class ObjectDetectionModelSpecModel(BaseModel):
     """
     Candidate model specification for object detection.
     """
     model_config = ConfigDict(extra="forbid")
 
-    # Selector-style fields
     model_architecture: Optional[
         Literal[
             "yolov8", "yolov10", "yolov11", "yolov12",
@@ -29,7 +36,6 @@ class ObjectDetectionModelSpecModel(BaseModel):
         description="High-level architecture family; if provided with model_architecture, must be consistent."
     )
     
-    # Common Object Detection H-Parameters (Adjusted)
     loss_function_box: Optional[
         Literal["smooth_l1", "l1", "mse", "iou", "giou", "diou", "ciou"]
     ] = Field(
@@ -49,14 +55,12 @@ class ObjectDetectionModelSpecModel(BaseModel):
         description="Optimization algorithm (e.g., SGD, AdamW)."
     )
 
-    # Descriptive and loop controls
     description: str = Field(..., min_length=1, description="Short model rationale/notes.")
     num_epochs: Optional[int] = Field(None, ge=1, description="Max training epochs; must be ≥ 1.")
     patience: Optional[int] = Field(None, ge=0, description="Early stopping patience (epochs without improvement); must be ≥ 0.")
 
     @model_validator(mode="after")
     def _check_family_consistency(self) -> Self:
-        # Enforce family consistent with architecture when both are provided
         if self.model_architecture and self.architecture_family:
             family_map = {
                 "yolov8": "yolo", "yolov10": "yolo", "yolov11": "yolo", "yolov12": "yolo",
@@ -72,18 +76,11 @@ class ObjectDetectionModelSpecModel(BaseModel):
                     f"architecture_family='{self.architecture_family}' "
                     f"does not match model_architecture='{self.model_architecture}'"
                 )
-        
-        # Simple consistency check for mask-rcnn (requires mask prediction)
-        if self.architecture_family == "mask-rcnn" and not self.description:
-             # In a real-world scenario, you might add a check here for mask loss in the future 
-             # if a mask_loss field were added, but for now we rely on the description/name.
-             pass
              
         return self
 
 
 # --- Structured Output for Object Detection ---
-
 class DetectionOutputModel(BaseModel):
     """
     Structured schema for LLM output, designed for Object Detection tasks.
@@ -98,7 +95,7 @@ class DetectionOutputModel(BaseModel):
     description: str = Field(..., min_length=1, description="Problem description and objectives, including detection scope.")
     user_query: str = Field(..., min_length=1, description="Original user prompt or query for context.")
 
-    # Dataset (flattened; no unions)
+    # Dataset
     dataset_name: str = Field(..., min_length=1, description="Dataset name or identifier.")
     classes: List[str] = Field(..., min_length=1, description="Class names in label order; list must be non-empty.")
     annotations_format: Literal["coco", "yolo", "pascal_voc"] = Field(
@@ -109,8 +106,10 @@ class DetectionOutputModel(BaseModel):
     path_labels: Optional[str] = Field(None, description="Local/remote path to labels (annotations) if applicable.")
     preprocessing: Optional[str] = Field(None, description="Text description of preprocessing steps (e.g., resizing, normalization).")
     augmentation: Optional[str] = Field(None, description="Text description of augmentation strategy (e.g., Mosaic, CutMix, H-Flip).")
-    available_data: Optional[Dict[str, Dict[str, int]]] = Field(None, description="Map of class names to dataset sources and their respective image counts. Format: {class: {dataset_name: image_count}}.")
-    selected_data: Optional[Dict[str, Dict[str, int]]] = Field(None, description="The subset of available_data selected for training. Format: {class: {dataset_name: image_count}}.")
+    
+    # CHANGED: Replaced Dicts with strictly typed Lists
+    available_data: Optional[List[ClassDataSelection]] = Field(None, description="List mapping class names to dataset sources and their respective image counts.")
+    selected_data: Optional[List[ClassDataSelection]] = Field(None, description="The subset of available_data selected for training.")
 
     # Model candidates
     model: List[ObjectDetectionModelSpecModel] = Field(
@@ -130,14 +129,12 @@ class DetectionOutputModel(BaseModel):
 
     @model_validator(mode="after")
     def _validate_consistency(self) -> Self:                
-        # Instance Segmentation check: if the task is IS, the model list should contain relevant models
         if self.task == "instance_segmentation":
-            valid_is_models = ["mask-rcnn", "yolo"] # YOLO models can do segmentation
+            valid_is_models = ["mask-rcnn", "yolo"]
             
-            # Check if at least one selected model can perform instance segmentation
             if not any(
                 m.architecture_family in valid_is_models 
-                or m.model_architecture in ["yolov8", "yolov10", "yolov11", "yolov12", "mask-rcnn_r50_fpn_1x_coco"] # specific model names
+                or m.model_architecture in ["yolov8", "yolov10", "yolov11", "yolov12", "mask-rcnn_r50_fpn_1x_coco"]
                 for m in self.model
             ):
                  raise ValueError("Task is 'instance_segmentation', but no 'mask-rcnn' or YOLO-family model is listed in 'model'.")

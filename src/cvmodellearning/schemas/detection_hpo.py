@@ -1,15 +1,16 @@
 import math
-from typing import List, Literal, Optional, Dict, Any
+from typing import List, Literal, Optional
 from pydantic import BaseModel, Field, ConfigDict, model_validator
 from typing_extensions import Self
 
-class DatasetSource(BaseModel):
-    dataset_name: str
-    image_count: int
+# --- Unified Helper Models for Strict JSON Schema ---
+class DatasetSourceCount(BaseModel):
+    dataset_name: str = Field(..., description="The name of the dataset")
+    count: int = Field(..., description="Number of images from this dataset")
 
-class ClassSelection(BaseModel):
-    class_name: str
-    sources: List[DatasetSource]
+class ClassDataSelection(BaseModel):
+    class_name: str = Field(..., description="The name of the class or subset")
+    sources: List[DatasetSourceCount] = Field(..., description="List of datasets and their counts")
 
 
 class DetectionConfigModel(BaseModel):
@@ -28,10 +29,13 @@ class DetectionConfigModel(BaseModel):
         ..., min_length=1,
         description="Provide class names in training label order; list must be non-empty."
     )
-    selected_data: List[ClassSelection] = Field(
+    
+    # CHANGED: Unified schema
+    selected_data: List[ClassDataSelection] = Field(
         ..., 
         description="List of selected classes, their data sources and the respective image counts."
     )
+    
     train_data_ratio: float = Field(
         0.8, ge=0.0, lt=1.0,
         description="Proportion of the dataset allocated for training; must be in [0, 1)."
@@ -64,7 +68,7 @@ class DetectionConfigModel(BaseModel):
     )
     aspect_ratio_range: Optional[List[float]] = Field(
         [0.5, 2.0],
-        description="Range [min, max] of aspect ratios to sample images for (detection often uses non-square crops/resizes)."
+        description="Range [min, max] of aspect ratios to sample images for."
     )
     track_metric: Literal["val_mAP", "val_mAP_50", "val_mAP_75", "val_loss"] = Field(
         ...,
@@ -140,12 +144,10 @@ class DetectionConfigModel(BaseModel):
 
     @model_validator(mode="after")
     def _validate_combinations(self) -> Self:
-        # 0. Validate Data Split Ratios
         total_ratio = self.train_data_ratio + self.val_data_ratio + self.test_data_ratio
         if not math.isclose(total_ratio, 1.0, rel_tol=1e-5):
             raise ValueError(f"train_data_ratio, val_data_ratio, and test_data_ratio must sum to 1.0. Current sum: {total_ratio}")
 
-        # 1. Segmentation Task Logic
         if self.task_type == "segmentation":
             segmentation_models = ["mask_rcnn_r50", "yolov8_l", "yolov10_s"]
             if self.model_name not in segmentation_models:
@@ -156,17 +158,12 @@ class DetectionConfigModel(BaseModel):
                 raise ValueError("Task is 'segmentation', but 'loss_mask' is not defined.")
             if self.lambda_mask <= 0.0:
                 raise ValueError("Task is 'segmentation', but 'lambda_mask' is not > 0.0.")
-        
-        # 2. Detection Task Logic (The Fix)
         else: # task_type == "detection"
-            # SELF-HEALING LOGIC:
             if self.loss_mask is not None:
                 self.loss_mask = None 
-            
             if self.lambda_mask > 0.0:
                 self.lambda_mask = 0.0
 
-        # 3. Aspect Ratio range validation
         if self.aspect_ratio_range:
             if len(self.aspect_ratio_range) != 2 or self.aspect_ratio_range[0] <= 0 or self.aspect_ratio_range[0] > self.aspect_ratio_range[1]:
                  raise ValueError("aspect_ratio_range must be a list [min, max] where 0 < min <= max.")

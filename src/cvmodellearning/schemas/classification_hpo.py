@@ -1,7 +1,16 @@
 import math
-from typing import Dict, List, Literal, Optional
+from typing import List, Literal, Optional
 from pydantic import BaseModel, Field, ConfigDict, model_validator
 from typing_extensions import Self
+
+# --- Helper Models for Strict JSON Schema ---
+class DatasetSourceCount(BaseModel):
+    dataset_name: str = Field(..., description="The name of the dataset")
+    count: int = Field(..., description="Number of images from this dataset")
+
+class ClassDataSelection(BaseModel):
+    class_name: str = Field(..., description="The name of the class or subset")
+    sources: List[DatasetSourceCount] = Field(..., description="List of datasets and their counts")
 
 
 class ClassificationConfigModel(BaseModel):
@@ -22,10 +31,13 @@ class ClassificationConfigModel(BaseModel):
         ..., ge=1,
         description="Set target images per class used for sampling/balancing; must be ≥ 1."
     )
-    selected_data: Dict[str, Dict[str, int]] = Field(
+    
+    # CHANGED: Replaced Dict with strictly typed List
+    selected_data: List[ClassDataSelection] = Field(
         ..., 
-        description="Map of class names to selected dataset sources and respective image counts to download. Format: {class: {dataset_name: image_count}}."
+        description="List of selected classes, their dataset sources, and respective image counts to download."
     )
+    
     train_data_ratio: float = Field(
         0.8, ge=0.0, lt=1.0,
         description="Proportion of the dataset allocated for training; must be in [0, 1)."
@@ -153,24 +165,18 @@ class ClassificationConfigModel(BaseModel):
         if not math.isclose(total_ratio, 1.0, rel_tol=1e-5):
             raise ValueError(f"train_data_ratio, val_data_ratio, and test_data_ratio must sum to 1.0. Current sum: {total_ratio}")
 
-        # Validate optimizer-specific expectations
         if self.optimizer_name == "adamw":
-            # eps, beta1, beta2 already defaulted; ensure ranges are good
             pass
         elif self.optimizer_name == "sgd":
-            # momentum/nesterov already defaulted; ensure ranges are good
             pass
         elif self.optimizer_name == "rmsprop":
-            # alpha/eps/momentum/centered already defaulted; ensure ranges are good
             pass
 
         # Criterion compatibility
         if self.criterion_name == "cross_entropy":
-            # label_smoothing valid; pos_weight is not used, keep neutral default
             if self.pos_weight != 1.0:
                 raise ValueError("For cross_entropy, pos_weight must be 1.0 (unused).")
         elif self.criterion_name == "bce_with_logit":
-            # label_smoothing should not be applied
             if getattr(self, "label_smoothing", 0.0) not in (0.0,):
                 raise ValueError("label_smoothing must be 0.0 for bce_with_logit.")
 
