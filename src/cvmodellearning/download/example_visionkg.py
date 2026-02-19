@@ -1,6 +1,6 @@
 import requests
 import pprint
-from cvmodellearning.download.download_data import download_visionkg_mixed_datasets
+from cvmodellearning.download.download_data import download_visionkg_mixed_datasets_detection, download_visionkg_images_flat
 
 def query(query_string, token=""):
       response = requests.get('https://vision.semkg.org/sparql',
@@ -295,5 +295,6 @@ def try_download_visionkg_simple4():
     pprint(result)
 
 #try_download_visionkg_simple4()
-download_visionkg_mixed_datasets("experiment_001",  [ { "class_name": "bicycle", "sources": [ { "dataset_name": "objects365_det_train", "image_count": 1 }, { "dataset_name": "coco2017_det_train", "image_count": 1 }, { "dataset_name": "bdd_100k_det_train", "image_count": 1 } ] }, { "class_name": "pedestrian", "sources": [ { "dataset_name": "bdd_100k_det_train", "image_count": 1 }, { "dataset_name": "KITTI_det", "image_count": 1} ] } ])
+# download_visionkg_mixed_datasets("experiment_001",  [ { "class_name": "bicycle", "sources": [ { "dataset_name": "objects365_det_train", "image_count": 1 }, { "dataset_name": "coco2017_det_train", "image_count": 1 }, { "dataset_name": "bdd_100k_det_train", "image_count": 1 } ] }, { "class_name": "pedestrian", "sources": [ { "dataset_name": "bdd_100k_det_train", "image_count": 1 }, { "dataset_name": "KITTI_det", "image_count": 1} ] } ])
+download_visionkg_images_flat("experiment_001",  [ { "class_name": "bicycle", "sources": [ { "dataset_name": "objects365_det_train", "image_count": 1 }, { "dataset_name": "coco2017_det_train", "image_count": 1 }, { "dataset_name": "bdd_100k_det_train", "image_count": 1 } ] }, { "class_name": "pedestrian", "sources": [ { "dataset_name": "bdd_100k_det_train", "image_count": 1 }, { "dataset_name": "KITTI_det", "image_count": 1} ] } ])
 

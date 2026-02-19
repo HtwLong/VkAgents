@@ -7,11 +7,11 @@ from pydantic import BaseModel
 # Core agent/pipeline imports
 from agents import Runner
 from cvmodellearning.agents.interpretation_agents_api import interpretation_loop, task_interpretation_agent, synonym_check_agent
-from cvmodellearning.agents.model_agents import classification_model_selector_agent, detection_model_selector_agent
+from cvmodellearning.agents.model_agents import classification_model_selector_agent, detection_model_selector_agent, vqq_model_selector_agent
 from cvmodellearning.agents.hyperparameter_agents_api import choose_hyperparameters_loop
 from cvmodellearning.agents.agents_utils import save_json
 from cvmodellearning.paths import planning_artifacts_dir
-from cvmodellearning.agents.preprocessing_agents import detection_data_preprocessing_agent, classification_data_preprocessing_agent, classification_dataset_selection_agent, detection_dataset_selection_agent
+from cvmodellearning.agents.preprocessing_agents import detection_data_preprocessing_agent, classification_data_preprocessing_agent, classification_dataset_selection_agent, detection_dataset_selection_agent, vqa_dataset_selection_agent, vqa_data_preprocessing_agent
 from cvmodellearning.agents.agents_utils import log_planning_step, load_unified_dataset_classes
 from cvmodellearning.download.visionkg_utils import get_multi_class_stats
 
@@ -213,7 +213,7 @@ async def select_model(request: ModelSelectRequest):
     elif task_value == "segmentation":
         pass
     elif task_value == "visual question answering":
-        pass
+        model_selector_agent = vqq_model_selector_agent
     else:
         pass
     if model_selector_agent:
@@ -261,8 +261,8 @@ async def preprocess_step(request: PreprocessRequest):
         # Add segmentation agents here when ready
         pass
     elif task_value == "visual question answering":
-        # Add VQA agents here when ready
-        pass
+        dataset_agent = vqa_dataset_selection_agent
+        preprocessing_agent = vqa_data_preprocessing_agent
     
     # If we have valid agents for this task, run the chain
     if dataset_agent and preprocessing_agent:

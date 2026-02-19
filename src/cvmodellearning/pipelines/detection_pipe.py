@@ -38,10 +38,6 @@ from cvmodellearning.paths import (
     best_yolo_model_path
 )
 
-# --- Global Constants (External to class, as they are fixed paths/versions) ---
-NUSCENES_DATA_ROOT = "/Users/longus/Downloads/v1.0-mini" 
-NUSCENES_VERSION = "v1.0-mini"
-
 
 # --- Helper Functions (External to class, as they don't use instance state) ---
 
@@ -98,7 +94,7 @@ class DetectionPipeline:
     
     # --- Data Steps ---
 
-    def download_data_step(self, config: Dict[str, Any], job_id: str) -> Dict[str, Any]:
+    def download_data_step(self, config: Dict[str, Any], job_id: str):
         """Downloads data and create a consolidated COCO-style JSON label file."""
 
         selected_data: List[Dict[str, Any]] = config["selected_data"]

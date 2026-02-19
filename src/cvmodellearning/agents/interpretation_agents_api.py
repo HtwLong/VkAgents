@@ -17,7 +17,7 @@ readiness_check_agent = Agent(
         "Return only a pydantic Decision."
     ),
     output_type=Decision,
-    model="gpt-4o-mini"
+    model="gpt-5-nano"
 )
 
 
@@ -25,13 +25,15 @@ task_interpretation_agent = Agent(
     name="Task Interpreter",
     instructions=(
         "Extract ONLY given information from the user prompt about a computer vision task, "
-        "the model and the data the model should be trained on as well as the original user query. "
+        "the model and the data the model should be trained on as well as the original user query "
+        "and the use case description. "
         "Leave fields empty, if the information does not exist in the user request. "
         "For the classes mentioned, turn them into singular form if they are in plural form. "
         "If a class is pedestrian, add 'human.pedestrian' to classes instead."
+        "If the user explicitly provides specific questions to be answered, add them to 'questions_list'."
     ),
     output_type=InterpretationRequirements,
-    model="gpt-4o-mini"
+    model="gpt-5-nano"
 )
 
 synonym_check_agent = Agent(
@@ -48,7 +50,7 @@ synonym_check_agent = Agent(
         "4. Return ONLY the SynonymMatch JSON."
     ),
     output_type=SynonymMatch,
-    model="gpt-4o-mini"
+    model="gpt-5-nano"
 )
 
 

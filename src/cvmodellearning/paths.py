@@ -70,9 +70,9 @@ def test_csv_path(job_id: str) -> Path:
 
 
 
-# JSON in data/ for object detection annotations
+# JSON for either object detection annotations
+# OR VQA annotations (we can differentiate based on the content structure)
 def json_labels_path(job_id: str) -> Path:
-    """Path to the consolidated COCO-style JSON annotation file."""
     return data_dir(job_id) / "annotations.json"
  
 def train_json_path(job_id: str) -> Path:

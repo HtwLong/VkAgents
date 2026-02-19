@@ -1,7 +1,7 @@
 import json
 import csv
 import os
-from cvmodellearning.download.visionkg_utils import prepare_data, visionkg2cocoDet, query, visionkg_parse_classification
+from cvmodellearning.download.visionkg_utils import prepare_data, visionkg2cocoDet, query, visionkg_parse_classification, prepare_data_flat
 from cvmodellearning.paths import data_dir, json_labels_path, csv_labels_path
 
 def download_visionkg_mixed_datasets_detection(job_id: str, requests: list):
@@ -255,3 +255,93 @@ def download_visionkg_mixed_datasets_classification(job_id: str, requests: list)
         print(f"Total Rows in CSV: {len(master_csv_rows)}")
     else:
         print("\nNo data collected.")
+
+
+def download_visionkg_images_flat(job_id: str, requests: list):
+    """
+    Sequentially queries VisionKG for images and downloads them into a single 
+    directory with flattened filenames. No annotations are processed.
+    """
+    if not isinstance(requests, list):
+        raise TypeError(f"Input 'requests' must be a list. Got {type(requests)}.")
+
+    if not requests:
+        print("Warning: 'requests' list is empty. Nothing to download.")
+        return
+
+    # Track unique images to prevent duplicate downloads
+    global_image_set = set()
+    images_to_download = []
+
+    for entry in requests:
+        if not isinstance(entry, dict):
+            continue
+
+        class_name = entry.get("class_name")
+        sources = entry.get("sources")
+
+        if not class_name or not sources or not isinstance(sources, list):
+            continue
+
+        for source in sources:
+            if not isinstance(source, dict):
+                continue
+
+            dataset_name = source.get("dataset_name")
+            limit = source.get("image_count")
+
+            if not dataset_name or not isinstance(limit, int):
+                continue
+
+            print(f"\n--- Fetching Images: Class '{class_name}' from Dataset '{dataset_name}' (Limit: {limit}) ---")
+
+            # Highly simplified query: We only need the image and dataset names
+            query_string = f"""
+            PREFIX cv:<http://vision.semkg.org/onto/v0.1/>
+            PREFIX schema:<http://schema.org/>
+            
+            SELECT DISTINCT ?datasetName ?imageName
+            WHERE {{
+                ?image schema:isPartOf / schema:name ?datasetName .
+                FILTER regex(?datasetName, "{dataset_name}", "i")
+                
+                ?image cv:hasAnnotation ?ann .
+                ?ann cv:hasLabel/cv:label ?labelName .
+                FILTER regex(?labelName, "{class_name}", "i")
+                
+                OPTIONAL {{ ?image schema:name ?imageName }} .
+            }}
+            LIMIT {limit}
+            """
+
+            print("  Querying VisionKG...")
+            raw_result = query(query_string)
+            
+            if not raw_result:
+                print(f"  No results found for {class_name} in {dataset_name}.")
+                continue
+
+            for row in raw_result:
+                dataset_n = row.get('datasetName')
+                img_name = row.get('imageName')
+                
+                if not dataset_n or not img_name:
+                    continue
+                    
+                # Creating a clean relative path (standardizing on forward slash for the URL)
+                rel_image_path = f"{dataset_n}/{img_name}"
+                
+                if rel_image_path not in global_image_set:
+                    global_image_set.add(rel_image_path)
+                    
+                    image_url = f"https://vision-api.semkg.org/api/image?image=/{dataset_n}/{img_name}"
+                    images_to_download.append({
+                        'url': image_url,
+                        'image_path': rel_image_path,
+                    })
+
+    if images_to_download:
+        print(f"\nStarting download for {len(images_to_download)} unique images...")
+        prepare_data_flat(images_to_download, DATA_ROOT_PATH=str(data_dir(job_id)))
+    else:
+        print("\nNo new images to download.")

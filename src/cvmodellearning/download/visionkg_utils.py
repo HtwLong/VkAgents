@@ -357,3 +357,45 @@ def visionkg_parse_classification(query_bindings: List[Dict], global_image_set: 
         'images_to_download': images_to_download,
         'csv_rows': csv_rows
     }
+
+import urllib.request
+import os
+
+def prepare_data_flat(images: list, DATA_ROOT_PATH: str = None):
+    """
+    Downloads images directly into the root directory without creating subfolders.
+    The filename is created by flattening the relative image path (replacing '/' with '_').
+    """
+    if not DATA_ROOT_PATH:
+        print("DATA path did not set! Path will set default at /tmp")
+        DATA_ROOT_PATH = "/tmp"
+        
+    if not os.path.isdir(DATA_ROOT_PATH):
+        os.makedirs(DATA_ROOT_PATH, exist_ok=True)
+
+    missing_images = []
+    
+    for image in images:
+        # Flatten the path (e.g., "coco2017_det_train/000000102096.jpg" -> "coco2017_det_train_000000102096.jpg")
+        # We replace both standard slashes and backslashes just to be safe across OS environments
+        flat_filename = image['image_path'].replace('/', '_').replace('\\', '_')
+        full_file_path = os.path.join(DATA_ROOT_PATH, flat_filename)
+        
+        if not os.path.exists(full_file_path):
+            is_success = False
+            if image.get('url'):
+                print(f"Downloading {flat_filename}...")
+                try:
+                    urllib.request.urlretrieve(image['url'], full_file_path)
+                    is_success = True
+                except Exception as e:
+                    print(f"Download failed for {flat_filename}: {e}")
+            
+            if not is_success:
+                missing_images.append(flat_filename)
+                
+    if missing_images:
+        print(f"\nThe following images could not be downloaded to {DATA_ROOT_PATH}:")
+        print(", ".join(missing_images))
+    else:
+        print("\nAll downloads finished successfully!")

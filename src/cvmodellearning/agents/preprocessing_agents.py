@@ -1,6 +1,7 @@
 from agents import Agent
 from cvmodellearning.schemas.classification_model_requirements import ClassificationOutputModel
 from cvmodellearning.schemas.detection_model_requirements import DetectionOutputModel
+from cvmodellearning.schemas.vqa_model_requirements import VQAOutputModel
 
 # TODO: in case of missing annotations for user provided data: 
 # let the data preprocessor have a tool to add annotations to the images and 
@@ -57,7 +58,7 @@ classification_dataset_selection_agent = Agent(
         "downsample 'dog' to ~500-1000 to prevent class bias, unless 'dog' is the priority class."
     ),
     output_type=ClassificationOutputModel,
-    model="gpt-4o-mini"
+    model="gpt-5-nano"
 )
 
 detection_dataset_selection_agent = Agent(
@@ -68,7 +69,18 @@ detection_dataset_selection_agent = Agent(
         "OpenImages is vast but sometimes has noisier machine-generated labels; treat it as a secondary source if primary sources are sufficient."
     ),
     output_type=DetectionOutputModel,
-    model="gpt-4o-mini"
+    model="gpt-5-nano"
+)
+
+vqa_dataset_selection_agent = Agent(
+    name="VQA Data Selector",
+    instructions=(
+        f"{BASE_INSTRUCTIONS}\n"
+        "Specific to VISUAL QUESTION ANSWERING: Since annotations will be generated downstream via a VLM, your goal is to select a highly diverse set of images from the available datasets. "
+        "Prioritize visual diversity, varied scene compositions, and sufficient object counts so the downstream VLM can generate rich and varied question-answer pairs. Ensure the subset size is manageable for automated labeling."
+    ),
+    output_type=VQAOutputModel,
+    model="gpt-5-nano"
 )
 
 # --- Context for Augmentation Strategy ---
@@ -98,13 +110,13 @@ classification_data_preprocessing_agent = Agent(
         f"You are an expert in Data Augmentation for Image Classification.\n"
         f"{AUGMENTATION_CONTEXT}\n"
         "### YOUR TASK:\n"
-        "1. **Analyze** the `application_domain`, user_query, `classes`, `selected_data`,and selected `model`.\n"
+        "1. **Analyze** the `application_domain`, user_query, `classes`, `selected_data`, and selected `model`.\n"
         "2. **Populate** ONLY the `augmentation` and `preprocessing` fields with a text description of the strategy.\n"
         "3. **Rationale**: Redo the 'rationale' field to explain WHY these specific augmentations fit the domain (e.g., 'Added RandomHorizontalFlip because cars look the same facing left or right, but skipped VerticalFlip as cars do not drive upside down.').\n"
         "4. **Constraints**: Do NOT modify `model`, `classes`, `selected_data`, or hyperparameters."
     ),
     output_type=ClassificationOutputModel,
-    model="gpt-4o-mini"
+    model="gpt-5-nano"
 )
 
 # --- Detection Preprocessor ---
@@ -122,5 +134,23 @@ detection_data_preprocessing_agent = Agent(
         "4. **Constraints**: Do NOT modify `model`, `classes`, `selected_data`, or hyperparameters."
     ),
     output_type=DetectionOutputModel,
-    model="gpt-4o-mini"
+    model="gpt-5-nano"
+)
+
+vqa_data_preprocessing_agent = Agent(
+    name="VQA Data Preprocessor",
+    instructions=(
+        f"You are an expert in Data Augmentation and Preprocessing for Vision-Language Models (VLMs) and VQA tasks.\n"
+        f"{AUGMENTATION_CONTEXT}\n"
+        "### YOUR TASK:\n"
+        "1. **Analyze** the `application_domain`, user_query, `dataset_name`, and selected `model` (especially VLMs like Qwen-VL).\n"
+        "2. **Populate** the `augmentation`, `preprocessing`, and `num_qa_pairs` fields.\n"
+        "   - **WARNING FOR VQA**: Be extremely conservative with geometric augmentations. Random flipping can invalidate spatial questions. Avoid unless explicitly safe.\n"
+        "   - Focus on padding, aspect-ratio preserving resizing, or dynamic resolution mechanisms.\n"
+        "   - Determine an appropriate `num_qa_pairs` (e.g., 3-10) based on the visual complexity of the domain and user needs.\n"
+        "3. **Rationale**: Redo the 'rationale' field explaining your cautious VQA augmentation choices AND why you selected that specific `num_qa_pairs`.\n"
+        "4. **Constraints**: Do NOT modify `model`, `classes`, `selected_data`, or hyperparameters."
+    ),
+    output_type=VQAOutputModel,
+    model="gpt-5-nano"
 )

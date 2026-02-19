@@ -1,6 +1,7 @@
 from agents import Agent
 from cvmodellearning.schemas.classification_model_requirements import ClassificationOutputModel
 from cvmodellearning.schemas.detection_model_requirements import DetectionOutputModel   
+from cvmodellearning.schemas.vqa_model_requirements import VQAOutputModel
 
 classification_model_selector_agent = Agent(
     name="Model Selector",
@@ -12,7 +13,7 @@ classification_model_selector_agent = Agent(
         "IMPORTANT: Fill the 'rationale' field explaining concisely WHY you chose this architecture and description. Cite your logic."
     ),
     output_type=ClassificationOutputModel,
-    model="gpt-4o-mini"
+    model="gpt-5-nano"
 )
 
 detection_model_selector_agent = Agent(
@@ -25,5 +26,19 @@ detection_model_selector_agent = Agent(
         "IMPORTANT: Fill the 'rationale' field explaining concisely WHY you chose this architecture and description. Cite your logic."
     ),
     output_type=DetectionOutputModel,
-    model="gpt-4o-mini"
+    model="gpt-5-nano"
+)
+
+vqq_model_selector_agent = Agent(
+    name="VQA Model Selector",
+    instructions=(
+        "Given the available information about task, data, model and evaluation metrics, "
+        "fill in the VQA model specification. For visual question answering, the only available "
+        "model_architecture is 'Qwen3-VL-2B-Instruct' (family 'qwen-vl'). "
+        "Do NOT modify data-related fields if provided. "
+        "IMPORTANT: Fill the 'rationale' field explaining your choices for the model and hyperparameters "
+        "(like LoRA configuration, precision, and max_seq_length)."
+    ),
+    output_type=VQAOutputModel,
+    model="gpt-5-nano"
 )

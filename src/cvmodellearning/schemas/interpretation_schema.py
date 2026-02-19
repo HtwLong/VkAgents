@@ -81,6 +81,14 @@ class InterpretationRequirements(BaseModel):
     application_domain: Optional[str] = Field(None, min_length=1, description="Application domain (e.g., 'medical imaging', 'autonomous driving', 'satellite analysis').")
     description: Optional[str] = Field(None, min_length=1, description="Detailed problem description and objectives.")
     user_query: Optional[str] = Field(None, min_length=1, description="Original user prompt or query for context.")
+    use_case_description: Optional[str] = Field(
+        None, 
+        description="General description of the overall use case or goal."
+    )
+    questions_list: Optional[List[str]] = Field(
+        None, 
+        description="Specific questions the user wants answered, if explicitly provided."
+    )
 
     # --- Data ---
     classes: List[str] = Field(..., min_length=1, description="Class names in label order; list must be non-empty.")

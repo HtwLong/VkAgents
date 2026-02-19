@@ -56,6 +56,8 @@ def get_pipeline_by_task(job_id: str) -> PipelineType:
             elif task == "detection":
                 # Ensure the detection JSON path exists for detection data steps
                 return DetectionPipeline()
+            elif task == "visual question answering":
+                pass
             else:
                 # Handle other tasks as they are implemented (segmentation, etc.)
                 raise HTTPException(
