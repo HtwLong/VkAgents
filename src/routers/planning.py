@@ -8,7 +8,7 @@ from pydantic import BaseModel
 from agents import Runner
 from cvmodellearning.agents.interpretation_agents_api import interpretation_loop, task_interpretation_agent, synonym_check_agent
 from cvmodellearning.agents.model_agents import classification_model_selector_agent, detection_model_selector_agent, vqq_model_selector_agent
-from cvmodellearning.agents.hyperparameter_agents_api import choose_hyperparameters_loop
+from cvmodellearning.agents.hyperparameter_agents_api import generate_and_evaluate_hpo
 from cvmodellearning.agents.agents_utils import save_json
 from cvmodellearning.paths import planning_artifacts_dir
 from cvmodellearning.agents.preprocessing_agents import detection_data_preprocessing_agent, classification_data_preprocessing_agent, classification_dataset_selection_agent, detection_dataset_selection_agent, vqa_dataset_selection_agent, vqa_data_preprocessing_agent
@@ -316,7 +316,7 @@ async def preprocess_step(request: PreprocessRequest):
 async def choose_hyperparameters(request: ChooseHPRequest):
     ctx = request.context if isinstance(request.context, str) else json.dumps(request.context)
     
-    candidate, decision = await choose_hyperparameters_loop(ctx, job_id=request.job_id)
+    candidate, decision = await generate_and_evaluate_hpo(ctx, job_id=request.job_id)
 
     combined_output = {
         "hyperparameter_candidate": candidate.model_dump(),

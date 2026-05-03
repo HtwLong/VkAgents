@@ -3,10 +3,8 @@ from agents import Agent
 from cvmodellearning.models.detection_models.torchvision_trainer import train_torchvision_model
 from cvmodellearning.models.detection_models.yolo_trainer import train_yolo_model
 
-
-
 yolo_trainer_agent = Agent(
-    model="gpt-4o-mini",
+    model="gpt-5-nano",
     tools=[train_yolo_model],
     instructions=(
         "You are an expert in configuring and launching Ultralytics YOLO training runs. "
@@ -21,7 +19,7 @@ yolo_trainer_agent = Agent(
 )
 
 torchvision_trainer_agent = Agent(
-    model="gpt-4o-mini",
+    model="gpt-5-nano",
     tools=[train_torchvision_model], 
     instructions=(
         "You are an expert in configuring and launching standard PyTorch/TorchVision "

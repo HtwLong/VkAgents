@@ -3,6 +3,13 @@ from cvmodellearning.schemas.classification_model_requirements import Classifica
 from cvmodellearning.schemas.detection_model_requirements import DetectionOutputModel
 from cvmodellearning.schemas.vqa_model_requirements import VQAOutputModel
 
+
+# This file defines agents responsible for 
+# - selecting data subsets 
+# - determining appropriate augmentation strategies based on the task, domain, and model requirements
+
+
+
 # TODO: in case of missing annotations for user provided data: 
 # let the data preprocessor have a tool to add annotations to the images and 
 # keep the ones with high confidence
