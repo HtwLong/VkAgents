@@ -1,4 +1,3 @@
-import asyncio
 from typing import List, Tuple, Optional
 from agents import Agent, Runner
 from cvmodellearning.schemas.decision_schema import Decision
