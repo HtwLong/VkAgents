@@ -1,7 +1,6 @@
 import math
-from typing import List, Literal, Optional
+from typing import List, Literal, Optional, Self
 from pydantic import BaseModel, Field, ConfigDict, model_validator
-from typing_extensions import Self
 
 # --- Helper Models for Strict JSON Schema ---
 class DatasetSourceCount(BaseModel):

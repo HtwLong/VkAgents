@@ -84,7 +84,8 @@ def prepare_data(images, DATA_ROOT_PATH=None):
 
 def get_multi_class_stats(classes: list) -> dict:
     """
-    Retrieves dataset statistics for multiple classes in a single SPARQL query.
+    Retrieves dataset statistics for multiple classes using a single 
+    SPARQL query optimized with the VALUES clause.
     
     Args:
         classes (list): A list of strings, e.g., ["cat", "dog", "bird"].
@@ -98,47 +99,37 @@ def get_multi_class_stats(classes: list) -> dict:
     if not classes:
         return {}
 
-    # 1. Build the UNION sub-queries
-    # We create a sub-query for each class. 
-    # Crucially, we inject the class name as "?targetLabel" so we can identify rows in the final result.
-    union_parts = []
-    
-    for cls in classes:
-        subquery = f"""
-        {{
-            SELECT ?datasetName ("{cls}" AS ?targetLabel) (COUNT(DISTINCT ?image) AS ?count)
-            WHERE {{
-                ?image cv:hasAnnotation ?annotation .
-                ?annotation a cv:ObjectDetectionAnnotation .
-                ?annotation cv:hasLabel ?lbl .
-                ?lbl cv:label "{cls}" .
-                ?image schema:isPartOf / schema:name ?datasetName .
-            }}
-            GROUP BY ?datasetName
-        }}
-        """
-        union_parts.append(subquery)
+    # Initialize the output structure with empty dicts for all requested classes
+    all_stats = {cls: {} for cls in classes}
 
-    # Join all parts with UNION
-    inner_query_block = " UNION ".join(union_parts)
+    # Format the classes into a SPARQL VALUES string: "cat" "dog" "bird"
+    values_string = " ".join([f'"{cls}"' for cls in classes])
 
-    # 2. Construct the Main Query
+    # 1. Construct the Main Query
     query_string = f"""
     PREFIX cv: <http://vision.semkg.org/onto/v0.1/>
     PREFIX schema: <http://schema.org/>
 
-    SELECT ?targetLabel ?datasetName ?count
+    SELECT ?targetLabel ?datasetName (COUNT(DISTINCT ?image) AS ?count)
     WHERE {{
-        {inner_query_block}
+        # Inject the list of classes directly into the query engine's execution plan
+        VALUES ?targetLabel {{ {values_string} }} 
+        
+        ?image cv:hasAnnotation ?annotation .
+        ?annotation a cv:ObjectDetectionAnnotation .
+        ?annotation cv:hasLabel ?lbl .
+        ?lbl cv:label ?targetLabel .
+        ?image schema:isPartOf / schema:name ?datasetName .
     }}
+    GROUP BY ?targetLabel ?datasetName
     ORDER BY ?targetLabel DESC(?count)
     """
     
-    print(f"Querying VisionKG for {len(classes)} classes in a single request...")
+    print(f"Querying VisionKG for {len(classes)} classes using VALUES...")
 
-    # 3. Execute the Query
-    # Assumes 'semkg_api' is initialized globally
+    # 2. Execute the Query
     try:
+        # Assumes 'semkg_api' is initialized globally
         raw_result = semkg_api.query(query_string)
     except NameError:
         print("Error: 'semkg_api' is not defined. Please ensure the API is initialized.")
@@ -147,13 +138,7 @@ def get_multi_class_stats(classes: list) -> dict:
         print(f"Error executing query: {e}")
         return {}
 
-    # 4. Parse Results into Nested Dictionary
-    # Goal structure: { "cat": {"coco": 300}, "dog": {"voc": 100} }
-    
-    # Initialize keys for all requested classes (so empty ones show as {})
-    all_stats = {cls: {} for cls in classes}
-
-    # Handle different return formats (dict vs list)
+    # 3. Parse Results into Nested Dictionary
     bindings = []
     if isinstance(raw_result, dict) and 'results' in raw_result:
         bindings = raw_result['results']['bindings']
@@ -171,7 +156,7 @@ def get_multi_class_stats(classes: list) -> dict:
 
         if label and d_name and count_val:
             try:
-                # Add to the nested dictionary if the label is one we requested
+                # Map the results back to the initialized dictionary
                 if label in all_stats:
                     all_stats[label][d_name] = int(count_val)
             except ValueError:
