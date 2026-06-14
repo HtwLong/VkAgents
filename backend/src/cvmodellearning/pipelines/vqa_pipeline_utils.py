@@ -4,7 +4,9 @@ import os, json, random
 def generate_annotations(image_folder, output_file, questions_list, use_case_description, num_qa_pairs=5):
     # --- 1. Initialize the vLLM Engine ---
     model_name = "Qwen/Qwen3-VL-30B-A3B-Instruct-AWQ" 
-    print(f"Loading {model_name} on a single RTX 6000 (48GB)...")
+    # For loading the large vLLM model, we use a single GPU (RTX 6000 (48GB)
+    # Adaptive Weight Quantization (AWQ) allows us to fit the model in memory while maintaining performance 
+    print(f"Loading {model_name} on a single GPU (RTX 6000 (48GB)...") 
     
     llm = LLM(
         model=model_name,
