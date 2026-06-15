@@ -1,0 +1,4 @@
+id,type,hardware_name,hardware_category,gpu_memory_gb,num_gpus,cpu_only,supports_mixed_precision,supports_quantization,training_allowed,inference_allowed,latency_category,notes
+cpu_onnx_benchmark,HardwareProfile,CPU ONNX Benchmark,CPU,,0,true,false,true,false,true,Batch,"Benchmark profile used for official YOLOv8 CPU ONNX speed reporting; not a generic deployment guarantee."
+a100_tensorrt_benchmark,HardwareProfile,A100 TensorRT Benchmark,DataCenterGPU,,1,false,true,true,false,true,RealTime,"Benchmark profile used for official YOLOv8 A100 TensorRT speed reporting; not a generic deployment guarantee."
+t4_tensorrt_fp16_benchmark,HardwareProfile,T4 TensorRT FP16 Benchmark,DataCenterGPU,,1,false,true,true,false,true,RealTime,"Benchmark profile used for official YOLOv10, YOLO11, and YOLO12 TensorRT FP16 speed reporting on NVIDIA T4; not a generic deployment guarantee."
