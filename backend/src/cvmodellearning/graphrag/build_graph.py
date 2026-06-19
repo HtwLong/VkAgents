@@ -5,7 +5,7 @@ Initialize a NetworkX knowledge graph from the ontology CSV files.
 
 Expected project layout:
 
-ontology_data/
+kg_data/
   nodes/
     tasks.csv
     domains.csv
@@ -23,18 +23,19 @@ ontology_data/
     edges.csv
 
 Usage:
-    python build_graph.py
+    python build_graph.py --data-dir kg_data
 
 This script:
 1. Loads entity CSV files into pandas DataFrames.
 2. Adds every row with an 'id' column as a graph node.
 3. Adds manual edges from edges.csv.
 4. Calls graph_edge_utils.add_generated_edges(...) to create foreign-key-derived edges.
-5. Prints a graph summary and saves a graph visualization.
+5. Optionally prints a graph summary.
 """
 
 from __future__ import annotations
 
+import argparse
 from pathlib import Path
 from typing import Dict, Iterable
 
@@ -108,7 +109,6 @@ def add_nodes_from_dataframes(G: nx.MultiDiGraph, dfs: Dict[str, pd.DataFrame]) 
             row_dict["source_csv"] = f"{stem}.csv"
 
             G.add_node(node_id, **row_dict)
-            print(f"Added node: {node_id} from {stem}.csv")
 
 
 def add_manual_edges(G: nx.MultiDiGraph, edges_path: Path) -> None:
@@ -148,7 +148,7 @@ def add_manual_edges(G: nx.MultiDiGraph, edges_path: Path) -> None:
         G.add_edge(source_id, target_id, **edge_attrs)
 
 
-def build_graph(data_dir: str | Path = "ontology_data") -> nx.MultiDiGraph:
+def build_graph(data_dir: str | Path = "kg_data") -> nx.MultiDiGraph:
     """
     Build and return the complete NetworkX MultiDiGraph.
 
@@ -204,6 +204,7 @@ def main() -> None:
     print(summarize_graph(G))
     visualization_path = visualize_interactive_graph(G, ontology_data_dir / "graph_visualization.html", [], [])
     print(f"\nGraph visualization saved to: {visualization_path}")
+    print(summarize_graph(G))
 
 
 if __name__ == "__main__":

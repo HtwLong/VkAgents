@@ -1,9 +1,9 @@
-id,type,metric_name,task_id,optimization_direction,primary_or_secondary,description
-map50_95,EvaluationMetric,mAP50-95,object_detection,maximize,Primary,"Mean average precision averaged over IoU thresholds from 0.50 to 0.95."
-ap50,EvaluationMetric,AP50,object_detection,maximize,Secondary,"Average precision at IoU threshold 0.50."
-precision,EvaluationMetric,Precision,object_detection,maximize,Secondary,"Fraction of predicted positive detections that are correct."
-recall,EvaluationMetric,Recall,object_detection,maximize,Secondary,"Fraction of true objects that are correctly detected."
-f1_score,EvaluationMetric,F1-score,object_detection,maximize,Secondary,"Harmonic mean of precision and recall."
-latency_ms,EvaluationMetric,Latency ms,all,minimize,Secondary,"Inference time in milliseconds."
-params_m,EvaluationMetric,Parameters M,all,minimize,Secondary,"Number of model parameters in millions."
-flops_b,EvaluationMetric,FLOPs B,all,minimize,Secondary,"Approximate compute cost in billions of FLOPs."
+id,type,metric_name,task_id,optimization_direction,primary_or_secondary,description,evidence_ids
+map50_95,EvaluationMetric,mAP50-95,object_detection,maximize,Primary,Mean average precision averaged over IoU thresholds from 0.50 to 0.95.,evidence_ultralytics_yolov8_docs|evidence_ultralytics_yolov10_docs|evidence_ultralytics_yolo11_docs|evidence_ultralytics_yolo12_docs
+ap50,EvaluationMetric,AP50,object_detection,maximize,Secondary,Average precision at IoU threshold 0.50.,evidence_ultralytics_hpo_docs
+precision,EvaluationMetric,Precision,object_detection,maximize,Secondary,Fraction of predicted positive detections that are correct.,evidence_ultralytics_hpo_docs
+recall,EvaluationMetric,Recall,object_detection,maximize,Secondary,Fraction of true objects that are correctly detected.,evidence_ultralytics_hpo_docs
+f1_score,EvaluationMetric,F1-score,object_detection,maximize,Secondary,Harmonic mean of precision and recall.,evidence_ultralytics_hpo_docs
+latency_ms,EvaluationMetric,Latency ms,all,minimize,Secondary,Inference time in milliseconds.,evidence_ultralytics_yolov8_docs|evidence_ultralytics_yolov10_docs|evidence_ultralytics_yolo11_docs|evidence_ultralytics_yolo12_docs
+params_m,EvaluationMetric,Parameters M,all,minimize,Secondary,Number of model parameters in millions.,evidence_ultralytics_yolov8_docs|evidence_ultralytics_yolov10_docs|evidence_ultralytics_yolo11_docs|evidence_ultralytics_yolo12_docs
+flops_b,EvaluationMetric,FLOPs B,all,minimize,Secondary,Approximate compute cost in billions of FLOPs.,evidence_ultralytics_yolov8_docs|evidence_ultralytics_yolov10_docs|evidence_ultralytics_yolo11_docs|evidence_ultralytics_yolo12_docs
