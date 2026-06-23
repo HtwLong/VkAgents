@@ -1,6 +1,7 @@
 import math
 from typing import List, Literal, Optional, Self
 from pydantic import BaseModel, Field, ConfigDict, model_validator
+from cvmodellearning.models.registry import VQAModelId
 
 # --- Helper Models for Strict JSON Schema ---
 class DatasetSourceCount(BaseModel):
@@ -17,9 +18,9 @@ class VQAConfigModel(BaseModel):
     """
     Structured schema for Visual Question Answering (VQA) training configuration,
     specifically tailored for Vision-Language Models (VLMs) like Qwen-VL.
-    Uses Literal enums for key selector fields.
+    Uses registry-backed enums for key selector fields.
     """
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="forbid", use_enum_values=True)
 
     # --- Data/Task ---
     task_type: Literal["visual question answering"] = Field(
@@ -73,9 +74,7 @@ class VQAConfigModel(BaseModel):
     )
 
     # --- Model Selection (VLM) ---
-    model_name: Literal[
-        "Qwen3-VL-2B-Instruct"
-    ] = Field(
+    model_name: VQAModelId = Field(
         ...,
         description="Select the Vision-Language Model architecture."
     )

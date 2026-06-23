@@ -1,6 +1,7 @@
 import math
 from typing import List, Literal, Optional, Self
 from pydantic import BaseModel, Field, ConfigDict, model_validator
+from cvmodellearning.models.registry import ClassificationModelId
 
 # --- Helper Models for Strict JSON Schema ---
 class DatasetSourceCount(BaseModel):
@@ -17,11 +18,11 @@ class ClassDataSelection(BaseModel):
 class ClassificationConfigModel(BaseModel):
     """
     Union-free schema designed for structured outputs:
-    - Uses Literal enums for selector fields (no unions/oneOf).
+    - Uses registry-backed enums for selector fields (no unions/oneOf).
     - Keeps parameters as simple primitives.
     - Enforces cross-field constraints in a post-parse validator.
     """
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="forbid", use_enum_values=True)
 
     # Data/task
     classes: List[str] = Field(
@@ -75,11 +76,7 @@ class ClassificationConfigModel(BaseModel):
     )
 
     # Model selection (no unions)
-    model_name: Literal[
-        "resnet50", "vgg16", "mobilenet_v2", "mobilenet_v3_large",
-        "efficientnet_b0", "densenet121", "convnext_tiny", "vit_b_16",
-        "swin_v2_t", "swin_v2_s", "swin_v2_b"
-    ] = Field(
+    model_name: ClassificationModelId = Field(
         ...,
         description="Select the backbone architecture identifier."
     )

@@ -1,6 +1,11 @@
 from typing import List, Optional, Literal
 from pydantic import BaseModel, Field, ConfigDict, model_validator
 from typing_extensions import Self
+from cvmodellearning.models.registry import (
+    ClassificationModelFamily,
+    ClassificationModelId,
+    family_by_model_id,
+)
 
 # --- Helper Models for Strict JSON Schema ---
 class DatasetSourceCount(BaseModel):
@@ -18,21 +23,13 @@ class ModelSpecModel(BaseModel):
     """
     Candidate model specification kept union-free with simple primitives and optional Literals.
     """
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="forbid", use_enum_values=True)
 
-    model_architecture: Optional[
-        Literal[
-            "resnet50", "vgg16", "mobilenet_v2", "mobilenet_v3_large",
-            "efficientnet_b0", "densenet121", "convnext_tiny", "vit_b_16",
-            "swin_v2_t", "swin_v2_s", "swin_v2_b"
-        ]
-    ] = Field(
+    model_architecture: Optional[ClassificationModelId] = Field(
         None,
         description="Backbone architecture identifier; optional to allow other values downstream."
     )
-    architecture_family: Optional[
-        Literal["resnet", "vgg", "mobilenet", "efficientnet", "densenet", "convnext", "vit", "swin_v2"]
-    ] = Field(
+    architecture_family: Optional[ClassificationModelFamily] = Field(
         None,
         description="High-level architecture family; if provided with model_architecture, must be consistent."
     )
@@ -44,24 +41,13 @@ class ModelSpecModel(BaseModel):
     @model_validator(mode="after")
     def _check_family_consistency(self) -> Self:
         if self.model_architecture and self.architecture_family:
-            family_map = {
-                "resnet50": "resnet",
-                "vgg16": "vgg",
-                "mobilenet_v2": "mobilenet",
-                "mobilenet_v3_large": "mobilenet",
-                "efficientnet_b0": "efficientnet",
-                "densenet121": "densenet",
-                "convnext_tiny": "convnext",
-                "vit_b_16": "vit",
-                "swin_v2_t": "swin_v2",
-                "swin_v2_s": "swin_v2",
-                "swin_v2_b": "swin_v2",
-            }
-            inferred = family_map.get(self.model_architecture)
-            if inferred and inferred != self.architecture_family:
+            architecture = getattr(self.model_architecture, "value", self.model_architecture)
+            family = getattr(self.architecture_family, "value", self.architecture_family)
+            inferred = family_by_model_id("classification").get(architecture)
+            if inferred and inferred != family:
                 raise ValueError(
-                    f"architecture_family='{self.architecture_family}' "
-                    f"does not match model_architecture='{self.model_architecture}'"
+                    f"architecture_family='{family}' "
+                    f"does not match model_architecture='{architecture}'"
                 )
         return self
 

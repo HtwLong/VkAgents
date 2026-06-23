@@ -87,6 +87,9 @@ async def task_interpret(request: StateRequest):
     final_classes = []
     valid_classes_str = ", ".join(sorted(list(valid_classes)))
 
+    # check for each extracted class if its a valid class or
+    # if it has a synonym that matches a valid class. 
+    # If neither, raise an error to user to clarify the class name
     for cls in (extracted.classes or []):
         cls_clean = cls.strip().lower()
         if cls_clean in valid_classes:

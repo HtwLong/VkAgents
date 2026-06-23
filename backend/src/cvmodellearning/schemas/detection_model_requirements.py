@@ -1,6 +1,7 @@
 from typing import List, Optional, Literal
 from pydantic import BaseModel, Field, ConfigDict, model_validator
 from typing_extensions import Self
+from cvmodellearning.models.registry import DetectionModelFamily, DetectionModelId, family_by_model_id
 
 # --- Unified Helper Models for Strict JSON Schema ---
 class DatasetSourceCount(BaseModel):
@@ -18,22 +19,13 @@ class ObjectDetectionModelSpecModel(BaseModel):
     """
     Candidate model specification for object detection.
     """
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="forbid", use_enum_values=True)
 
-    model_architecture: Optional[
-        Literal[
-            "yolov8", "yolov10", "yolov11", "yolov12",
-            "retinanet_r50_fpn_1x_coco", "faster-rcnn_r50_fpn_1x_coco",
-            "mask-rcnn_r50_fpn_1x_coco", "ssd300_coco",
-            "rt-detr-r50_8xb2-100e_coco"
-        ]
-    ] = Field(
+    model_architecture: Optional[DetectionModelId] = Field(
         None,
         description="Backbone architecture identifier; optional to allow other values downstream."
     )
-    architecture_family: Optional[
-        Literal["yolo", "retinanet", "faster-rcnn", "mask-rcnn", "ssd", "detr"]
-    ] = Field(
+    architecture_family: Optional[DetectionModelFamily] = Field(
         None,
         description="High-level architecture family; if provided with model_architecture, must be consistent."
     )
@@ -64,19 +56,13 @@ class ObjectDetectionModelSpecModel(BaseModel):
     @model_validator(mode="after")
     def _check_family_consistency(self) -> Self:
         if self.model_architecture and self.architecture_family:
-            family_map = {
-                "yolov8": "yolo", "yolov10": "yolo", "yolov11": "yolo", "yolov12": "yolo",
-                "retinanet_r50_fpn_1x_coco": "retinanet",
-                "faster-rcnn_r50_fpn_1x_coco": "faster-rcnn",
-                "mask-rcnn_r50_fpn_1x_coco": "mask-rcnn",
-                "ssd300_coco": "ssd",
-                "rt-detr-r50_8xb2-100e_coco": "detr",
-            }
-            inferred = family_map.get(self.model_architecture)
-            if inferred and inferred != self.architecture_family:
+            architecture = getattr(self.model_architecture, "value", self.model_architecture)
+            family = getattr(self.architecture_family, "value", self.architecture_family)
+            inferred = family_by_model_id("detection").get(architecture)
+            if inferred and inferred != family:
                 raise ValueError(
-                    f"architecture_family='{self.architecture_family}' "
-                    f"does not match model_architecture='{self.model_architecture}'"
+                    f"architecture_family='{family}' "
+                    f"does not match model_architecture='{architecture}'"
                 )
              
         return self

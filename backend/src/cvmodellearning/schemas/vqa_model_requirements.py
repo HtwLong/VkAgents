@@ -1,6 +1,7 @@
 from typing import List, Optional, Literal
 from pydantic import BaseModel, Field, ConfigDict, model_validator
 from typing_extensions import Self
+from cvmodellearning.models.registry import VQAModelId
 
 # --- Helper Models for Strict JSON Schema ---
 class DatasetSourceCount(BaseModel):
@@ -17,10 +18,10 @@ class VQAModelSpecModel(BaseModel):
     """
     Candidate model specification for visual question answering using VLMs.
     """
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="forbid", use_enum_values=True)
 
     # Architecture fields
-    model_architecture: Literal["Qwen3-VL-2B-Instruct"] = Field(
+    model_architecture: VQAModelId = Field(
         ..., description="Backbone architecture identifier for VQA."
     )
     architecture_family: Literal["qwen-vl"] = Field(

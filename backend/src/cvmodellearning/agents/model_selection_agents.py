@@ -3,7 +3,8 @@ from typing import List
 from agents import Agent
 
 # Import ONLY the specific sub-schemas
-from cvmodellearning.schemas.interpretation_schema import ModelSpecModel
+from cvmodellearning.models.registry import format_available_models
+from cvmodellearning.schemas.classification_model_requirements import ModelSpecModel
 from cvmodellearning.schemas.detection_model_requirements import ObjectDetectionModelSpecModel
 from cvmodellearning.schemas.vqa_model_requirements import VQAModelSpecModel
 
@@ -31,6 +32,10 @@ You will receive a JSON object with the following fields. Some may be null:
 - `available_data`: Datasets found containing these classes.
 """
 
+CLASSIFICATION_MODEL_INSTRUCTIONS = format_available_models("classification")
+DETECTION_MODEL_INSTRUCTIONS = format_available_models("detection")
+VQA_MODEL_INSTRUCTIONS = format_available_models("visual question answering")
+
 # --- 3. Agents ---
 classification_model_selector_agent = Agent(
     name="Model Selector",
@@ -38,7 +43,7 @@ classification_model_selector_agent = Agent(
         f"{PIPELINE_STATE_BLUEPRINT}\n"
         "Review the 'task', 'application_domain', and 'use_case_description'. "
         "Choose the best architecture. "
-        "Available: resnet50, vgg16, mobilenet_v2, mobilenet_v3_large, efficientnet_b0, densenet121, convnext_tiny, vit_b_16, swin_v2_t, swin_v2_s, swin_v2_b."
+        f"Available: {CLASSIFICATION_MODEL_INSTRUCTIONS}."
     ),
     output_type=ClassificationModelPatch,
     model="gpt-5-nano"
@@ -50,7 +55,7 @@ detection_model_selector_agent = Agent(
         f"{PIPELINE_STATE_BLUEPRINT}\n"
         "Observe the extracted 'classes' and 'application_domain'. "
         "Select a model architecture. "
-        "Available: yolov8, yolov10, yolo11, yolo12, fasterrcnn, maskrcnn, ssd, retinanet, rt_detr."
+        f"Available: {DETECTION_MODEL_INSTRUCTIONS}."
     ),
     output_type=DetectionModelPatch,
     model="gpt-5-nano"
@@ -60,7 +65,7 @@ vqq_model_selector_agent = Agent(
     name="VQA Model Selector",
     instructions=(
         f"{PIPELINE_STATE_BLUEPRINT}\n"
-        "Review the state. For Visual Question Answering, the only architecture is 'Qwen3-VL-2B-Instruct'. "
+        f"Review the state. For Visual Question Answering, select from: {VQA_MODEL_INSTRUCTIONS}. "
         "Fill the rationale based on the user's specific 'questions_list' if present in the state."
     ),
     output_type=VQAModelPatch,

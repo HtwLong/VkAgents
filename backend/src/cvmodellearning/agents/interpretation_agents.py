@@ -2,7 +2,12 @@ from typing import List, Tuple, Optional, Literal
 from pydantic import BaseModel, Field
 from agents import Agent, Runner
 from cvmodellearning.schemas.decision_schema import Decision
-from cvmodellearning.schemas.interpretation_schema import SynonymMatch
+from cvmodellearning.schemas.interpretation_schema import (
+    HardwareSpecModel,
+    ModelSpecModel,
+    PerformanceSpecModel,
+    SynonymMatch,
+)
 
 # --- 1. Define Targeted 'Patch' Schema ---
 class TaskExtractionPatch(BaseModel):
@@ -11,6 +16,18 @@ class TaskExtractionPatch(BaseModel):
     use_case_description: Optional[str] = Field(None, description="Overall goal.")
     questions_list: Optional[List[str]] = Field(None, description="Specific VQA questions if provided.")
     classes: List[str] = Field(default_factory=list, description="Target objects to detect/classify.")
+    performance_requirements: Optional[PerformanceSpecModel] = Field(
+        None,
+        description="Performance targets or constraints explicitly mentioned by the user.",
+    )
+    available_hardware: Optional[HardwareSpecModel] = Field(
+        None,
+        description="Available compute hardware explicitly mentioned by the user.",
+    )
+    model_requirements: Optional[List[ModelSpecModel]] = Field(
+        None,
+        description="User-stated model architecture, framework, backbone, or model preference requirements.",
+    )
 
 # --- 2. Agents ---
 readiness_check_agent = Agent(
@@ -32,7 +49,8 @@ task_interpretation_agent = Agent(
         "Extract ONLY the requested information from the user prompt. "
         "Leave fields empty if the information does not exist. "
         "For the classes mentioned, turn them into singular form. "
-        "If classes are not explicitly mentioned, try to infer them."
+        "If classes are not explicitly mentioned, try to infer them. "
+        "Also extract explicit performance requirements, available hardware, and model requirements if provided."
     ),
     output_type=TaskExtractionPatch, 
     model="gpt-5-nano"

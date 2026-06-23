@@ -1,6 +1,7 @@
 import math
 from typing import List, Literal, Optional, Self
 from pydantic import BaseModel, Field, ConfigDict, model_validator
+from cvmodellearning.models.registry import DetectionHpoModelId
 
 # --- Unified Helper Models for Strict JSON Schema ---
 class DatasetSourceCount(BaseModel):
@@ -17,9 +18,9 @@ class ClassDataSelection(BaseModel):
 class DetectionConfigModel(BaseModel):
     """
     Structured schema for Object Detection training configuration.
-    Uses Literal enums for key selector fields.
+    Uses registry-backed enums for key selector fields.
     """
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="forbid", use_enum_values=True)
 
     # --- Data/Task ---
     task_type: Literal["detection", "segmentation"] = Field(
@@ -77,13 +78,7 @@ class DetectionConfigModel(BaseModel):
     )
 
     # --- Model Selection (Detection Models) ---
-    model_name: Literal[
-        "yolov8_n", "yolov8_s", "yolov8_m","yolov8_l", "yolov8_x",
-        "yolov10_n", "yolov10_s", "yolov10_m","yolov10_l", "yolov10_x", 
-        "yolov11_n", "yolov11_s", "yolov11_m","yolov11_l", "yolov11_x",
-        "yolov12_n", "yolov12_s", "yolov12_m","yolov12_l", "yolov12_x", 
-        "retinanet_r50", "faster_rcnn_r50", "mask_rcnn_r50", "ssd300", "rt_detr_r50"
-    ] = Field(
+    model_name: DetectionHpoModelId = Field(
         ...,
         description="Select the object detection architecture identifier."
     )
@@ -145,15 +140,16 @@ class DetectionConfigModel(BaseModel):
 
     @model_validator(mode="after")
     def _validate_combinations(self) -> Self:
+        model_name = getattr(self.model_name, "value", self.model_name)
         total_ratio = self.train_data_ratio + self.val_data_ratio + self.test_data_ratio
         if not math.isclose(total_ratio, 1.0, rel_tol=1e-5):
             raise ValueError(f"train_data_ratio, val_data_ratio, and test_data_ratio must sum to 1.0. Current sum: {total_ratio}")
 
         if self.task_type == "segmentation":
             segmentation_models = ["mask_rcnn_r50", "yolov8_l", "yolov10_s"]
-            if self.model_name not in segmentation_models:
+            if model_name not in segmentation_models:
                 raise ValueError(
-                    f"Task is 'segmentation', but selected model '{self.model_name}' does not support segmentation."
+                    f"Task is 'segmentation', but selected model '{model_name}' does not support segmentation."
                 )
             if self.loss_mask is None:
                 raise ValueError("Task is 'segmentation', but 'loss_mask' is not defined.")
