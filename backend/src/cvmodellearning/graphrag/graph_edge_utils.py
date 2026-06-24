@@ -11,7 +11,9 @@ Design used by the cleaned CSV set:
 Important schema conventions:
 - models.csv uses singular `model_family`, because each model belongs to one family.
 - training_recipes.csv uses plural `model_families`, because one recipe can apply to multiple families.
-- model_benchmark_results.csv uses `evidence_ids`; older `source_id` is still supported as a fallback.
+- model_benchmark_results.csv can optionally use `training_recipe_id` when a benchmark is tied
+  to a specific recipe/config; it also uses `evidence_ids`, with older `source_id` supported
+  as a fallback.
 """
 
 from __future__ import annotations
@@ -212,6 +214,7 @@ def add_model_benchmark_result_edges(G: nx.MultiDiGraph, dfs: DataFrames) -> Non
 
     Generated edges:
     - Model --has_benchmark_result--> ModelBenchmarkResult, using model_id
+    - TrainingRecipe --has_reference_benchmark_result--> ModelBenchmarkResult, using training_recipe_id if present
     - ModelBenchmarkResult --measures_metric--> EvaluationMetric, using metric_id
     - ModelBenchmarkResult --measured_on_hardware--> HardwareProfile, using hardware_profile_id if present
     - ModelBenchmarkResult --evaluated_for_task--> Task, using task_id if Task nodes exist
@@ -223,6 +226,7 @@ def add_model_benchmark_result_edges(G: nx.MultiDiGraph, dfs: DataFrames) -> Non
     for _, result in benchmarks.iterrows():
         result_id = _clean(result.get("id"))
         model_id = _clean(result.get("model_id"))
+        training_recipe_id = _clean(result.get("training_recipe_id"))
         metric_id = _clean(result.get("metric_id"))
         hardware_profile_id = _clean(result.get("hardware_profile_id"))
         task_id = _clean(result.get("task_id"))
@@ -238,6 +242,16 @@ def add_model_benchmark_result_edges(G: nx.MultiDiGraph, dfs: DataFrames) -> Non
             confidence=confidence,
             notes="Generated from model_benchmark_results.model_id.",
         )
+        if training_recipe_id:
+            _add_edge_if_nodes_exist(
+                G,
+                training_recipe_id,
+                result_id,
+                "has_reference_benchmark_result",
+                evidence_id=evidence_id,
+                confidence=confidence,
+                notes="Generated from model_benchmark_results.training_recipe_id.",
+            )
         _add_edge_if_nodes_exist(
             G,
             result_id,
