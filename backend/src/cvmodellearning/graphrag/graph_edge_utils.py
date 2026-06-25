@@ -20,6 +20,8 @@ Important schema conventions:
 - model_benchmark_results.csv can optionally use `training_recipe_id` when a benchmark is tied
   to a specific recipe/config; it also uses `evidence_ids`, with older `source_id` supported
   as a fallback.
+- model_inference_memory_estimates.csv stores analytical inference-memory estimate nodes that
+  point back to models.csv through `model_id`.
 """
 
 from __future__ import annotations
@@ -386,6 +388,33 @@ def add_model_benchmark_result_edges(G: nx.MultiDiGraph, dfs: DataFrames) -> Non
             )
 
 
+def add_model_inference_memory_estimate_edges(G: nx.MultiDiGraph, dfs: DataFrames) -> None:
+    """
+    Generate edges from model_inference_memory_estimates.csv.
+
+    Generated edges:
+    - Model --has_inference_memory_estimate--> ModelInferenceMemoryEstimate, using model_id
+    """
+    estimates = dfs.get("model_inference_memory_estimates", pd.DataFrame())
+    if estimates.empty or not _has_columns(estimates, ["id", "model_id"]):
+        return
+
+    for _, estimate in estimates.iterrows():
+        estimate_id = _clean(estimate.get("id"))
+        model_id = _clean(estimate.get("model_id"))
+        evidence_id = _first_evidence_id(estimate)
+        confidence = _clean(estimate.get("confidence"))
+        _add_edge_if_nodes_exist(
+            G,
+            model_id,
+            estimate_id,
+            "has_inference_memory_estimate",
+            evidence_id=evidence_id,
+            confidence=confidence,
+            notes="Generated from model_inference_memory_estimates.model_id.",
+        )
+
+
 def add_dataset_edges(G: nx.MultiDiGraph, dfs: DataFrames) -> None:
     """
     Generate edges from datasets.csv.
@@ -547,6 +576,7 @@ def add_generated_edges(G: nx.MultiDiGraph, dfs: DataFrames) -> nx.MultiDiGraph:
     add_training_recipe_detail_edges(G, dfs)
     add_training_recipe_parameter_edges(G, dfs)
     add_model_benchmark_result_edges(G, dfs)
+    add_model_inference_memory_estimate_edges(G, dfs)
     add_evaluation_metric_edges(G, dfs)
     add_adjustment_rule_edges(G, dfs)
     add_dataset_requirement_edges(G, dfs)

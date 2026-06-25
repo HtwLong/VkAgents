@@ -24,6 +24,7 @@ kg_data/
     evidence_sources.csv
     cv_problems.csv
     model_benchmark_results.csv
+    model_inference_memory_estimates.csv
   edges/
     edges.csv
 
@@ -69,6 +70,7 @@ ENTITY_FILE_STEMS = [
     "evidence_sources",
     "cv_problems",
     "model_benchmark_results",
+    "model_inference_memory_estimates",
 ]
 
 
