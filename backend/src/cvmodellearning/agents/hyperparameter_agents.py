@@ -16,7 +16,7 @@ PIPELINE_STATE_BLUEPRINT = """
 You are receiving a full PipelineState JSON containing:
 - `task`, `application_domain`, `classes`
 - `performance_requirements`: Metrics, targets, and normalized optimization priority such as LatencyFirst, AccuracyFirst, ThroughputFirst, or Balanced.
-- `available_hardware`: Compute constraints.
+- `available_hardware`: Compute constraints, including `hardware_category` (ConsumerCPU, ConsumerGPU, EdgeDevice, DataCenterGPU, or fallback ConsumerCPU | EdgeDevice) and `vram_gb`.
 - `selected_data`: The image counts chosen for training.
 - `selected_model_info`: The architecture chosen in previous steps.
 - `augmentation`, `preprocessing`: The data transformation strategies.

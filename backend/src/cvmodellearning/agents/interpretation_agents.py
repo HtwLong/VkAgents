@@ -25,7 +25,10 @@ class TaskExtractionPatch(BaseModel):
     )
     available_hardware: Optional[HardwareSpecModel] = Field(
         None,
-        description="Available compute hardware explicitly mentioned by the user.",
+        description=(
+            "Available compute hardware explicitly mentioned by the user, including "
+            "hardware_category and vram_gb when stated or inferable."
+        ),
     )
     model_requirements: Optional[List[ModelSpecModel]] = Field(
         None,
@@ -54,6 +57,10 @@ task_interpretation_agent = Agent(
         "For the classes mentioned, turn them into singular form. "
         "If classes are not explicitly mentioned, try to infer them. "
         "Also extract explicit performance requirements, available hardware, and model requirements if provided. "
+        "For available_hardware.hardware_category, use exactly one of ConsumerCPU, ConsumerGPU, EdgeDevice, "
+        "or DataCenterGPU when the prompt states or implies it. Extract GPU memory as vram_gb. "
+        "If there is no data regarding hardware_category or VRAM, set available_hardware.hardware_category "
+        "to ConsumerCPU | EdgeDevice. "
         "Infer performance_requirements.priority when the prompt signals an optimization preference: "
         "use LatencyFirst for real-time, low-latency, edge, mobile, interactive, or fast-response requirements; "
         "use ThroughputFirst for high-FPS, high-volume, batch, or many-stream processing; "

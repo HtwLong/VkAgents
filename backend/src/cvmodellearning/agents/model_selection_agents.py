@@ -30,8 +30,9 @@ You will receive a JSON object with the following fields. Some may be null:
 - `user_query`: The original prompt.
 - `classes`: Target objects/classes.
 - `performance_requirements`: Metrics, targets, and normalized optimization priority such as LatencyFirst, AccuracyFirst, ThroughputFirst, or Balanced.
-- `available_hardware`: Compute constraints that can affect model choice.
+- `available_hardware`: Compute constraints that can affect model choice, including `hardware_category` (ConsumerCPU, ConsumerGPU, EdgeDevice, DataCenterGPU, or fallback ConsumerCPU | EdgeDevice) and `vram_gb`.
 - `available_data`: Datasets found containing these classes.
+- `model_selection_graph_context`: GraphRAG shortlist from the NetworkX knowledge graph. It contains up to 5 ranked candidate models with model metadata, inference-memory estimates, benchmark results, task evaluation metrics, hardware profiles, and evidence sources. Use this as grounded evidence for model choice and rationale.
 """
 
 CLASSIFICATION_MODEL_INSTRUCTIONS = format_available_models("classification")
@@ -44,6 +45,7 @@ classification_model_selector_agent = Agent(
     instructions=(
         f"{PIPELINE_STATE_BLUEPRINT}\n"
         "Review the 'task', 'application_domain', and 'use_case_description'. "
+        "First inspect `model_selection_graph_context` when present and prefer its ranked candidates unless user constraints override them. "
         "Choose the best architecture. Respect 'performance_requirements.priority' when present: "
         "prefer efficient models for LatencyFirst or ThroughputFirst, stronger models for AccuracyFirst, "
         "and practical trade-offs for Balanced. "
@@ -58,6 +60,7 @@ detection_model_selector_agent = Agent(
     instructions=(
         f"{PIPELINE_STATE_BLUEPRINT}\n"
         "Observe the extracted 'classes' and 'application_domain'. "
+        "First inspect `model_selection_graph_context` when present and prefer its ranked candidates unless user constraints override them. "
         "Select a model architecture. Respect 'performance_requirements.priority' when present: "
         "prefer efficient detectors for LatencyFirst or ThroughputFirst, stronger detectors for AccuracyFirst, "
         "and practical trade-offs for Balanced. "
@@ -72,6 +75,7 @@ vqq_model_selector_agent = Agent(
     instructions=(
         f"{PIPELINE_STATE_BLUEPRINT}\n"
         f"Review the state. For Visual Question Answering, select from: {VQA_MODEL_INSTRUCTIONS}. "
+        "First inspect `model_selection_graph_context` when present and prefer its ranked candidates unless user constraints override them. "
         "Respect 'performance_requirements.priority' when present when choosing model size and LoRA settings. "
         "Fill the rationale based on the user's specific 'questions_list' if present in the state."
     ),
