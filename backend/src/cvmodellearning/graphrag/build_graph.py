@@ -9,8 +9,13 @@ kg_data/
   nodes/
     tasks.csv
     domains.csv
+    datasets.csv
     models.csv
     training_recipes.csv
+    training_recipe_parameters.csv
+    training_recipe_object_detection_details.csv
+    training_recipe_image_classification_details.csv
+    training_recipe_vqa_details.csv
     adjustment_rules.csv
     dataset_requirements.csv
     evaluation_metrics.csv
@@ -48,9 +53,14 @@ from cvmodellearning.graphrag.visualize_utils import visualize_interactive_graph
 
 ENTITY_FILE_STEMS = [
     "tasks",
+    "datasets",
     "domains",
     "models",
     "training_recipes",
+    "training_recipe_parameters",
+    "training_recipe_object_detection_details",
+    "training_recipe_image_classification_details",
+    "training_recipe_vqa_details",
     "adjustment_rules",
     "dataset_requirements",
     "evaluation_metrics",

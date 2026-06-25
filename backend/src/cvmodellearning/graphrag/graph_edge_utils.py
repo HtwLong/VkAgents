@@ -11,6 +11,12 @@ Design used by the cleaned CSV set:
 Important schema conventions:
 - models.csv uses singular `model_family`, because each model belongs to one family.
 - training_recipes.csv uses plural `model_families`, because one recipe can apply to multiple families.
+- training_recipe_*_details.csv files store task-specific recipe extension nodes that point
+  back to training_recipes.csv through `recipe_id`.
+- training_recipe_parameters.csv stores structured parameter facts that point back to
+  training_recipes.csv through `recipe_id`.
+- datasets.csv stores benchmark dataset nodes that model_benchmark_results.csv can point to
+  by matching the result's human-readable `dataset` value.
 - model_benchmark_results.csv can optionally use `training_recipe_id` when a benchmark is tied
   to a specific recipe/config; it also uses `evidence_ids`, with older `source_id` supported
   as a fallback.
@@ -78,6 +84,18 @@ def _recipe_model_families(recipe: pd.Series) -> list[str]:
             return families
     family = _clean(recipe.get("model_family", ""))
     return [family] if family else []
+
+
+def _dataset_key(value: object) -> str:
+    """Return a normalized key for matching benchmark dataset labels to Dataset nodes."""
+    text = _clean(value).lower()
+    replacements = {
+        "+": " plus ",
+        "&": " and ",
+    }
+    for old, new in replacements.items():
+        text = text.replace(old, new)
+    return " ".join(text.replace("-", " ").split())
 
 
 def _add_edge_if_nodes_exist(
@@ -208,6 +226,65 @@ def add_training_recipe_edges(G: nx.MultiDiGraph, dfs: DataFrames) -> None:
                 )
 
 
+def add_training_recipe_detail_edges(G: nx.MultiDiGraph, dfs: DataFrames) -> None:
+    """
+    Generate edges from task-specific training recipe detail CSVs.
+
+    Generated edges:
+    - TrainingRecipe --has_recipe_details--> RecipeDetails, using recipe_id
+    """
+    detail_stems = [
+        "training_recipe_object_detection_details",
+        "training_recipe_image_classification_details",
+        "training_recipe_vqa_details",
+    ]
+
+    for stem in detail_stems:
+        details = dfs.get(stem, pd.DataFrame())
+        if details.empty or not _has_columns(details, ["id", "recipe_id"]):
+            continue
+
+        for _, detail in details.iterrows():
+            detail_id = _clean(detail.get("id"))
+            recipe_id = _clean(detail.get("recipe_id"))
+            evidence_id = _first_evidence_id(detail)
+            confidence = _clean(detail.get("confidence"))
+            _add_edge_if_nodes_exist(
+                G,
+                recipe_id,
+                detail_id,
+                "has_recipe_details",
+                evidence_id=evidence_id,
+                confidence=confidence,
+                notes=f"Generated from {stem}.recipe_id.",
+            )
+
+
+def add_training_recipe_parameter_edges(G: nx.MultiDiGraph, dfs: DataFrames) -> None:
+    """
+    Generate edges from training_recipe_parameters.csv.
+
+    Generated edges:
+    - TrainingRecipe --has_parameter--> TrainingRecipeParameter, using recipe_id
+    """
+    parameters = dfs.get("training_recipe_parameters", pd.DataFrame())
+    if parameters.empty or not _has_columns(parameters, ["id", "recipe_id"]):
+        return
+
+    for _, parameter in parameters.iterrows():
+        parameter_id = _clean(parameter.get("id"))
+        recipe_id = _clean(parameter.get("recipe_id"))
+        evidence_id = _first_evidence_id(parameter)
+        _add_edge_if_nodes_exist(
+            G,
+            recipe_id,
+            parameter_id,
+            "has_parameter",
+            evidence_id=evidence_id,
+            notes="Generated from training_recipe_parameters.recipe_id.",
+        )
+
+
 def add_model_benchmark_result_edges(G: nx.MultiDiGraph, dfs: DataFrames) -> None:
     """
     Generate edges from model_benchmark_results.csv.
@@ -220,8 +297,24 @@ def add_model_benchmark_result_edges(G: nx.MultiDiGraph, dfs: DataFrames) -> Non
     - ModelBenchmarkResult --evaluated_for_task--> Task, using task_id if Task nodes exist
     """
     benchmarks = dfs.get("model_benchmark_results", pd.DataFrame())
+    datasets = dfs.get("datasets", pd.DataFrame())
     if benchmarks.empty or "id" not in benchmarks.columns:
         return
+
+    dataset_ids_by_key = {}
+    if not datasets.empty and _has_columns(datasets, ["id", "dataset_name"]):
+        for _, dataset in datasets.iterrows():
+            dataset_id = _clean(dataset.get("id"))
+            dataset_name = _clean(dataset.get("dataset_name"))
+            if dataset_id:
+                dataset_ids_by_key[_dataset_key(dataset_id)] = dataset_id
+            if dataset_name:
+                dataset_ids_by_key[_dataset_key(dataset_name)] = dataset_id
+        if "aliases" in datasets.columns:
+            for _, dataset in datasets.iterrows():
+                dataset_id = _clean(dataset.get("id"))
+                for alias in _split_pipe(dataset.get("aliases")):
+                    dataset_ids_by_key[_dataset_key(alias)] = dataset_id
 
     for _, result in benchmarks.iterrows():
         result_id = _clean(result.get("id"))
@@ -230,6 +323,7 @@ def add_model_benchmark_result_edges(G: nx.MultiDiGraph, dfs: DataFrames) -> Non
         metric_id = _clean(result.get("metric_id"))
         hardware_profile_id = _clean(result.get("hardware_profile_id"))
         task_id = _clean(result.get("task_id"))
+        dataset_id = dataset_ids_by_key.get(_dataset_key(result.get("dataset")))
         evidence_id = _first_evidence_id(result)
         confidence = _clean(result.get("confidence"))
 
@@ -280,6 +374,41 @@ def add_model_benchmark_result_edges(G: nx.MultiDiGraph, dfs: DataFrames) -> Non
             confidence=confidence,
             notes="Generated from model_benchmark_results.task_id.",
         )
+        if dataset_id:
+            _add_edge_if_nodes_exist(
+                G,
+                result_id,
+                dataset_id,
+                "evaluated_on_dataset",
+                evidence_id=evidence_id,
+                confidence=confidence,
+                notes="Generated by matching model_benchmark_results.dataset to datasets.dataset_name.",
+            )
+
+
+def add_dataset_edges(G: nx.MultiDiGraph, dfs: DataFrames) -> None:
+    """
+    Generate edges from datasets.csv.
+
+    Generated edges:
+    - Dataset --supports_task--> Task, using task_ids if Task nodes exist
+    """
+    datasets = dfs.get("datasets", pd.DataFrame())
+    if datasets.empty or "id" not in datasets.columns:
+        return
+
+    for _, dataset in datasets.iterrows():
+        dataset_id = _clean(dataset.get("id"))
+        evidence_id = _first_evidence_id(dataset)
+        for task_id in _split_pipe(dataset.get("task_ids")):
+            _add_edge_if_nodes_exist(
+                G,
+                dataset_id,
+                task_id,
+                "supports_task",
+                evidence_id=evidence_id,
+                notes="Generated from datasets.task_ids.",
+            )
 
 
 def add_evaluation_metric_edges(G: nx.MultiDiGraph, dfs: DataFrames) -> None:
@@ -413,7 +542,10 @@ def add_generated_edges(G: nx.MultiDiGraph, dfs: DataFrames) -> nx.MultiDiGraph:
     2. Loading all manual edges from edges.csv.
     """
     add_evidence_edges(G, dfs)
+    add_dataset_edges(G, dfs)
     add_training_recipe_edges(G, dfs)
+    add_training_recipe_detail_edges(G, dfs)
+    add_training_recipe_parameter_edges(G, dfs)
     add_model_benchmark_result_edges(G, dfs)
     add_evaluation_metric_edges(G, dfs)
     add_adjustment_rule_edges(G, dfs)

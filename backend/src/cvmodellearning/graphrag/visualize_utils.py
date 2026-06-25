@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from html import escape
+import json
 import re
 from pathlib import Path
 from textwrap import shorten, wrap
@@ -25,55 +26,44 @@ DEFAULT_NODE_COLOR = "#8CD17D"
 BENCHMARK_SUMMARY_COLOR = "#6C5CE7"
 
 TYPE_COLORS = {
-    "Task": "#4C78A8",
-    "Domain": "#F58518",
+    "Task": "#1F77B4",
+    "Dataset": "#00A6A6",
     "Model": "#54A24B",
     "TrainingRecipe": "#E45756",
+    "TrainingRecipeParameter": "#FF9DA6",
+    "ObjectDetectionRecipeDetails": "#F28E2B",
+    "ImageClassificationRecipeDetails": "#4E79A7",
     "AdjustmentRule": "#B279A2",
-    "DatasetRequirement": "#72B7B2",
     "EvaluationMetric": "#EECA3B",
     "HardwareProfile": "#9D755D",
-    "PerformanceRequirement": "#FF9DA6",
     "EvidenceSource": "#BAB0AC",
-    "CVProblem": "#7F7F7F",
     "ModelBenchmarkResult": "#59A14F",
     "BenchmarkSummary": BENCHMARK_SUMMARY_COLOR,
 }
 
-TYPE_LEVELS = {
-    "Domain": 0,
-    "CVProblem": 0,
-    "Task": 1,
-    "Model": 2,
-    "TrainingRecipe": 3,
-    "BenchmarkSummary": 3,
-    "AdjustmentRule": 4,
-    "DatasetRequirement": 4,
-    "EvaluationMetric": 4,
-    "HardwareProfile": 4,
-    "PerformanceRequirement": 4,
-    "EvidenceSource": 5,
-}
-
 TYPE_SHAPES = {
-    "Task": "dot",
-    "Domain": "diamond",
+    "Task": "diamond",
+    "Dataset": "database",
     "Model": "dot",
     "TrainingRecipe": "box",
+    "TrainingRecipeParameter": "text",
+    "ObjectDetectionRecipeDetails": "box",
+    "ImageClassificationRecipeDetails": "box",
     "AdjustmentRule": "hexagon",
-    "DatasetRequirement": "box",
     "EvaluationMetric": "triangle",
     "HardwareProfile": "database",
-    "PerformanceRequirement": "box",
     "EvidenceSource": "ellipse",
-    "CVProblem": "diamond",
     "BenchmarkSummary": "box",
 }
 
 TYPE_BASE_SIZES = {
     "Task": 28,
+    "Dataset": 22,
     "Model": 30,
     "TrainingRecipe": 24,
+    "TrainingRecipeParameter": 16,
+    "ObjectDetectionRecipeDetails": 20,
+    "ImageClassificationRecipeDetails": 20,
     "BenchmarkSummary": 24,
     "AdjustmentRule": 18,
     "EvaluationMetric": 18,
@@ -393,6 +383,186 @@ def _inject_filter_controls(output_path: Path) -> None:
     output_path.write_text(html, encoding="utf-8")
 
 
+def _node_color(attrs: dict[str, object]) -> str:
+    return TYPE_COLORS.get(_node_type(attrs), DEFAULT_NODE_COLOR)
+
+
+def _legend_symbol_svg(shape: str, color: str) -> str:
+    """Return an inline symbol that mirrors the pyvis shape used for a node."""
+    escaped_color = escape(color)
+    common_attrs = f'fill="{escaped_color}" stroke="#2f3437" stroke-width="1.8"'
+
+    if shape == "box":
+        symbol = f'<rect x="5" y="7" width="22" height="18" rx="2" {common_attrs} />'
+    elif shape == "ellipse":
+        symbol = f'<ellipse cx="16" cy="16" rx="12" ry="9" {common_attrs} />'
+    elif shape == "diamond":
+        symbol = f'<polygon points="16,4 28,16 16,28 4,16" {common_attrs} />'
+    elif shape == "triangle":
+        symbol = f'<polygon points="16,4 29,27 3,27" {common_attrs} />'
+    elif shape == "hexagon":
+        symbol = f'<polygon points="10,4 22,4 30,16 22,28 10,28 2,16" {common_attrs} />'
+    elif shape == "database":
+        symbol = (
+            f'<path d="M5 9c0-3 5-5 11-5s11 2 11 5v14c0 3-5 5-11 5S5 26 5 23Z" {common_attrs} />'
+            '<path d="M5 9c0 3 5 5 11 5s11-2 11-5" fill="none" stroke="#2f3437" stroke-width="1.8" />'
+        )
+    else:
+        symbol = f'<circle cx="16" cy="16" r="10" {common_attrs} />'
+
+    return (
+        '<svg class="graph-legend-symbol" viewBox="0 0 32 32" aria-hidden="true" '
+        'focusable="false">'
+        f"{symbol}"
+        "</svg>"
+    )
+
+
+def _inject_shape_legend(output_path: Path, node_types: list[str]) -> None:
+    """Add a bottom-left legend using the actual auto-generated pyvis colors."""
+    html = output_path.read_text(encoding="utf-8")
+    legend_data = [
+        {"type": node_type, "shape": _node_shape({"type": node_type})}
+        for node_type in sorted(set(node_types))
+    ]
+
+    legend = f"""
+<style>
+  #graph-shape-legend {{
+    position: fixed;
+    left: 18px;
+    bottom: 18px;
+    z-index: 9998;
+    width: min(300px, calc(100vw - 36px));
+    max-height: min(42vh, 360px);
+    overflow: auto;
+    padding: 12px 14px;
+    background: rgba(255, 255, 255, 0.96);
+    border: 1px solid #d7dce2;
+    border-radius: 8px;
+    box-shadow: 0 12px 32px rgba(15, 23, 42, 0.18);
+    color: #1f2933;
+    font-family: Arial, sans-serif;
+    font-size: 13px;
+    line-height: 1.3;
+  }}
+  #graph-shape-legend h3 {{
+    margin: 0 0 10px;
+    font-size: 15px;
+  }}
+  .graph-legend-grid {{
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 7px;
+  }}
+  .graph-legend-item {{
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    min-width: 0;
+  }}
+  .graph-legend-symbol {{
+    flex: 0 0 auto;
+    width: 14px;
+    height: 14px;
+    overflow: visible;
+  }}
+</style>
+<div id="graph-shape-legend">
+  <h3>Entity legend</h3>
+  <div class="graph-legend-grid" id="graph-legend-grid"></div>
+</div>
+<script>
+  (function () {{
+    var legendData = {json.dumps(legend_data)};
+
+    function colorFromNode(nodeId) {{
+      var renderedNode = network && network.body && network.body.nodes
+        ? network.body.nodes[nodeId]
+        : null;
+      var color = renderedNode && renderedNode.options
+        ? renderedNode.options.color
+        : null;
+
+      if (typeof color === "string") {{
+        return color;
+      }}
+      if (color && color.background) {{
+        return color.background;
+      }}
+      if (color && color.color) {{
+        return color.color;
+      }}
+      if (color && color.highlight && color.highlight.background) {{
+        return color.highlight.background;
+      }}
+      return "{DEFAULT_NODE_COLOR}";
+    }}
+
+    function typeColor(nodeType) {{
+      var matchingNodes = nodes.get({{
+        filter: function (node) {{
+          return node.group === nodeType;
+        }}
+      }});
+      if (!matchingNodes.length) {{
+        return "{DEFAULT_NODE_COLOR}";
+      }}
+      return colorFromNode(matchingNodes[0].id);
+    }}
+
+    function symbolSvg(shape, color) {{
+      var attrs = 'fill="' + color + '" stroke="#2f3437" stroke-width="1.8"';
+      var symbol;
+      if (shape === "box") {{
+        symbol = '<rect x="5" y="7" width="22" height="18" rx="2" ' + attrs + ' />';
+      }} else if (shape === "ellipse") {{
+        symbol = '<ellipse cx="16" cy="16" rx="12" ry="9" ' + attrs + ' />';
+      }} else if (shape === "diamond") {{
+        symbol = '<polygon points="16,4 28,16 16,28 4,16" ' + attrs + ' />';
+      }} else if (shape === "triangle") {{
+        symbol = '<polygon points="16,4 29,27 3,27" ' + attrs + ' />';
+      }} else if (shape === "hexagon") {{
+        symbol = '<polygon points="10,4 22,4 30,16 22,28 10,28 2,16" ' + attrs + ' />';
+      }} else if (shape === "database") {{
+        symbol = '<path d="M5 9c0-3 5-5 11-5s11 2 11 5v14c0 3-5 5-11 5S5 26 5 23Z" ' + attrs + ' />'
+          + '<path d="M5 9c0 3 5 5 11 5s11-2 11-5" fill="none" stroke="#2f3437" stroke-width="1.8" />';
+      }} else {{
+        symbol = '<circle cx="16" cy="16" r="10" ' + attrs + ' />';
+      }}
+      return '<svg class="graph-legend-symbol" viewBox="0 0 32 32" aria-hidden="true" focusable="false">' + symbol + '</svg>';
+    }}
+
+    function attachShapeLegend() {{
+      if (typeof network === "undefined" || typeof nodes === "undefined") {{
+        window.setTimeout(attachShapeLegend, 100);
+        return;
+      }}
+
+      var grid = document.getElementById("graph-legend-grid");
+      if (!grid) {{
+        return;
+      }}
+
+      grid.innerHTML = legendData.map(function (item) {{
+        return '<div class="graph-legend-item">'
+          + symbolSvg(item.shape, typeColor(item.type))
+          + '<span>' + item.type + '</span>'
+          + '</div>';
+      }}).join("");
+    }}
+
+    attachShapeLegend();
+  }})();
+</script>
+"""
+    if "</body>" in html:
+        html = html.replace("</body>", f"{legend}\n</body>")
+    else:
+        html = f"{html}\n{legend}"
+    output_path.write_text(html, encoding="utf-8")
+
+
 def _dedupe_visible_title(output_path: Path, title: str) -> None:
     """Remove duplicate pyvis heading blocks for the same visible title."""
     html = output_path.read_text(encoding="utf-8")
@@ -477,6 +647,7 @@ def _node_label(node_id: object, attrs: dict[str, object]) -> str:
         attrs.get("name")
         or attrs.get("model_name")
         or attrs.get("recipe_name")
+        or attrs.get("detail_name")
         or attrs.get("metric_name")
         or attrs.get("display_name")
         or node_id
@@ -487,10 +658,6 @@ def _node_label(node_id: object, attrs: dict[str, object]) -> str:
 
 def _node_type(attrs: dict[str, object]) -> str:
     return str(attrs.get("type", "Unknown")).strip() or "Unknown"
-
-
-def _node_level(attrs: dict[str, object]) -> int:
-    return TYPE_LEVELS.get(_node_type(attrs), 6)
 
 
 def _node_shape(attrs: dict[str, object]) -> str:
@@ -510,33 +677,11 @@ def _node_mass(node_id: object, attrs: dict[str, object], G: nx.MultiDiGraph) ->
     return base_mass + min(4.0, G.degree(node_id) / 8)
 
 
-def _stable_node_positions(G: nx.MultiDiGraph, node_ids: set[object]) -> dict[object, tuple[int, int]]:
-    """Place nodes in deterministic type-based columns for fast, stable HTML loading."""
-    nodes_by_level: dict[int, list[object]] = defaultdict(list)
-    for node_id in node_ids:
-        nodes_by_level[_node_level(G.nodes[node_id])].append(node_id)
-
-    positions = {}
-    x_spacing = 380
-    y_spacing = 105
-    for level, level_node_ids in nodes_by_level.items():
-        sorted_node_ids = sorted(
-            level_node_ids,
-            key=lambda node_id: (
-                _node_type(G.nodes[node_id]),
-                -G.degree(node_id),
-                str(node_id),
-            ),
-        )
-        offset = (len(sorted_node_ids) - 1) * y_spacing / 2
-        for index, node_id in enumerate(sorted_node_ids):
-            positions[node_id] = (level * x_spacing, int(index * y_spacing - offset))
-    return positions
-
-
 def _edge_width(relation: str) -> float:
     if relation in {"has_training_recipe", "has_reference_benchmark_result", "has_benchmark_summary"}:
         return 2.4
+    if relation == "has_recipe_details":
+        return 2.0
     if relation in {"applies_to_model", "modifies_recipe"}:
         return 1.9
     if relation == "supported_by_evidence":
@@ -549,6 +694,8 @@ def _edge_color(relation: str) -> str:
         return "#6C5CE7"
     if relation == "has_training_recipe":
         return "#E45756"
+    if relation == "has_recipe_details":
+        return "#4E79A7"
     if relation == "has_benchmark_summary":
         return BENCHMARK_SUMMARY_COLOR
     if relation == "supported_by_evidence":
@@ -558,7 +705,7 @@ def _edge_color(relation: str) -> str:
 
 def _edge_smooth_type(relation: str) -> str:
     if relation == "supported_by_evidence":
-        return "cubicBezier"
+        return "continuous"
     return "dynamic"
 
 
@@ -643,16 +790,21 @@ def visualize_graph(
         font_weight="bold",
         font_color="#1F2933",
     )
-    nx.draw_networkx_edge_labels(
-        G,
-        pos,
-        edge_labels=_edge_labels(G),
-        ax=ax,
-        font_size=7,
-        font_color="#4B5563",
-        bbox={"boxstyle": "round,pad=0.18", "facecolor": "white", "edgecolor": "none", "alpha": 0.78},
-        rotate=False,
-    )
+    try:
+        nx.draw_networkx_edge_labels(
+            G,
+            pos,
+            edge_labels=_edge_labels(G),
+            ax=ax,
+            font_size=7,
+            font_color="#4B5563",
+            bbox={"boxstyle": "round,pad=0.18", "facecolor": "white", "edgecolor": "none", "alpha": 0.78},
+            rotate=False,
+        )
+    except TypeError:
+        # Some NetworkX versions cannot label curved MultiDiGraph edges. The
+        # interactive HTML visualization still contains full edge details.
+        pass
 
     legend_types = sorted(set(node_types))
     legend_items = [
@@ -774,14 +926,29 @@ def visualize_interactive_graph(
             "tooltipDelay": 120
           },
           "physics": {
-            "enabled": false,
-            "stabilization": false
+            "enabled": true,
+            "solver": "forceAtlas2Based",
+            "forceAtlas2Based": {
+              "gravitationalConstant": -180,
+              "centralGravity": 0.012,
+              "springLength": 300,
+              "springConstant": 0.03,
+              "damping": 0.88,
+              "avoidOverlap": 1
+            },
+            "minVelocity": 0.75,
+            "maxVelocity": 40,
+            "stabilization": {
+              "enabled": true,
+              "iterations": 500,
+              "updateInterval": 25,
+              "fit": true
+            }
           },
           "edges": {
             "smooth": {
-              "type": "cubicBezier",
-              "forceDirection": "horizontal",
-              "roundness": 0.35
+              "type": "dynamic",
+              "roundness": 0.25
             },
             "font": {
               "size": 11,
@@ -808,26 +975,22 @@ def visualize_interactive_graph(
         """
     )
 
-    node_positions = _stable_node_positions(G, selected_nodes)
-
     added_nodes = set()
+    added_node_types = set()
     for node_id in sorted(selected_nodes, key=str):
         attrs = G.nodes[node_id]
         node_type = _node_type(attrs)
-        x, y = node_positions.get(node_id, (0, 0))
         net.add_node(
             str(node_id),
             label=_node_label(node_id, attrs),
             title=f"<b>{escape(str(node_id))}</b>{_html_table(dict(attrs))}",
-            color=TYPE_COLORS.get(node_type, DEFAULT_NODE_COLOR),
             group=node_type,
             shape=_node_shape(attrs),
-            x=x,
-            y=y,
             mass=_node_mass(node_id, attrs, G),
             size=_node_size(node_id, attrs, G),
         )
         added_nodes.add(str(node_id))
+        added_node_types.add(node_type)
 
     visible_model_ids = [
         node_id
@@ -842,16 +1005,12 @@ def visualize_interactive_graph(
         if _is_blacklisted(summary_id, summary_attrs, blacklisted_strings):
             continue
 
-        model_x, model_y = node_positions.get(model_id, (_node_level(summary_attrs) * 380, 0))
         net.add_node(
             summary_id,
             label=_benchmark_summary_label(model_id),
             title=f"<b>{escape(summary_id)}</b>{_html_table(summary_attrs)}",
-            color=BENCHMARK_SUMMARY_COLOR,
             group="BenchmarkSummary",
             shape=_node_shape(summary_attrs),
-            x=_node_level(summary_attrs) * 380,
-            y=model_y + 44,
             mass=2.5,
             size=TYPE_BASE_SIZES["BenchmarkSummary"] + 6,
         )
@@ -863,9 +1022,10 @@ def visualize_interactive_graph(
             arrows="to",
             color=_edge_color("has_benchmark_summary"),
             width=_edge_width("has_benchmark_summary"),
-            smooth={"type": _edge_smooth_type("has_benchmark_summary"), "forceDirection": "horizontal", "roundness": 0.35},
+            smooth={"type": _edge_smooth_type("has_benchmark_summary"), "roundness": 0.25},
         )
         added_nodes.add(summary_id)
+        added_node_types.add(_node_type(summary_attrs))
 
     added_edges = set()
     for source, target, attrs in G.edges(data=True):
@@ -887,7 +1047,7 @@ def visualize_interactive_graph(
             arrows="to",
             color=_edge_color(relation),
             width=_edge_width(relation),
-            smooth={"type": _edge_smooth_type(relation), "forceDirection": "horizontal", "roundness": 0.35},
+            smooth={"type": _edge_smooth_type(relation), "roundness": 0.25},
         )
         added_edges.add(edge_key)
 
@@ -898,4 +1058,5 @@ def visualize_interactive_graph(
     _dedupe_visible_title(output_path, title)
     _inject_filter_controls(output_path)
     _inject_click_details_panel(output_path)
+    _inject_shape_legend(output_path, sorted(added_node_types))
     return output_path
