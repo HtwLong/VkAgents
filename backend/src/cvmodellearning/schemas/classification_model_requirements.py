@@ -6,6 +6,7 @@ from cvmodellearning.models.registry import (
     ClassificationModelId,
     family_by_model_id,
 )
+from cvmodellearning.schemas.interpretation_schema import PerformanceSpecModel
 
 # --- Helper Models for Strict JSON Schema ---
 class DatasetSourceCount(BaseModel):
@@ -72,6 +73,10 @@ class ClassificationOutputModel(BaseModel):
     path_labels: Optional[str] = Field(None, description="Local/remote path to labels if applicable.")
     preprocessing: Optional[str] = Field(None, description="Text description of preprocessing steps.")
     augmentation: Optional[str] = Field(None, description="Text description of augmentation strategy.")
+    performance_requirements: Optional[PerformanceSpecModel] = Field(
+        None,
+        description="Performance targets, constraints, and optimization priority.",
+    )
     
     # CHANGED: Replaced Dicts with Strictly Typed Lists
     available_data: Optional[List[ClassDataSelection]] = Field(None, description="List mapping class names to dataset sources and their respective image counts.")

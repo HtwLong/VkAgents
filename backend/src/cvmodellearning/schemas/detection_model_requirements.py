@@ -2,6 +2,7 @@ from typing import List, Optional, Literal
 from pydantic import BaseModel, Field, ConfigDict, model_validator
 from typing_extensions import Self
 from cvmodellearning.models.registry import DetectionModelFamily, DetectionModelId, family_by_model_id
+from cvmodellearning.schemas.interpretation_schema import PerformanceSpecModel
 
 # --- Unified Helper Models for Strict JSON Schema ---
 class DatasetSourceCount(BaseModel):
@@ -94,6 +95,10 @@ class DetectionOutputModel(BaseModel):
     path_labels: Optional[str] = Field(None, description="Local/remote path to labels (annotations) if applicable.")
     preprocessing: Optional[str] = Field(None, description="Text description of preprocessing steps (e.g., resizing, normalization).")
     augmentation: Optional[str] = Field(None, description="Text description of augmentation strategy (e.g., Mosaic, CutMix, H-Flip).")
+    performance_requirements: Optional[PerformanceSpecModel] = Field(
+        None,
+        description="Performance targets, constraints, and optimization priority.",
+    )
     
     # CHANGED: Replaced Dicts with strictly typed Lists
     available_data: Optional[List[ClassDataSelection]] = Field(None, description="List mapping class names to dataset sources and their respective image counts.")

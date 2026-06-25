@@ -1,5 +1,5 @@
 from typing import List, Optional, Literal, Dict, Any, Union
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict, field_validator
 
 # --- Structured Schema definitions to fix OpenAI "Any" errors ---
 class DatasetSourceCount(BaseModel):
@@ -15,7 +15,14 @@ class ClassDataSelection(BaseModel):
 class SynonymMatch(BaseModel):
     original_class: str
     found_match: bool
-    dataset_class: Optional[str] = Field(None, description="The exact string from the allowed list that matches the meaning.")
+    dataset_classes: List[str] = Field(
+        default_factory=list,
+        description=(
+            "Exact strings from the allowed list that match the user class. "
+            "Return one class for synonym/subcategory matches, or up to ten "
+            "non-overlapping valid classes for supercategory matches."
+        ),
+    )
     reason: str
 
 class HardwareSpecModel(BaseModel):
@@ -30,10 +37,49 @@ class HardwareSpecModel(BaseModel):
 class PerformanceSpecModel(BaseModel):
     model_config = ConfigDict(extra="forbid")
     primary_metric: Optional[str] = Field(..., min_length=1, description="The main metric to optimize.")
+    priority: Optional[
+        Literal["LatencyFirst", "AccuracyFirst", "Balanced", "ThroughputFirst"]
+    ] = Field(
+        None,
+        description=(
+            "The inferred optimization priority, normalized to ontology labels. "
+            "Use LatencyFirst for real-time or low-latency needs, AccuracyFirst for best-quality "
+            "or highest-score needs, ThroughputFirst for high FPS/batch processing needs, "
+            "and Balanced when the user asks for a trade-off."
+        ),
+    )
     target_value: Optional[float] = Field(None, ge=0.0, le=1.0, description="Target value for the primary metric.")
     latency_ms: Optional[float] = Field(None, ge=0.0, description="Max allowable latency.")
     throughput_fps: Optional[float] = Field(None, ge=0.0, description="Min required FPS.")
     other_constraints: Optional[List[str]] = Field(None, description="Other performance requirements.")
+
+    @field_validator("priority", mode="before")
+    @classmethod
+    def normalize_priority(cls, value: Optional[str]) -> Optional[str]:
+        if value is None:
+            return None
+
+        normalized = str(value).strip().replace("-", "_").replace(" ", "_").lower()
+        priority_map = {
+            "latency_first": "LatencyFirst",
+            "latencyfirst": "LatencyFirst",
+            "low_latency": "LatencyFirst",
+            "realtime": "LatencyFirst",
+            "real_time": "LatencyFirst",
+            "accuracy_first": "AccuracyFirst",
+            "accuracyfirst": "AccuracyFirst",
+            "quality_first": "AccuracyFirst",
+            "qualityfirst": "AccuracyFirst",
+            "throughput_first": "ThroughputFirst",
+            "throughputfirst": "ThroughputFirst",
+            "high_throughput": "ThroughputFirst",
+            "high_fps": "ThroughputFirst",
+            "balanced": "Balanced",
+            "balance": "Balanced",
+            "tradeoff": "Balanced",
+            "trade_off": "Balanced",
+        }
+        return priority_map.get(normalized, value)
 
 class ModelSpecModel(BaseModel):
     model_config = ConfigDict(extra="forbid")

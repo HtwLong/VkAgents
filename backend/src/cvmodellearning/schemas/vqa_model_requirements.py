@@ -2,6 +2,7 @@ from typing import List, Optional, Literal
 from pydantic import BaseModel, Field, ConfigDict, model_validator
 from typing_extensions import Self
 from cvmodellearning.models.registry import VQAModelId
+from cvmodellearning.schemas.interpretation_schema import PerformanceSpecModel
 
 # --- Helper Models for Strict JSON Schema ---
 class DatasetSourceCount(BaseModel):
@@ -88,6 +89,10 @@ class VQAOutputModel(BaseModel):
     path_labels: Optional[str] = Field(None, description="Local/remote path to labels (Q&A pairs).")
     preprocessing: Optional[str] = Field(None, description="Preprocessing steps.")
     augmentation: Optional[str] = Field(None, description="Augmentation strategy.")
+    performance_requirements: Optional[PerformanceSpecModel] = Field(
+        None,
+        description="Performance targets, constraints, and optimization priority.",
+    )
     
     # NEW: Added num_qa_pairs as requested previously
     num_qa_pairs: Optional[int] = Field(
