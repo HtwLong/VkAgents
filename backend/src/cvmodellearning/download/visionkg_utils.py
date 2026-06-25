@@ -1,7 +1,7 @@
 import os
 from typing import Dict, List
 import urllib.request
-from pprintpp import pprint
+from pprint import pprint
 import requests
 from vision_utils import semkg_api
 import os
@@ -12,8 +12,10 @@ def query(query_string, token=""):
     Executes a SPARQL query against the VisionKG endpoint.
     """
     try:
-        response = requests.get('https://vision.semkg.org/sparql',
-                                json={"query": query_string, "token": token})
+        response = requests.get(
+            'https://vision.semkg.org/sparql',
+            params={"query": query_string, "token": token},
+        )
         response.raise_for_status()
         _data = response.json()
         
@@ -27,6 +29,9 @@ def query(query_string, token=""):
                 for key in result.keys():
                     tmp[key] = result[key]['value']
                 data.append(tmp)
+        else:
+            print("VisionKG returned an unexpected response:")
+            pprint(_data)
         return data
     except Exception as e:
         print(f"Query failed: {e}")
@@ -128,15 +133,7 @@ def get_multi_class_stats(classes: list) -> dict:
     print(f"Querying VisionKG for {len(classes)} classes using VALUES...")
 
     # 2. Execute the Query
-    try:
-        # Assumes 'semkg_api' is initialized globally
-        raw_result = semkg_api.query(query_string)
-    except NameError:
-        print("Error: 'semkg_api' is not defined. Please ensure the API is initialized.")
-        return {}
-    except Exception as e:
-        print(f"Error executing query: {e}")
-        return {}
+    raw_result = query(query_string)
 
     # 3. Parse Results into Nested Dictionary
     bindings = []
