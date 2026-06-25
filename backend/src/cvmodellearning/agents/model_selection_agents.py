@@ -29,6 +29,8 @@ You will receive a JSON object with the following fields. Some may be null:
 - `application_domain`: The real-world use case.
 - `user_query`: The original prompt.
 - `classes`: Target objects/classes.
+- `performance_requirements`: Metrics, targets, and normalized optimization priority such as LatencyFirst, AccuracyFirst, ThroughputFirst, or Balanced.
+- `available_hardware`: Compute constraints that can affect model choice.
 - `available_data`: Datasets found containing these classes.
 """
 
@@ -42,7 +44,9 @@ classification_model_selector_agent = Agent(
     instructions=(
         f"{PIPELINE_STATE_BLUEPRINT}\n"
         "Review the 'task', 'application_domain', and 'use_case_description'. "
-        "Choose the best architecture. "
+        "Choose the best architecture. Respect 'performance_requirements.priority' when present: "
+        "prefer efficient models for LatencyFirst or ThroughputFirst, stronger models for AccuracyFirst, "
+        "and practical trade-offs for Balanced. "
         f"Available: {CLASSIFICATION_MODEL_INSTRUCTIONS}."
     ),
     output_type=ClassificationModelPatch,
@@ -54,7 +58,9 @@ detection_model_selector_agent = Agent(
     instructions=(
         f"{PIPELINE_STATE_BLUEPRINT}\n"
         "Observe the extracted 'classes' and 'application_domain'. "
-        "Select a model architecture. "
+        "Select a model architecture. Respect 'performance_requirements.priority' when present: "
+        "prefer efficient detectors for LatencyFirst or ThroughputFirst, stronger detectors for AccuracyFirst, "
+        "and practical trade-offs for Balanced. "
         f"Available: {DETECTION_MODEL_INSTRUCTIONS}."
     ),
     output_type=DetectionModelPatch,
@@ -66,6 +72,7 @@ vqq_model_selector_agent = Agent(
     instructions=(
         f"{PIPELINE_STATE_BLUEPRINT}\n"
         f"Review the state. For Visual Question Answering, select from: {VQA_MODEL_INSTRUCTIONS}. "
+        "Respect 'performance_requirements.priority' when present when choosing model size and LoRA settings. "
         "Fill the rationale based on the user's specific 'questions_list' if present in the state."
     ),
     output_type=VQAModelPatch,

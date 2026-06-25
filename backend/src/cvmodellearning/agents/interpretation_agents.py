@@ -18,7 +18,10 @@ class TaskExtractionPatch(BaseModel):
     classes: List[str] = Field(default_factory=list, description="Target objects to detect/classify.")
     performance_requirements: Optional[PerformanceSpecModel] = Field(
         None,
-        description="Performance targets or constraints explicitly mentioned by the user.",
+        description=(
+            "Performance targets, constraints, or inferred optimization priority. "
+            "Infer priority from user intent when possible, even if no numeric target is provided."
+        ),
     )
     available_hardware: Optional[HardwareSpecModel] = Field(
         None,
@@ -50,21 +53,35 @@ task_interpretation_agent = Agent(
         "Leave fields empty if the information does not exist. "
         "For the classes mentioned, turn them into singular form. "
         "If classes are not explicitly mentioned, try to infer them. "
-        "Also extract explicit performance requirements, available hardware, and model requirements if provided."
+        "Also extract explicit performance requirements, available hardware, and model requirements if provided. "
+        "Infer performance_requirements.priority when the prompt signals an optimization preference: "
+        "use LatencyFirst for real-time, low-latency, edge, mobile, interactive, or fast-response requirements; "
+        "use ThroughputFirst for high-FPS, high-volume, batch, or many-stream processing; "
+        "use AccuracyFirst for best quality, highest accuracy, precision/recall/mAP, or safety-critical correctness; "
+        "use Balanced when the user asks for a good trade-off between speed and quality. "
+        "If you infer a priority without a stated metric, set primary_metric to the most relevant metric "
+        "such as latency, throughput, accuracy, F1, mAP, or balanced_performance."
     ),
     output_type=TaskExtractionPatch, 
     model="gpt-5-nano"
 )
 
 synonym_check_agent = Agent(
-    name="Synonym Checker",
+    name="Class Ontology Matcher",
     instructions=(
         "You are an expert ontology matcher for computer vision datasets. "
         "You will be given a User Class and a list of Allowed Dataset Classes. "
-        "Task: Determine if the User Class is a synonym, alternative name, or sub-type.\n"
-        "1. If exact match exists, select it.\n"
-        "2. If a clear semantic match exists, select it.\n"
-        "3. If NO match exists, set found_match=False."
+        "Task: Determine if the User Class maps to one or more allowed dataset classes.\n"
+        "Return only exact strings from the Allowed Dataset Classes in dataset_classes.\n"
+        "1. If the User Class is a synonym or alternative name of one allowed class, "
+        "set found_match=True and return that one valid class.\n"
+        "2. If the User Class is a subcategory of one allowed class, set found_match=True "
+        "and return that broader valid class. Example: 'sports car' may map to 'car' if 'car' is allowed.\n"
+        "3. If the User Class is a supercategory of multiple allowed classes, set found_match=True "
+        "and return the most appropriate non-overlapping allowed classes, with a maximum of ten classes. "
+        "Do not return both a parent and child class if both are allowed; choose the non-overlapping set.\n"
+        "4. If no synonym, subcategory, or supercategory relationship exists, set found_match=False "
+        "and return an empty dataset_classes list."
     ),
     output_type=SynonymMatch,
     model="gpt-5-nano"

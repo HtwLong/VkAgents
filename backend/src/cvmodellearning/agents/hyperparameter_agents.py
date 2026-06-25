@@ -15,6 +15,8 @@ PIPELINE_STATE_BLUEPRINT = """
 ### PIPELINE STATE STRUCTURE (Input Context):
 You are receiving a full PipelineState JSON containing:
 - `task`, `application_domain`, `classes`
+- `performance_requirements`: Metrics, targets, and normalized optimization priority such as LatencyFirst, AccuracyFirst, ThroughputFirst, or Balanced.
+- `available_hardware`: Compute constraints.
 - `selected_data`: The image counts chosen for training.
 - `selected_model_info`: The architecture chosen in previous steps.
 - `augmentation`, `preprocessing`: The data transformation strategies.
@@ -60,6 +62,8 @@ async def generate_and_evaluate_hpo(json_data: str, job_id: str, max_rounds: int
                 "You must rely ONLY on standard, universally accepted heuristics. Do not attempt creative, novel, or experimental configurations. "
                 "If a parameter is standard, use the standard value. Hallucination or guessing outside of the provided context is strictly prohibited. "
                 "Pay strict attention to memory constraints and learning rates for the selected architecture. "
+                "Respect `performance_requirements.priority` when present: favor stronger training choices for AccuracyFirst, "
+                "efficient settings for LatencyFirst or ThroughputFirst, and moderate defaults for Balanced. "
                 "Always fill the 'rationale' field explaining concisely your standard choices."
             )
         },
@@ -73,6 +77,7 @@ async def generate_and_evaluate_hpo(json_data: str, job_id: str, max_rounds: int
         f"{PIPELINE_STATE_BLUEPRINT}\n\n"
         "You are a strict Senior Machine Learning Reviewer. Your job is to review proposed hyperparameters against the provided PipelineState. "
         "Look for catastrophic errors: Out of Memory risks based on the chosen model, exploding gradients, or logical mismatches. "
+        "Check that the proposal is consistent with `performance_requirements.priority` when it is present. "
         "Be ruthless but constructive. If it is safe and adheres to standard practices, accept it."
     )
 

@@ -20,7 +20,7 @@ class PreprocessingPatch(BaseModel):
 
 PIPELINE_STATE_BLUEPRINT = """
 ### PIPELINE STATE STRUCTURE (Input Context):
-You will receive a JSON object with fields like `task`, `application_domain`, `available_data`, `classes`, and `selected_model_info`.
+You will receive a JSON object with fields like `task`, `application_domain`, `available_data`, `classes`, `performance_requirements`, and `selected_model_info`.
 """
 
 DATASET_CONTEXT = """
@@ -32,7 +32,7 @@ KNOWN DATASETS CONTEXT:
 
 BASE_SELECTION_INSTRUCTIONS = f"""
 You are an expert Computer Vision Data Curator. You are receiving a full PipelineState JSON.
-Your goal: Populate 'selected_data' based on 'task', 'application_domain', and 'available_data'.
+Your goal: Populate 'selected_data' based on 'task', 'application_domain', 'available_data', and any performance priority.
 
 {DATASET_CONTEXT}
 
@@ -42,6 +42,7 @@ Your goal: Populate 'selected_data' based on 'task', 'application_domain', and '
 3. **Domain Alignment**: Match datasets to 'application_domain' (e.g., Cityscapes for Traffic, iNaturalist for Nature).
 4. **Generalization**: When data is abundant, prefer mixing ~2 compatible datasets (e.g., COCO + VOC) for better diversity.
 5. **Constraints**: Total selected count for any class MUST NOT exceed its 'available_data' count.
+6. **Performance Priority**: For AccuracyFirst, prefer more diverse data when available. For LatencyFirst or ThroughputFirst, keep selections practical enough for faster iteration unless the user gave explicit target counts.
 
 ### OUTPUT:
 - Update 'selected_data' with counts.
@@ -114,7 +115,7 @@ classification_data_preprocessing_agent = Agent(
         f"You are an expert in Data Augmentation. You are receiving a full PipelineState JSON.\n"
         f"{AUGMENTATION_CONTEXT}\n"
         "### YOUR TASK:\n"
-        "1. Analyze 'application_domain' and the 'selected_model_info' already in the state.\n"
+        "1. Analyze 'application_domain', 'performance_requirements', and the 'selected_model_info' already in the state.\n"
         "2. Populate ONLY the 'augmentation' and 'preprocessing' text fields.\n"
         "3. Rationale: Explain WHY these fits the domain (e.g., 'No vertical flip because the domain is medical X-rays')."
     ),
@@ -129,7 +130,7 @@ detection_data_preprocessing_agent = Agent(
         f"You are an expert in Detection Augmentation. You are receiving a full PipelineState JSON.\n"
         f"{AUGMENTATION_CONTEXT}\n"
         "### YOUR TASK:\n"
-        "1. Analyze the 'selected_model_info' (e.g., YOLO vs R-CNN) and 'application_domain'.\n"
+        "1. Analyze the 'selected_model_info' (e.g., YOLO vs R-CNN), 'performance_requirements', and 'application_domain'.\n"
         "2. Populate 'augmentation' and 'preprocessing'.\n"
         "3. If the model is YOLO-based, strongly recommend 'Mosaic' and 'MixUp' augmentation."
     ),
@@ -143,7 +144,7 @@ vqa_data_preprocessing_agent = Agent(
         f"{PIPELINE_STATE_BLUEPRINT}\n"
         f"You are an expert in VLM Preprocessing. You are receiving a full PipelineState JSON.\n"
         f"{AUGMENTATION_CONTEXT}\n"
-        "Analyze the 'selected_model_info' and 'questions_list'.\n"
+        "Analyze the 'selected_model_info', 'performance_requirements', and 'questions_list'.\n"
         "1. Populate 'augmentation', 'preprocessing', and 'num_qa_pairs'.\n"
         "2. WARNING: Be conservative with geometric flips as they can invalidate spatial questions."
     ),
