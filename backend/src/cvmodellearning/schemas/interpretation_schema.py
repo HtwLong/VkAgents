@@ -1,6 +1,14 @@
 from typing import List, Optional, Literal, Dict, Any, Union
 from pydantic import BaseModel, Field, ConfigDict, field_validator
 
+HardwareCategory = Literal[
+    "ConsumerCPU",
+    "ConsumerGPU",
+    "EdgeDevice",
+    "DataCenterGPU",
+    "ConsumerCPU | EdgeDevice",
+]
+
 # --- Structured Schema definitions to fix OpenAI "Any" errors ---
 class DatasetSourceCount(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -15,71 +23,66 @@ class ClassDataSelection(BaseModel):
 class SynonymMatch(BaseModel):
     original_class: str
     found_match: bool
-    dataset_classes: List[str] = Field(
-        default_factory=list,
-        description=(
-            "Exact strings from the allowed list that match the user class. "
-            "Return one class for synonym/subcategory matches, or up to ten "
-            "non-overlapping valid classes for supercategory matches."
-        ),
-    )
+    dataset_class: Optional[str] = Field(None, description="The exact string from the allowed list that matches the meaning.")
     reason: str
 
 class HardwareSpecModel(BaseModel):
     model_config = ConfigDict(extra="forbid")
+    hardware_category: Optional[HardwareCategory] = Field(
+        None,
+        description=(
+            "Normalized hardware class. Use ConsumerCPU, ConsumerGPU, EdgeDevice, "
+            "or DataCenterGPU when stated or inferable. Use ConsumerCPU | EdgeDevice "
+            "only as the fallback when neither hardware_category nor VRAM is known."
+        ),
+    )
     cpu_cores: Optional[int] = Field(None, ge=1, description="Number of available CPU cores.")
     gpu_type: Optional[str] = Field(None, description="Specific GPU model.")
     gpu_count: Optional[int] = Field(None, ge=0, description="Number of GPUs available.")
+    vram_gb: Optional[float] = Field(None, ge=0.0, description="Available GPU VRAM in GB.")
     ram_gb: Optional[float] = Field(None, ge=1.0, description="Available system RAM in GB.")
     storage_gb: Optional[float] = Field(None, ge=1.0, description="Available storage space in GB.")
     details: Optional[str] = Field(None, description="Any additional hardware details.")
 
-class PerformanceSpecModel(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-    primary_metric: Optional[str] = Field(..., min_length=1, description="The main metric to optimize.")
-    priority: Optional[
-        Literal["LatencyFirst", "AccuracyFirst", "Balanced", "ThroughputFirst"]
-    ] = Field(
-        None,
-        description=(
-            "The inferred optimization priority, normalized to ontology labels. "
-            "Use LatencyFirst for real-time or low-latency needs, AccuracyFirst for best-quality "
-            "or highest-score needs, ThroughputFirst for high FPS/batch processing needs, "
-            "and Balanced when the user asks for a trade-off."
-        ),
-    )
-    target_value: Optional[float] = Field(None, ge=0.0, le=1.0, description="Target value for the primary metric.")
-    latency_ms: Optional[float] = Field(None, ge=0.0, description="Max allowable latency.")
-    throughput_fps: Optional[float] = Field(None, ge=0.0, description="Min required FPS.")
-    other_constraints: Optional[List[str]] = Field(None, description="Other performance requirements.")
-
-    @field_validator("priority", mode="before")
+    @field_validator("hardware_category", mode="before")
     @classmethod
-    def normalize_priority(cls, value: Optional[str]) -> Optional[str]:
+    def normalize_hardware_category(cls, value: Optional[str]) -> Optional[str]:
         if value is None:
             return None
 
         normalized = str(value).strip().replace("-", "_").replace(" ", "_").lower()
-        priority_map = {
-            "latency_first": "LatencyFirst",
-            "latencyfirst": "LatencyFirst",
-            "low_latency": "LatencyFirst",
-            "realtime": "LatencyFirst",
-            "real_time": "LatencyFirst",
-            "accuracy_first": "AccuracyFirst",
-            "accuracyfirst": "AccuracyFirst",
-            "quality_first": "AccuracyFirst",
-            "qualityfirst": "AccuracyFirst",
-            "throughput_first": "ThroughputFirst",
-            "throughputfirst": "ThroughputFirst",
-            "high_throughput": "ThroughputFirst",
-            "high_fps": "ThroughputFirst",
-            "balanced": "Balanced",
-            "balance": "Balanced",
-            "tradeoff": "Balanced",
-            "trade_off": "Balanced",
+        category_map = {
+            "consumer_cpu": "ConsumerCPU",
+            "consumercpu": "ConsumerCPU",
+            "cpu": "ConsumerCPU",
+            "cpu_only": "ConsumerCPU",
+            "consumer_gpu": "ConsumerGPU",
+            "consumergpu": "ConsumerGPU",
+            "gpu": "ConsumerGPU",
+            "edge_device": "EdgeDevice",
+            "edgedevice": "EdgeDevice",
+            "edge": "EdgeDevice",
+            "mobile": "EdgeDevice",
+            "embedded": "EdgeDevice",
+            "data_center_gpu": "DataCenterGPU",
+            "datacenter_gpu": "DataCenterGPU",
+            "datacentergpu": "DataCenterGPU",
+            "data_center": "DataCenterGPU",
+            "datacenter": "DataCenterGPU",
+            "server_gpu": "DataCenterGPU",
+            "consumer_cpu_|_edge_device": "ConsumerCPU | EdgeDevice",
+            "consumercpu|edgedevice": "ConsumerCPU | EdgeDevice",
+            "consumer_cpu_edge_device": "ConsumerCPU | EdgeDevice",
         }
-        return priority_map.get(normalized, value)
+        return category_map.get(normalized, value)
+
+class PerformanceSpecModel(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    primary_metric: Optional[str] = Field(..., min_length=1, description="The main metric to optimize.")
+    target_value: Optional[float] = Field(None, ge=0.0, le=1.0, description="Target value for the primary metric.")
+    latency_ms: Optional[float] = Field(None, ge=0.0, description="Max allowable latency.")
+    throughput_fps: Optional[float] = Field(None, ge=0.0, description="Min required FPS.")
+    other_constraints: Optional[List[str]] = Field(None, description="Other performance requirements.")
 
 class ModelSpecModel(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -97,7 +100,6 @@ class InterpretationRequirements(BaseModel):
     use_case_description: Optional[str] = None
     questions_list: Optional[List[str]] = None
     classes: List[str] = Field(default_factory=list)
-    dataset_name: Optional[str] = None
     
     # Strictly enforce the list structure so OpenAI can generate valid JSON Schemas
     available_data: Optional[List[ClassDataSelection]] = None
@@ -116,6 +118,7 @@ class PipelineState(InterpretationRequirements):
     """The unified state that grows over time."""
     model_config = ConfigDict(extra="allow")
     
+    model_selection_graph_context: Optional[Dict[str, Any]] = None
     selected_model_info: Optional[Dict[str, Any]] = None
     hpo_config: Optional[Dict[str, Any]] = None
     hpo_decision: Optional[Dict[str, Any]] = None
