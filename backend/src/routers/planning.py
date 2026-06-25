@@ -87,22 +87,38 @@ async def task_interpret(request: StateRequest):
     final_classes = []
     valid_classes_str = ", ".join(sorted(list(valid_classes)))
 
-    # check for each extracted class if its a valid class or
-    # if it has a synonym that matches a valid class. 
-    # If neither, raise an error to user to clarify the class name
+    # Check each extracted class directly first. If it is not directly valid,
+    # ask the ontology matcher for synonym/subcategory/supercategory mappings.
     for cls in (extracted.classes or []):
         cls_clean = cls.strip().lower()
         if cls_clean in valid_classes:
-            final_classes.append(cls)
+            final_classes.append(cls_clean)
             continue
             
         syn_res = await Runner.run(synonym_check_agent, input=f"User Class: '{cls}'. Allowed: [{valid_classes_str}]")
-        if syn_res.final_output.found_match:
-            final_classes.append(syn_res.final_output.dataset_class)
+        matched_classes = [
+            dataset_class.strip().lower()
+            for dataset_class in (syn_res.final_output.dataset_classes or [])
+            if dataset_class and dataset_class.strip().lower() in valid_classes
+        ][:10]
+        if syn_res.final_output.found_match and matched_classes:
+            final_classes.extend(matched_classes)
         else:
             raise HTTPException(status_code=400, detail=f"Class '{cls}' not found.")
 
-    state = state.model_copy(update=extracted.model_dump(exclude_unset=True))
+    extracted_patch = extracted.model_dump(exclude_unset=True)
+    if extracted.performance_requirements and state.performance_requirements:
+        existing_performance = state.performance_requirements.model_dump(exclude_unset=True)
+        extracted_performance = extracted.performance_requirements.model_dump(
+            exclude_none=True,
+            exclude_unset=True,
+        )
+        extracted_patch["performance_requirements"] = {
+            **existing_performance,
+            **extracted_performance,
+        }
+
+    state = PipelineState(**{**state.model_dump(), **extracted_patch})
     state.classes = final_classes
     state.step_history.append("Task Interpretation Completed")
     
