@@ -10,7 +10,7 @@
       "type": "@n8n/n8n-nodes-langchain.chatTrigger",
       "typeVersion": 1.3,
       "position": [
-        -480,
+        -624,
         -16
       ],
       "id": "0441a0b7-ea3c-4de8-8cda-2e0c3d250310",
@@ -19,13 +19,13 @@
     },
     {
       "parameters": {
-        "message": "=Missing info: {{$node[\"Check for Completeness\"].json[\"reason\"]}}\nPlease answer: {{$node[\"Check for Completeness\"].json[\"suggestions\"]}}",
+        "message": "=Missing info: {{$node[\"Check for Completeness\"].json[\"reason\"]}}\n\n{{$node[\"Check for Completeness\"].json[\"suggestions\"]}}",
         "options": {}
       },
       "type": "@n8n/n8n-nodes-langchain.chat",
       "typeVersion": 1,
       "position": [
-        -80,
+        64,
         192
       ],
       "id": "8fdc1682-36b9-49c9-b50d-b12e1795ba59",
@@ -34,13 +34,17 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "http://localhost:8000/choose-hyperparameters",
+        "url": "http://127.0.0.1:8000/api/v1/planning/choose-hyperparameters",
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
             {
               "name": "context",
               "value": "={{ $json.context }}"
+            },
+            {
+              "name": "job_id",
+              "value": "={{$node[\"Create New Job\"].json.job_id}}"
             }
           ]
         },
@@ -56,7 +60,7 @@
       "typeVersion": 4.2,
       "position": [
         592,
-        320
+        496
       ],
       "id": "642e2b17-e4c8-44d1-8dc4-3541c9a28f56",
       "name": "Choose Hyperparameters"
@@ -64,13 +68,17 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "http://localhost:8000/preprocess",
+        "url": "http://127.0.0.1:8000/api/v1/planning/preprocess",
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
             {
               "name": "context",
               "value": "={{$json.context}}"
+            },
+            {
+              "name": "job_id",
+              "value": "={{$node[\"Create New Job\"].json.job_id}}"
             }
           ]
         },
@@ -80,7 +88,7 @@
       "typeVersion": 4.2,
       "position": [
         592,
-        96
+        272
       ],
       "id": "996cf61c-072d-413b-9a2c-2abf87d50f25",
       "name": "Preprocessing"
@@ -88,13 +96,17 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "http://localhost:8000/select-model",
+        "url": "http://127.0.0.1:8000/api/v1/planning/select-model",
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
             {
               "name": "context",
               "value": "={{$json.context}}"
+            },
+            {
+              "name": "job_id",
+              "value": "={{$node[\"Create New Job\"].json.job_id}}"
             }
           ]
         },
@@ -110,44 +122,15 @@
       "typeVersion": 4.2,
       "position": [
         592,
-        -112
+        64
       ],
       "id": "ddcb6746-6e67-4131-90e8-664ac9f8455f",
       "name": "Model Selection"
     },
     {
       "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "id": "dd0fd91b-4282-4c22-9e16-027420b7dbcc",
-              "name": "user_prompt",
-              "value": "={{ $json.chatInput }}",
-              "type": "string"
-            },
-            {
-              "id": "d92ac40b-0db8-4213-8a1b-402cf871fcd7",
-              "name": "user_replies",
-              "value": "[]",
-              "type": "array"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [
-        -272,
-        -16
-      ],
-      "id": "fc6da583-ce94-4307-8d75-b0ad528dd48a",
-      "name": "Edit Fields"
-    },
-    {
-      "parameters": {
         "method": "POST",
-        "url": "http://localhost:8000/completenesscheck",
+        "url": "http://127.0.0.1:8000/api/v1/planning/completenesscheck",
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
@@ -172,7 +155,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        -64,
+        -48,
         -16
       ],
       "id": "c056712b-010d-4e3f-b1ba-49486d3aa46f",
@@ -217,13 +200,17 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "http://localhost:8000/task-interpret",
+        "url": "http://127.0.0.1:8000/api/v1/planning/task-interpret",
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
             {
               "name": "context",
               "value": "={{ $json.context }}"
+            },
+            {
+              "name": "job_id",
+              "value": "={{$node[\"Create New Job\"].json.job_id}}"
             }
           ]
         },
@@ -246,7 +233,7 @@
     },
     {
       "parameters": {
-        "message": "=Proposed hyperparameters: \n\n{{ JSON.stringify($node[\"Choose Hyperparameters\"].json.candidate, null, 2) }}\n\nReply “approve” to proceed to training. Otherwise  we will refine the hyperparameters.",
+        "message": "=Proposed hyperparameters: \n\n{{ JSON.stringify($json.candidate, null, 2) }}\n\nReply “approve” to proceed to training. Otherwise  we will refine the hyperparameters.",
         "options": {}
       },
       "type": "@n8n/n8n-nodes-langchain.chat",
@@ -299,22 +286,22 @@
       "type": "@n8n/n8n-nodes-langchain.chat",
       "typeVersion": 1,
       "position": [
-        1376,
-        256
+        1008,
+        128
       ],
       "id": "7c2196aa-564e-4476-b044-4d90a807acd4",
       "name": "Ask for Change Requests"
     },
     {
       "parameters": {
-        "content": "## Finding fitting model and hyperparameters \n",
-        "height": 96,
+        "content": "## Planning Phase: Finding fitting model and hyperparameters \n",
+        "height": 1200,
         "width": 288
       },
       "type": "n8n-nodes-base.stickyNote",
       "position": [
         496,
-        -480
+        -496
       ],
       "typeVersion": 1,
       "id": "9ded384c-6e87-4887-b115-ba40cb80ce50",
@@ -322,13 +309,14 @@
     },
     {
       "parameters": {
-        "content": "## Download, Preparation and Training\n",
-        "height": 112
+        "content": "## Execution Phase: Download, Preparation and Training\n",
+        "height": 832,
+        "width": 256
       },
       "type": "n8n-nodes-base.stickyNote",
       "position": [
-        1664,
-        -464
+        1504,
+        -432
       ],
       "typeVersion": 1,
       "id": "3b0af042-f470-4795-ac8f-25c5ff9e11dd",
@@ -337,13 +325,13 @@
     {
       "parameters": {
         "content": "## User Description + Check for Completeness\n",
-        "height": 96,
-        "width": 304
+        "height": 496,
+        "width": 960
       },
       "type": "n8n-nodes-base.stickyNote",
       "position": [
-        -272,
-        -192
+        -656,
+        -112
       ],
       "typeVersion": 1,
       "id": "052adbd7-d088-43a0-a271-9fa8936169c5",
@@ -352,17 +340,13 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "http://localhost:8000/download-data",
+        "url": "http://127.0.0.1:8000/api/v1/download-data",
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
             {
               "name": "chosen_parameters",
               "value": "={{$node[\"Choose Hyperparameters\"].json.candidate}}"
-            },
-            {
-              "name": "project_id",
-              "value": "={{$node[\"User Request\"].json.sessionId}}"
             },
             {
               "name": "job_id",
@@ -381,41 +365,22 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1744,
-        -288
+        1584,
+        -240
       ],
       "id": "9c569a90-16b2-4ce3-8e5e-d2b8de6eec9f",
       "name": "Download data"
     },
     {
       "parameters": {
-        "language": "python",
-        "pythonCode": "return [{ job_id: Date.now().toString(36) + Math.random().toString(36).slice(2)}]"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        1456,
-        -176
-      ],
-      "id": "c7138b48-9172-4e86-ae30-540813f92780",
-      "name": "Create New Job",
-      "alwaysOutputData": true
-    },
-    {
-      "parameters": {
         "method": "POST",
-        "url": "http://localhost:8000/prepare-data",
+        "url": "http://127.0.0.1:8000/api/v1/prepare-data",
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
             {
               "name": "chosen_parameters",
               "value": "={{$node[\"Choose Hyperparameters\"].json.candidate}}"
-            },
-            {
-              "name": "project_id",
-              "value": "={{$node[\"User Request\"].json.sessionId}}"
             },
             {
               "name": "job_id",
@@ -434,8 +399,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1744,
-        -80
+        1584,
+        -16
       ],
       "id": "9b9b1f86-765f-4fa6-b7c2-7c876f01f9e6",
       "name": "Prepare data"
@@ -443,17 +408,13 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "http://localhost:8000/evaluate",
+        "url": "http://127.0.0.1:8000/api/v1/evaluate",
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
             {
               "name": "chosen_parameters",
               "value": "={{$node[\"Choose Hyperparameters\"].json.candidate}}"
-            },
-            {
-              "name": "project_id",
-              "value": "={{$node[\"User Request\"].json.sessionId}}"
             },
             {
               "name": "job_id",
@@ -472,8 +433,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        2544,
-        -112
+        2416,
+        48
       ],
       "id": "dca7c707-cedc-49d0-b6a5-4eacbfaa7cae",
       "name": "Evaluate Model"
@@ -481,17 +442,13 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "http://localhost:8000/train/start",
+        "url": "http://127.0.0.1:8000/api/v1/train/start",
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
             {
               "name": "chosen_parameters",
               "value": "={{$node[\"Choose Hyperparameters\"].json.candidate}}"
-            },
-            {
-              "name": "project_id",
-              "value": "={{$node[\"User Request\"].json.sessionId}}"
             },
             {
               "name": "job_id",
@@ -510,15 +467,15 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1744,
-        128
+        1584,
+        224
       ],
       "id": "a6adcf88-1621-48c7-ab00-6e713b3554a4",
       "name": "Train model"
     },
     {
       "parameters": {
-        "url": "=http://localhost:8000/train/status/{{$node[\"Create New Job\"].json.job_id}}",
+        "url": "=http://127.0.0.1:8000/api/v1/train/status/{{$node[\"Create New Job\"].json.job_id}}",
         "options": {
           "response": {
             "response": {
@@ -530,8 +487,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        2096,
-        128
+        1936,
+        224
       ],
       "id": "ea41a5b0-81a2-4c22-be3d-36e752bd92ca",
       "name": "Get Training Status"
@@ -564,93 +521,411 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        2288,
-        128
+        2128,
+        224
       ],
       "id": "b1879105-8dcf-4359-9a01-47b0d5b5f356",
       "name": "Training Completed?"
     },
     {
       "parameters": {
-        "amount": 30
+        "url": "=http://127.0.0.1:8000/artifacts/{{$node[\"Create New Job\"].json.job_id}}/model",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "model"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2672,
+        -48
+      ],
+      "id": "bc99fd53-e6f8-47dd-9b00-fbd095baa5d8",
+      "name": "Get Model"
+    },
+    {
+      "parameters": {
+        "content": "## Results",
+        "height": 416,
+        "width": 182
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        2624,
+        -128
+      ],
+      "typeVersion": 1,
+      "id": "20bf37b1-8067-4218-93bb-5aefc2ebb78d",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://127.0.0.1:8000/api/v1/planning/add-user-request",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "context",
+              "value": "={{$node[\"Preprocessing\"].json.context}}"
+            },
+            {
+              "name": "request_text",
+              "value": "={{ $json.chatInput }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1008,
+        320
+      ],
+      "id": "b81756ac-e639-4c87-b000-66b2653af3f6",
+      "name": "Add User Change Requests"
+    },
+    {
+      "parameters": {
+        "content": "## Evaluation\n",
+        "height": 224,
+        "width": 224
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        2352,
+        -16
+      ],
+      "typeVersion": 1,
+      "id": "b4513d9d-5867-471a-a492-768992e8c63a",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "dd0fd91b-4282-4c22-9e16-027420b7dbcc",
+              "name": "user_prompt",
+              "value": "={{ $node[\"User Request\"].json.chatInput }}",
+              "type": "string"
+            },
+            {
+              "id": "d92ac40b-0db8-4213-8a1b-402cf871fcd7",
+              "name": "user_replies",
+              "value": "=[]",
+              "type": "array"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -240,
+        -16
+      ],
+      "id": "fc6da583-ce94-4307-8d75-b0ad528dd48a",
+      "name": "Initialize Fields"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "185dcbc9-7ca0-47c5-b165-156f6cd486b4",
+              "name": "user_prompt",
+              "value": "={{ $node[\"User Request\"].json.chatInput }}",
+              "type": "string"
+            },
+            {
+              "id": "d1a717d9-ec98-483c-9694-89cea950c53e",
+              "name": "user_replies",
+              "value": "={{ ($json.user_replies || []).concat($json.chatInput ? [$json.chatInput] : []) }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -240,
+        208
+      ],
+      "id": "c7f45b95-100b-46ff-bf69-8920994ff3e3",
+      "name": "Append User Replies"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "7f672124-5e47-4cfd-807d-9def8960a5f4",
+              "name": "job_id",
+              "value": "={{ Date.now().toString(36) + Math.random().toString(36).slice(2) }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -432,
+        -16
+      ],
+      "id": "94a7c473-02fb-4d7c-9a34-e5b5e119e17e",
+      "name": "Create New Job"
+    },
+    {
+      "parameters": {
+        "method": "DELETE",
+        "url": "http://127.0.0.1:8000/data/clear",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -944,
+        736
+      ],
+      "id": "b348943d-61b1-4843-894a-0e7a70c47770",
+      "name": "Delete Files and Cleanup Storage"
+    },
+    {
+      "parameters": {
+        "amount": 10
       },
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
       "position": [
-        1920,
-        128
+        1760,
+        224
       ],
       "id": "53f5512c-f304-4441-92eb-75b13b9f4388",
-      "name": "Wait30sec",
+      "name": "Wait10sec",
       "webhookId": "25a4e770-2390-41b0-ab5d-cc25f5567baf"
     },
     {
       "parameters": {
-        "url": "=http://localhost:8000//artifacts/{{$node[\"User Request\"].json.sessionId}}/{{$node[\"Create New Job\"].json.job_id}}/metrics_csv",
-        "options": {
-          "response": {
-            "response": {
-              "responseFormat": "file"
+        "formTitle": "Upload Images",
+        "formDescription": "Please upload images of your choice.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "images",
+              "fieldType": "file"
             }
-          }
-        }
+          ]
+        },
+        "options": {}
       },
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.3,
       "position": [
-        2800,
-        -384
+        2192,
+        688
       ],
-      "id": "7d5c6a78-3ebf-4778-b250-0318e3cd3756",
-      "name": "Get Training Log"
+      "id": "9deab703-fdde-4201-a85e-666b98eb2fe7",
+      "name": "Upload Images Example",
+      "webhookId": "c8dca67d-006e-4b2f-842b-8e4a89714969"
     },
     {
       "parameters": {
-        "url": "=http://localhost:8000//artifacts/{{$node[\"User Request\"].json.sessionId}}/{{$node[\"Create New Job\"].json.job_id}}/test_report",
-        "options": {
-          "response": {
-            "response": {
-              "responseFormat": "file"
+        "formTitle": "Upload Images",
+        "formDescription": "Please upload images of your choice.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "images",
+              "fieldType": "file"
             }
-          }
-        }
+          ]
+        },
+        "options": {}
       },
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.3,
       "position": [
-        2800,
-        -208
+        160,
+        2400
       ],
-      "id": "6a8b4aff-b47c-468e-aba6-1fed5f6cb755",
-      "name": "Get Classification Report"
+      "id": "44b38e34-4e91-4bb5-a261-f4697941bd73",
+      "name": "Upload Images Example1",
+      "webhookId": "4f6ef45c-aa55-45c3-accf-95873979768f"
     },
     {
       "parameters": {
-        "url": "=http://localhost:8000//artifacts/{{$node[\"User Request\"].json.sessionId}}/{{$node[\"Create New Job\"].json.job_id}}/confusion_matrix",
-        "options": {
-          "response": {
-            "response": {
-              "responseFormat": "file"
+        "method": "POST",
+        "url": "http://localhost:8000/load-model",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "project_id",
+              "value": "fbfc621175814e40b33de6a4a667547a"
+            },
+            {
+              "name": "job_id",
+              "value": "=mgo34ljzz0mt0c2x6m"
             }
-          }
-        }
+          ]
+        },
+        "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        2800,
-        -16
+        144,
+        2176
       ],
-      "id": "648141d9-bde5-4ba2-a129-82432e98aedf",
-      "name": "Get Confusion Matrix"
+      "id": "82e2829c-4352-4d34-9aa8-7d079309920f",
+      "name": "Load Best Model1"
     },
     {
       "parameters": {
-        "url": "=http://localhost:8000//artifacts/{{$node[\"User Request\"].json.sessionId}}/{{$node[\"Create New Job\"].json.job_id}}/model",
+        "method": "POST",
+        "url": "http://localhost:8000/infer",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "project_id",
+              "value": "fbfc621175814e40b33de6a4a667547a"
+            },
+            {
+              "name": "job_id",
+              "value": "mgo34ljzz0mt0c2x6m"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "file",
+              "inputDataFieldName": "images"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        384,
+        2304
+      ],
+      "id": "aaf477bf-8a5e-42e5-8ba6-60e35f81581f",
+      "name": "Classify using Best Model1"
+    },
+    {
+      "parameters": {
+        "content": "## Example Bird Image\n![image of classification](https://raw.githubusercontent.com/HtwLong/n8n-images/main/1bird.jpg)\n## predicted_class:bird\n## confidence:0.7876344919204712\n\nprobabilities\ncat:0.07195013016462326\ndog:0.14041541516780853\nbird:0.7876344919204712",
+        "height": 432,
+        "width": 416
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        4112,
+        512
+      ],
+      "typeVersion": 1,
+      "id": "0cfda094-f394-4590-8c7a-207db7c2f01b",
+      "name": "Sticky Note8"
+    },
+    {
+      "parameters": {
+        "content": "## Example Cat Image\n![image of classification](https://raw.githubusercontent.com/HtwLong/n8n-images/main/1cat.jpg)\n## predicted_class:cat\n## confidence:0.9513\n\nprobabilities\ncat:0.9513139128684998\ndog:0.024553844705224037\nbird:0.024132240563631058",
+        "height": 432,
+        "width": 416
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        3616,
+        512
+      ],
+      "typeVersion": 1,
+      "id": "b6f419a1-a402-4db3-b72b-256aa80002ee",
+      "name": "Sticky Note9"
+    },
+    {
+      "parameters": {
+        "content": "## Example Dog Image\n![image of classification](https://raw.githubusercontent.com/HtwLong/n8n-images/main/1dog.jpg)\n## predicted_class:dog\n## confidence:0.7947\n\n\n\npredicted_class:dog\nconfidence:0.794784426689148\nprobabilities\ncat:0.1064673364162445\ndog:0.794784426689148\nbird:0.09874819219112396",
+        "height": 448,
+        "width": 304
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        3184,
+        512
+      ],
+      "typeVersion": 1,
+      "id": "37c429e7-bf8d-4d5b-97f7-149542560af5",
+      "name": "Sticky Note10"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://127.0.0.1:8000/api/v1/infer",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "job_id",
+              "value": "mizmz1rdo17ln5x6ois"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "file",
+              "inputDataFieldName": "images"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2416,
+        688
+      ],
+      "id": "4f861c50-25f3-4084-9371-38e88e865b91",
+      "name": "Classify using Model"
+    },
+    {
+      "parameters": {
+        "url": "=http://127.0.0.1:8000/artifacts/{{$node[\"Create New Job\"].json.job_id}}/report_pdf",
         "options": {
           "response": {
             "response": {
-              "responseFormat": "file"
+              "responseFormat": "file",
+              "outputPropertyName": "model"
             }
           }
         }
@@ -658,11 +933,69 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        2800,
-        192
+        2672,
+        128
       ],
-      "id": "bc99fd53-e6f8-47dd-9b00-fbd095baa5d8",
-      "name": "Get Model"
+      "id": "9691cb26-2d97-48da-96ce-0dfe79b9ea5f",
+      "name": "Get Report PDF"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://127.0.0.1:8000/api/v1/load-model",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "job_id",
+              "value": "mizmz1rdo17ln5x6ois"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1840,
+        624
+      ],
+      "id": "3f03a240-6bfe-4941-8ce9-60ba5909f097",
+      "name": "Load Model"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://127.0.0.1:8000/api/v1/planning/check-data",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "context",
+              "value": "={{ $json.context }}"
+            },
+            {
+              "name": "job_id",
+              "value": "={{$node[\"Create New Job\"].json.job_id}}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        592,
+        -144
+      ],
+      "id": "dcab5fe0-2e84-44dd-a575-a95055b934ed",
+      "name": "Check Data"
     }
   ],
   "pinData": {},
@@ -671,7 +1004,7 @@
       "main": [
         [
           {
-            "node": "Edit Fields",
+            "node": "Create New Job",
             "type": "main",
             "index": 0
           }
@@ -682,7 +1015,7 @@
       "main": [
         [
           {
-            "node": "Edit Fields",
+            "node": "Append User Replies",
             "type": "main",
             "index": 0
           }
@@ -705,17 +1038,6 @@
         [
           {
             "node": "Preprocessing",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Edit Fields": {
-      "main": [
-        [
-          {
-            "node": "Check for Completeness",
             "type": "main",
             "index": 0
           }
@@ -755,7 +1077,7 @@
       "main": [
         [
           {
-            "node": "Model Selection",
+            "node": "Check Data",
             "type": "main",
             "index": 0
           }
@@ -788,7 +1110,7 @@
       "main": [
         [
           {
-            "node": "Create New Job",
+            "node": "Download data",
             "type": "main",
             "index": 0
           }
@@ -813,17 +1135,6 @@
         ]
       ]
     },
-    "Create New Job": {
-      "main": [
-        [
-          {
-            "node": "Download data",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Prepare data": {
       "main": [
         [
@@ -839,7 +1150,7 @@
       "main": [
         [
           {
-            "node": "Wait30sec",
+            "node": "Wait10sec",
             "type": "main",
             "index": 0
           }
@@ -868,18 +1179,7 @@
         ],
         [
           {
-            "node": "Wait30sec",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Wait30sec": {
-      "main": [
-        [
-          {
-            "node": "Get Training Status",
+            "node": "Wait10sec",
             "type": "main",
             "index": 0
           }
@@ -890,22 +1190,132 @@
       "main": [
         [
           {
-            "node": "Get Training Log",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Get Classification Report",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Get Confusion Matrix",
-            "type": "main",
-            "index": 0
-          },
-          {
             "node": "Get Model",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Report PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ask for Change Requests": {
+      "main": [
+        [
+          {
+            "node": "Add User Change Requests",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add User Change Requests": {
+      "main": [
+        [
+          {
+            "node": "Choose Hyperparameters",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Initialize Fields": {
+      "main": [
+        [
+          {
+            "node": "Check for Completeness",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append User Replies": {
+      "main": [
+        [
+          {
+            "node": "Check for Completeness",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create New Job": {
+      "main": [
+        [
+          {
+            "node": "Initialize Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait10sec": {
+      "main": [
+        [
+          {
+            "node": "Get Training Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Model": {
+      "main": [
+        []
+      ]
+    },
+    "Upload Images Example": {
+      "main": [
+        [
+          {
+            "node": "Classify using Model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload Images Example1": {
+      "main": [
+        [
+          {
+            "node": "Classify using Best Model1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Best Model1": {
+      "main": [
+        [
+          {
+            "node": "Classify using Best Model1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Classify using Model": {
+      "main": [
+        []
+      ]
+    },
+    "Check Data": {
+      "main": [
+        [
+          {
+            "node": "Model Selection",
             "type": "main",
             "index": 0
           }
@@ -917,7 +1327,7 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "32298e1c-90a5-43c8-a1f2-b8f219b4618b",
+  "versionId": "a0cdbb21-925e-4419-88d8-913775c511a9",
   "meta": {
     "instanceId": "8054ebc0cddcd4c9a8315ad708035e2405f11199b3e8a385743ab8412e146b37"
   },
