@@ -4,6 +4,7 @@ from typing import Any, Dict, List
 from cvmodellearning.paths import data_dir, json_labels_path, planning_artifacts_dir
 from cvmodellearning.download.example_visionkg import download_visionkg_images_flat
 from cvmodellearning.pipelines.vqa_pipeline_utils import generate_annotations
+from cvmodellearning.schemas.hpo_runtime import training_compatible_hpo_config
 
 
 class VQAPipeline:
@@ -220,6 +221,7 @@ class VQAPipeline:
             METRIC_MAPPING[track_metric] = (compute_custom_metrics, None)
 
         # --- 3. Hardware & Optimizer Mapping ---
+        config = training_compatible_hpo_config(config)
         precision = config.get("precision", "bf16")
         bf16 = precision == "bf16"
         fp16 = precision == "fp16"
