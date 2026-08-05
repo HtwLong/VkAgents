@@ -68,7 +68,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "http://127.0.0.1:8000/api/v1/planning/preprocess",
+        "url": "http://127.0.0.1:8000/api/v1/planning/select-datasets",
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
@@ -91,7 +91,7 @@
         272
       ],
       "id": "996cf61c-072d-413b-9a2c-2abf87d50f25",
-      "name": "Preprocessing"
+      "name": "Dataset Selection"
     },
     {
       "parameters": {
@@ -572,7 +572,7 @@
           "parameters": [
             {
               "name": "context",
-              "value": "={{$node[\"Preprocessing\"].json.context}}"
+              "value": "={{$node[\"Dataset Selection\"].json.context}}"
             },
             {
               "name": "request_text",
@@ -1022,7 +1022,7 @@
         ]
       ]
     },
-    "Preprocessing": {
+    "Dataset Selection": {
       "main": [
         [
           {
@@ -1037,7 +1037,7 @@
       "main": [
         [
           {
-            "node": "Preprocessing",
+            "node": "Dataset Selection",
             "type": "main",
             "index": 0
           }
