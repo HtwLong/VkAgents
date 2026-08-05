@@ -1,169 +1,133 @@
-.
-├── __pycache__
-│   ├── api.cpython-311.pyc
-│   └── api.cpython-313.pyc
-├── api.py
-├── cvmodellearning
-│   ├── __pycache__
-│   │   ├── paths.cpython-311.pyc
-│   │   └── paths.cpython-313.pyc
-│   ├── agents
-│   │   ├── __pycache__
-│   │   │   ├── agents_utils.cpython-311.pyc
-│   │   │   ├── agents_utils.cpython-313.pyc
-│   │   │   ├── api.cpython-313.pyc
-│   │   │   ├── detection_agents.cpython-313.pyc
-│   │   │   ├── hyperparameter_agents.cpython-313.pyc
-│   │   │   ├── hyperparameter_agents_api.cpython-311.pyc
-│   │   │   ├── hyperparameter_agents_api.cpython-313.pyc
-│   │   │   ├── interpretation_agents.cpython-313.pyc
-│   │   │   ├── interpretation_agents_api.cpython-311.pyc
-│   │   │   ├── interpretation_agents_api.cpython-313.pyc
-│   │   │   ├── model_agents.cpython-311.pyc
-│   │   │   ├── model_agents.cpython-313.pyc
-│   │   │   ├── preprocessing_agents.cpython-311.pyc
-│   │   │   └── preprocessing_agents.cpython-313.pyc
-│   │   ├── agents_utils.py
-│   │   ├── detection_agents.py
-│   │   ├── hyperparameter_agents_api.py
+backend
+├── CV Pipeline GUI.json
+├── Dockerfile
+├── README.md
+├── RESULT_INTERPRETATION.json
+├── RESULT_MODEL.json
+├── RESULT_PREPROCESSING.json
+├── artifacts
+│   ├── hyperparameters_rationale.json
+│   ├── metrics_log.csv
+│   ├── output.json
+│   ├── result_interpretation.json
+│   ├── result_model.json
+│   ├── result_preprocessing.json
+│   ├── results_hyperparameters.json
+│   ├── test_classification_report.txt
+│   └── test_confusion_matrix.csv
+├── ontology_data
+│   ├── edges
+│   │   └── edges.csv
+│   ├── graph_visualization.html
+│   ├── graph_visualization.png
+│   └── nodes
+│       ├── adjustment_rules.csv
+│       ├── dataset_requirements.csv
+│       ├── datasets.csv
+│       ├── domains.csv
+│       ├── evaluation_metrics.csv
+│       ├── evidence_sources.csv
+│       ├── hardware_profiles.csv
+│       ├── model_benchmark_results.csv
+│       ├── model_inference_memory_estimates.csv
+│       ├── models.csv
+│       ├── tasks.csv
+│       ├── training_recipe_image_classification_details.csv
+│       ├── training_recipe_object_detection_details.csv
+│       ├── training_recipe_parameters.csv
+│       ├── training_recipe_vqa_details.csv
+│       └── training_recipes.csv
+├── pyproject.toml
+├── src
+│   ├── api.py
+│   ├── cvmodellearning
+│   │   ├── agents
+│   │   │   ├── agents_utils.py
+│   │   │   ├── data_selection_and_augmentation_agents.py
+│   │   │   ├── detection_agents.py
+│   │   │   ├── hyperparameter_agents.py
+│   │   │   ├── init.py
+│   │   │   ├── interpretation_agents.py
+│   │   │   └── model_selection_agents.py
+│   │   ├── download
+│   │   │   ├── download_data.py
+│   │   │   ├── example.py
+│   │   │   ├── example_visionkg.py
+│   │   │   ├── unified_dataset.txt
+│   │   │   └── visionkg_utils.py
+│   │   ├── evaluation
+│   │   │   ├── evaluation_utils.py
+│   │   │   └── report_builder.py
+│   │   ├── examples
+│   │   │   ├── crawler.py
+│   │   │   ├── example.py
+│   │   │   └── init.py
+│   │   ├── graphrag
+│   │   │   ├── build_graph.py
+│   │   │   ├── graph_edge_utils.py
+│   │   │   ├── model_selection_context.py
+│   │   │   └── visualize_utils.py
+│   │   ├── inference
+│   │   │   └── inference_utils.py
 │   │   ├── init.py
-│   │   ├── interpretation_agents.py
-│   │   ├── interpretation_agents_api.py
-│   │   ├── model_agents.py
-│   │   └── preprocessing_agents.py
-│   ├── download
-│   │   ├── __pycache__
-│   │   │   ├── download_data.cpython-311.pyc
-│   │   │   └── download_data.cpython-313.pyc
-│   │   ├── download_data.py
-│   │   └── example.py
-│   ├── download_utils
-│   │   └── instances_train2017.json
-│   ├── evaluation
-│   │   ├── __pycache__
-│   │   │   ├── evaluation_utils.cpython-311.pyc
-│   │   │   ├── evaluation_utils.cpython-313.pyc
-│   │   │   ├── report_builder.cpython-311.pyc
-│   │   │   └── report_builder.cpython-313.pyc
-│   │   ├── evaluation_utils.py
-│   │   └── report_builder.py
-│   ├── examples
-│   │   ├── __pycache__
-│   │   │   └── resnet_train.cpython-313.pyc
-│   │   ├── example.py
-│   │   ├── init.py
-│   │   └── resnet_train.py
-│   ├── inference
-│   │   ├── __pycache__
-│   │   │   └── inference_utils.cpython-313.pyc
-│   │   └── inference_utils.py
-│   ├── init.py
-│   ├── jobs
-│   │   ├── __pycache__
-│   │   │   └── job_manager.cpython-313.pyc
-│   │   └── job_manager.py
-│   ├── models
-│   │   ├── __pycache__
-│   │   │   ├── classification_model_utils.cpython-311.pyc
-│   │   │   ├── classification_model_utils.cpython-313.pyc
-│   │   │   ├── model_manager.cpython-311.pyc
-│   │   │   ├── model_manager.cpython-313.pyc
-│   │   │   └── model_utils.cpython-313.pyc
-│   │   ├── classification_model_utils.py
-│   │   ├── detection_model_utils.py
-│   │   ├── detection_models
-│   │   │   ├── __pycache__
-│   │   │   │   ├── torchvision_trainer.cpython-313.pyc
-│   │   │   │   └── yolo_trainer.cpython-313.pyc
-│   │   │   ├── torchvision_trainer.py
-│   │   │   └── yolo_trainer.py
-│   │   └── model_manager.py
-│   ├── optimization
-│   │   ├── __pycache__
-│   │   │   ├── optimization_utils.cpython-311.pyc
-│   │   │   └── optimization_utils.cpython-313.pyc
-│   │   └── optimization_utils.py
-│   ├── paths.py
-│   ├── pipelines
-│   │   ├── __pycache__
-│   │   │   ├── adaptive_image_classification.cpython-313.pyc
-│   │   │   ├── classification_pipe.cpython-311.pyc
-│   │   │   ├── classification_pipe.cpython-313.pyc
-│   │   │   ├── detection_pipe.cpython-311.pyc
-│   │   │   └── detection_pipe.cpython-313.pyc
-│   │   ├── classification_pipe.py
-│   │   ├── detection_pipe.py
-│   │   ├── init.py
-│   │   └── pipeline_utils.py
-│   ├── preprocessing
-│   │   ├── __pycache__
-│   │   │   ├── preprocessing.cpython-311.pyc
-│   │   │   ├── preprocessing.cpython-313.pyc
-│   │   │   ├── transformations.cpython-311.pyc
-│   │   │   └── transformations.cpython-313.pyc
-│   │   ├── preprocessing.py
-│   │   └── transformations.py
-│   ├── runners
-│   │   └── init.py
-│   ├── schemas
-│   │   ├── __pycache__
-│   │   │   ├── classification_hpo.cpython-311.pyc
-│   │   │   ├── classification_hpo.cpython-313.pyc
-│   │   │   ├── classification_model_requirements.cpython-311.pyc
-│   │   │   ├── classification_model_requirements.cpython-313.pyc
-│   │   │   ├── decision_schema.cpython-311.pyc
-│   │   │   ├── decision_schema.cpython-313.pyc
-│   │   │   ├── detection_hpo.cpython-311.pyc
-│   │   │   ├── detection_hpo.cpython-313.pyc
-│   │   │   ├── detection_model_requirements.cpython-311.pyc
-│   │   │   ├── detection_model_requirements.cpython-313.pyc
-│   │   │   ├── interpretation_schema.cpython-311.pyc
-│   │   │   ├── interpretation_schema.cpython-313.pyc
-│   │   │   ├── model_requirements.cpython-313.pyc
-│   │   │   └── training_schema.cpython-313.pyc
-│   │   ├── classification_hpo.py
-│   │   ├── classification_model_requirements.py
-│   │   ├── decision_schema.py
-│   │   ├── detection_hpo.py
-│   │   ├── detection_model_requirements.py
-│   │   ├── init.py
-│   │   ├── interpretation_schema.py
-│   │   └── user_task_schema.json
-│   ├── training
-│   │   ├── __pycache__
-│   │   │   ├── training_config.cpython-313.pyc
-│   │   │   ├── training_schema.cpython-313.pyc
-│   │   │   ├── training_utils.cpython-311.pyc
-│   │   │   └── training_utils.cpython-313.pyc
-│   │   ├── init.py
-│   │   ├── training_config.py
-│   │   └── training_utils.py
-│   └── userprompts
-│       ├── __pycache__
-│       │   └── user_prompts.cpython-313.pyc
-│       ├── init.py
-│       └── user_prompts.py
-├── routers
-│   ├── __pycache__
-│   │   ├── artifacts.cpython-313.pyc
-│   │   ├── execution.cpython-311.pyc
-│   │   ├── execution.cpython-313.pyc
-│   │   ├── planning.cpython-311.pyc
-│   │   └── planning.cpython-313.pyc
-│   ├── artifacts.py
-│   ├── execution.py
-│   └── planning.py
-├── run.py
-├── tree.txt
-├── vkg_llm_project.egg-info
-│   ├── PKG-INFO
-│   ├── SOURCES.txt
-│   ├── dependency_links.txt
-│   ├── entry_points.txt
-│   ├── requires.txt
-│   └── top_level.txt
-├── yolov10m.pt
-├── yolov8n.pt
-└── yolov8s.pt
+│   │   ├── jobs
+│   │   │   └── job_manager.py
+│   │   ├── models
+│   │   │   ├── classification_model_utils.py
+│   │   │   ├── detection_model_utils.py
+│   │   │   ├── detection_models
+│   │   │   │   ├── torchvision_trainer.py
+│   │   │   │   └── yolo_trainer.py
+│   │   │   ├── model_manager.py
+│   │   │   └── registry.py
+│   │   ├── optimization
+│   │   │   └── optimization_utils.py
+│   │   ├── paths.py
+│   │   ├── pipelines
+│   │   │   ├── classification_pipe.py
+│   │   │   ├── detection_pipe.py
+│   │   │   ├── init.py
+│   │   │   ├── vqa_pipe.py
+│   │   │   └── vqa_pipeline_utils.py
+│   │   ├── preprocessing
+│   │   │   ├── preprocessing.py
+│   │   │   └── transformations.py
+│   │   ├── runners
+│   │   │   └── init.py
+│   │   ├── schemas
+│   │   │   ├── classification_hpo.py
+│   │   │   ├── classification_model_requirements.py
+│   │   │   ├── decision_schema.py
+│   │   │   ├── detection_hpo.py
+│   │   │   ├── detection_model_requirements.py
+│   │   │   ├── init.py
+│   │   │   ├── interpretation_schema.py
+│   │   │   ├── vqa_hpo.py
+│   │   │   └── vqa_model_requirements.py
+│   │   ├── training
+│   │   │   ├── init.py
+│   │   │   ├── training_config.py
+│   │   │   └── training_utils.py
+│   │   └── userprompts
+│   │       ├── init.py
+│   │       └── user_prompts.py
+│   ├── routers
+│   │   ├── artifacts.py
+│   │   ├── execution.py
+│   │   └── planning.py
+│   ├── run.py
+│   ├── tree.txt
+│   ├── vkg_llm_project.egg-info
+│   │   ├── PKG-INFO
+│   │   ├── SOURCES.txt
+│   │   ├── dependency_links.txt
+│   │   ├── entry_points.txt
+│   │   ├── requires.txt
+│   │   └── top_level.txt
+│   ├── yolov10m.pt
+│   ├── yolov8n.pt
+│   └── yolov8s.pt
+├── uv.lock
+└── yolo11n.pt
 
-37 directories, 130 files
+25 directories, 106 files
