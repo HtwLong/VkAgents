@@ -294,7 +294,53 @@ def try_download_visionkg_simple4():
     from pprint import pprint
     pprint(result)
 
-#try_download_visionkg_simple4()
-# download_visionkg_mixed_datasets("experiment_001",  [ { "class_name": "bicycle", "sources": [ { "dataset_name": "objects365_det_train", "image_count": 1 }, { "dataset_name": "coco2017_det_train", "image_count": 1 }, { "dataset_name": "bdd_100k_det_train", "image_count": 1 } ] }, { "class_name": "pedestrian", "sources": [ { "dataset_name": "bdd_100k_det_train", "image_count": 1 }, { "dataset_name": "KITTI_det", "image_count": 1} ] } ])
-download_visionkg_images_flat("experiment_001",  [ { "class_name": "bicycle", "sources": [ { "dataset_name": "objects365_det_train", "image_count": 1 }, { "dataset_name": "coco2017_det_train", "image_count": 1 }, { "dataset_name": "bdd_100k_det_train", "image_count": 1 } ] }, { "class_name": "pedestrian", "sources": [ { "dataset_name": "bdd_100k_det_train", "image_count": 1 }, { "dataset_name": "KITTI_det", "image_count": 1} ] } ])
+def inspect_selected_config_flat_urls():
+    """Print one image URL per selected class/dataset pair without downloading."""
+    selected_data = [
+        {
+            "class_name": "car",
+            "sources": [
+                {"dataset_name": "bdd_100k_det_train", "count": 1},
+                {"dataset_name": "openimages_challenge_2019_det_train", "count": 1},
+                {"dataset_name": "bdd100k_UNIT_day2night_det_train", "count": 1},
+                {"dataset_name": "coco2017_det_train", "count": 1},
+                {"dataset_name": "ACDC_det_val_night", "count": 1},
+            ],
+        },
+        {
+            "class_name": "truck",
+            "sources": [
+                {"dataset_name": "objects365_det_train", "count": 1},
+                {"dataset_name": "bdd_100k_det_train", "count": 1},
+                {"dataset_name": "openimages_challenge_2019_det_train", "count": 1},
+                {"dataset_name": "bdd100k_cycleGAN_day2night_det_train", "count": 1},
+            ],
+        },
+        {
+            "class_name": "bus",
+            "sources": [
+                {"dataset_name": "objects365_det_train", "count": 1},
+                {"dataset_name": "bdd_100k_det_train", "count": 1},
+                {"dataset_name": "coco2017_det_train", "count": 1},
+            ],
+        },
+        {
+            "class_name": "motorcycle",
+            "sources": [
+                {"dataset_name": "objects365_det_train", "count": 1},
+                {"dataset_name": "openimages_challenge_2019_det_train", "count": 1},
+                {"dataset_name": "coco2017_det_train", "count": 1},
+                {"dataset_name": "LVIS_det_train", "count": 1},
+                {"dataset_name": "bdd100k_UNIT_day2night_det_train", "count": 1},
+            ],
+        },
+    ]
+    download_visionkg_images_flat(
+        "selected_config_flat_example",
+        selected_data,
+        download=False,
+    )
 
+
+if __name__ == "__main__":
+    inspect_selected_config_flat_urls()

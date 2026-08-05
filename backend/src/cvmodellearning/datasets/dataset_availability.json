@@ -1,0 +1,50 @@
+{
+  "datasets": {
+    "objects365_det_train": {
+      "downloadable": false,
+      "reason": "Image download/API is currently unavailable.",
+      "checked_at": "2026-07-28"
+    },
+    "cifar10_cls_test":{
+      "downloadable": false,
+      "reason": "Image download/API is currently unavailable.",
+      "checked_at": "2026-07-29"
+    },
+    "cifar10_cls_train":{
+      "downloadable": false,
+      "reason": "Image download/API is currently unavailable.",
+      "checked_at": "2026-07-29"
+    },
+    "cifar10_cls_val":{
+      "downloadable": false,
+      "reason": "Image download/API is currently unavailable.",
+      "checked_at": "2026-07-29"
+    },
+    "imageNet-1K_cls_train": {
+      "downloadable": false,
+      "reason": "VisionKG exposes ImageNet classes as WordNet IDs without human-readable label mappings.",
+      "checked_at": "2026-07-31"
+    },
+    "imageNet-1K_cls_val": {
+      "downloadable": false,
+      "reason": "VisionKG exposes ImageNet classes as WordNet IDs without human-readable label mappings.",
+      "checked_at": "2026-07-31"
+    },
+    "bdd100k_cycleGAN_day2night_det_train": {
+      "downloadable": false,
+      "reason": "Image download/API is currently unavailable.",
+      "checked_at": "2026-07-29"
+    },
+    "bdd100k_FDA_day2night_det_train": {
+      "downloadable": false,
+      "reason": "Image download/API is currently unavailable.",
+      "checked_at": "2026-07-30"
+    },
+    "cityscapes_det_train": {
+      "downloadable": false,
+      "reason": "Image download/API is currently unavailable.",
+      "checked_at": "2026-08-01"
+    }
+
+  }
+}

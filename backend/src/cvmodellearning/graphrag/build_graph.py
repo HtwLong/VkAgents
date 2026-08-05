@@ -55,6 +55,8 @@ from cvmodellearning.graphrag.visualize_utils import visualize_interactive_graph
 ENTITY_FILE_STEMS = [
     "tasks",
     "datasets",
+    "dataset_properties",
+    "dataset_characteristics",
     "domains",
     "models",
     "training_recipes",

@@ -562,6 +562,41 @@ def add_dataset_requirement_edges(G: nx.MultiDiGraph, dfs: DataFrames) -> None:
         )
 
 
+def add_dataset_characteristic_edges(G: nx.MultiDiGraph, dfs: DataFrames) -> None:
+    """Connect evidence-backed characteristic facts to datasets and properties."""
+    characteristics = dfs.get("dataset_characteristics", pd.DataFrame())
+    if characteristics.empty or not _has_columns(
+        characteristics,
+        ["id", "dataset_id", "property_id"],
+    ):
+        return
+
+    for _, row in characteristics.iterrows():
+        characteristic_id = _clean(row.get("id"))
+        dataset_id = _clean(row.get("dataset_id"))
+        property_id = _clean(row.get("property_id"))
+        evidence_id = _first_evidence_id(row)
+        confidence = _clean(row.get("confidence"))
+        _add_edge_if_nodes_exist(
+            G,
+            dataset_id,
+            characteristic_id,
+            "has_characteristic",
+            evidence_id=evidence_id,
+            confidence=confidence,
+            notes="Generated from dataset_characteristics.dataset_id.",
+        )
+        _add_edge_if_nodes_exist(
+            G,
+            characteristic_id,
+            property_id,
+            "characteristic_type",
+            evidence_id=evidence_id,
+            confidence=confidence,
+            notes="Generated from dataset_characteristics.property_id.",
+        )
+
+
 def add_generated_edges(G: nx.MultiDiGraph, dfs: DataFrames) -> nx.MultiDiGraph:
     """
     Add all generated edges to the graph.
@@ -580,4 +615,5 @@ def add_generated_edges(G: nx.MultiDiGraph, dfs: DataFrames) -> nx.MultiDiGraph:
     add_evaluation_metric_edges(G, dfs)
     add_adjustment_rule_edges(G, dfs)
     add_dataset_requirement_edges(G, dfs)
+    add_dataset_characteristic_edges(G, dfs)
     return G

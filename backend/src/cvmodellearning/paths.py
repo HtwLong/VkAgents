@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 def find_project_root(markers=("pyproject.toml", ".git")) -> Path:
@@ -9,6 +10,9 @@ def find_project_root(markers=("pyproject.toml", ".git")) -> Path:
 
 PROJECT_ROOT = find_project_root()
 RUNS_ROOT = (PROJECT_ROOT / "runs").resolve()
+VISIONKG_CACHE_ROOT = Path(
+    os.environ.get("VISIONKG_IMAGE_CACHE_DIR", PROJECT_ROOT / "dataset_cache" / "visionkg")
+).expanduser().resolve()
 
 def run_dir(job_id: str) -> Path:
     base = (RUNS_ROOT / job_id).resolve()
@@ -19,6 +23,11 @@ def run_dir(job_id: str) -> Path:
 
 def data_dir(job_id: str) -> Path:
     return (run_dir(job_id) / "data").resolve()
+
+def visionkg_cache_dir() -> Path:
+    """Return the persistent root for immutable images downloaded from VisionKG."""
+    VISIONKG_CACHE_ROOT.mkdir(parents=True, exist_ok=True)
+    return VISIONKG_CACHE_ROOT
 
 def train_data_dir(job_id: str) -> Path:
     return (data_dir(job_id) / "train").resolve()
@@ -48,7 +57,10 @@ def rationales_path(job_id: str) -> Path:
     return planning_artifacts_dir(job_id) / "planning_rationales.txt"
 
 def interpretation_path(job_id: str) -> Path:
-    return planning_artifacts_dir(job_id) / "RESULT_INTERPRETATION.json"
+    planning_dir = planning_artifacts_dir(job_id)
+    current = planning_dir / "STATE_01_INTERPRETATION.json"
+    legacy = planning_dir / "RESULT_INTERPRETATION.json"
+    return current if current.exists() or not legacy.exists() else legacy
 
 def hpo_config_path(job_id: str) -> Path:
     return planning_artifacts_dir(job_id) / "RESULT_HYPERPARAMETERS.json"
@@ -65,6 +77,21 @@ def val_csv_path(job_id: str) -> Path:
 
 def test_csv_path(job_id: str) -> Path:
     return data_dir(job_id) / "test_labels.csv"
+
+def dataset_manifest_path(job_id: str) -> Path:
+    return data_dir(job_id) / "dataset_manifest.json"
+
+def download_report_path(job_id: str) -> Path:
+    return artifacts_dir(job_id) / "download_report.json"
+
+def download_progress_path(job_id: str) -> Path:
+    return artifacts_dir(job_id) / "download_progress.json"
+
+def preparation_summary_path(job_id: str) -> Path:
+    return data_dir(job_id) / "preparation_summary.json"
+
+def data_provenance_path(job_id: str) -> Path:
+    return artifacts_dir(job_id) / "data_provenance.json"
 
 
 
@@ -105,6 +132,12 @@ def best_yolo_model_path(job_id: str) -> Path:
     """Path to the best YOLO model file (.pt)."""
     return artifacts_dir(job_id) / "best_model.pt"
 
+def lora_adapter_bundle_path(job_id: str) -> Path:
+    return artifacts_dir(job_id) / "best_lora_adapter.zip"
+
+def merged_model_path(job_id: str) -> Path:
+    return artifacts_dir(job_id) / "best_merged_model.pth"
+
 def metrics_csv_path(job_id: str) -> Path:
     return artifacts_dir(job_id) / "metrics_log.csv"
 
@@ -114,9 +147,9 @@ def metrics_json_path(job_id: str) -> Path:
 def test_cm_path(job_id: str) -> Path:
     return artifacts_dir(job_id) / "test_confusion_matrix.csv"
 
-def report_pdf_path(job_id: str) -> Path:
-    """Path to the consolidated PDF report."""
-    return artifacts_dir(job_id) / "report_summary.pdf"
+def evaluation_report_path(job_id: str) -> Path:
+    """Structured evaluation data consumed by the frontend results view."""
+    return artifacts_dir(job_id) / "evaluation_report.json"
 
 def test_report_json_path(job_id: str) -> Path:
     return artifacts_dir(job_id) / "test_classification_report.json"
@@ -124,24 +157,42 @@ def test_report_json_path(job_id: str) -> Path:
 def tool_call_args_path(job_id: str) -> Path:
     return artifacts_dir(job_id) / "tool_call_args.json"
 
-def unified_dataset_path() -> Path:
-    """Path to the unified dataset class list file."""
-    return PROJECT_ROOT / "src" / "cvmodellearning" / "download" / "unified_dataset.txt"
+def unified_dataset_path(task: str | None = None) -> Path:
+    """Path to the legacy or task-specific VisionKG class vocabulary."""
+    filenames = {
+        None: "unified_dataset.txt",
+        "classification": "unified_dataset_classification.txt",
+        "detection": "unified_dataset_detection.txt",
+    }
+    try:
+        filename = filenames[task]
+    except KeyError as exc:
+        raise ValueError(f"Unsupported vocabulary task: {task}") from exc
+    return PROJECT_ROOT / "src" / "cvmodellearning" / "download" / filename
 
 
 
 __all__ = [
     "PROJECT_ROOT",
     "RUNS_ROOT",
+    "VISIONKG_CACHE_ROOT",
     "find_project_root",
     "run_dir",
     "data_dir",
+    "visionkg_cache_dir",
     "artifacts_dir",
     "csv_labels_path",
     "train_csv_path",
     "val_csv_path",
     "test_csv_path",
+    "dataset_manifest_path",
+    "download_report_path",
+    "download_progress_path",
+    "preparation_summary_path",
+    "data_provenance_path",
     "best_model_path",
+    "lora_adapter_bundle_path",
+    "merged_model_path",
     "metrics_csv_path",
     "test_report_path",
     "test_cm_path",

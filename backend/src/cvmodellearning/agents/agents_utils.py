@@ -69,20 +69,28 @@ def find_project_root(markers=("pyproject.toml", ".git")) -> Path:
             return parent
     return here.parent
 
-def load_unified_dataset_classes() -> Set[str]:
+def load_unified_dataset_classes(task: str | None = None) -> Set[str]:
     """
-    Loads the unified_dataset.txt file using the centralized path.
+    Load the legacy vocabulary, or the native-task vocabulary used for planning.
+
+    VQA can use both classification and detection image sources, so it receives
+    the union of those vocabularies.
     Returns a set of strings for O(1) lookups.
     """
-    dataset_path = unified_dataset_path()
-
-    if not dataset_path.exists():
-        raise FileNotFoundError(f"Could not find unified_dataset.txt at {dataset_path}")
-
-    with open(dataset_path, "r", encoding="utf-8") as f:
-        # distinct lines, stripped, lowercase for case-insensitive matching
-        classes = {line.strip().lower() for line in f if line.strip()}
-    
+    vocabulary_tasks = (
+        ("classification", "detection")
+        if task == "visual question answering"
+        else (task,)
+    )
+    classes: Set[str] = set()
+    for vocabulary_task in vocabulary_tasks:
+        dataset_path = unified_dataset_path(vocabulary_task)
+        if not dataset_path.exists():
+            raise FileNotFoundError(f"Could not find class vocabulary at {dataset_path}")
+        with open(dataset_path, "r", encoding="utf-8") as vocabulary:
+            classes.update(
+                line.strip().lower() for line in vocabulary if line.strip()
+            )
     return classes
 
 def log_planning_step(job_id: str, step_name: str, input_context: Any, rationale: str, output_summary: Any, round_num: int = None):

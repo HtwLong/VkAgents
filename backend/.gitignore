@@ -6,10 +6,16 @@ dist/
 wheels/
 *.egg-info
 .DS_Store
+__pycache__/
+*.py[cod]
+
+# These are downloaded model weights
+*.pt
 
 .git
 
 runs/
+dataset_cache/
 src/yolov10m.pt
 src/yolov8n.pt
 src/yolov8s.pt
