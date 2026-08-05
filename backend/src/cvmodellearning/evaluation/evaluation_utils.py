@@ -2,11 +2,12 @@ import torch
 from sklearn.metrics import precision_recall_fscore_support, classification_report, confusion_matrix
 import numpy as np
 
-@torch.no_grad()
+@torch.inference_mode()
 def evaluate(classes, model, loader, criterion, device):
     model.eval()
     running_loss = 0.0
     running_correct = 0
+    running_top5_correct = 0
     total = 0
 
     all_preds = []
@@ -22,6 +23,9 @@ def evaluate(classes, model, loader, criterion, device):
         running_loss += loss.item() * images.size(0)
         preds = outputs.argmax(dim=1)
         running_correct += (preds == targets).sum().item()
+        if outputs.shape[1] >= 5:
+            top5 = outputs.topk(5, dim=1).indices
+            running_top5_correct += top5.eq(targets[:, None]).any(dim=1).sum().item()
         total += images.size(0)
 
         all_preds.append(preds.cpu().numpy())
@@ -69,6 +73,8 @@ def evaluate(classes, model, loader, criterion, device):
             "classification_report_dict": report_dict,
             "confusion_matrix": cm.tolist(),
         })
+        if len(classes) >= 5:
+            metrics["top5_acc"] = float(running_top5_correct / total)
     else:
         metrics.update({"accuracy": 0.0, "loss": epoch_loss})
 

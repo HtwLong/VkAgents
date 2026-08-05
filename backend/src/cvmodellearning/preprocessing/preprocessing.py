@@ -8,7 +8,12 @@ from torch.utils.data import Dataset
 # Dataset class for loading images and labels from CSV
 class CocoImageDataset(Dataset):
     def __init__(self, csv_file, root_dir, transform=None, class_to_idx=None):
-        self.data = pd.read_csv(csv_file, header=0, names=['image_filename', 'labels'])
+        self.data = pd.read_csv(
+            csv_file,
+            header=0,
+            names=['image_filename', 'labels'],
+            dtype={'labels': str},
+        )
         self.root_dir = root_dir
         self.transform = transform
 

@@ -1,7 +1,9 @@
-from typing import Optional, List, Union
-from typing_extensions import TypedDict, Literal
-from typing import List, Optional, Literal
+from typing import List, Literal, Optional, Union
+
 from pydantic import BaseModel, Field, ConfigDict, model_validator
+from typing_extensions import TypedDict
+
+from cvmodellearning.training.resource_guard import MAX_IMAGE_SIDE
 
 # ----- Optimizer specs (unchanged) -----
 class AdamWSpec(TypedDict, total=False):
@@ -42,12 +44,8 @@ class BCEWithLogitsSpec(TypedDict, total=False):
 CriterionSpec = Union[CrossEntropySpec, BCEWithLogitsSpec]
 
 # ----- Model spec (from your model factory) -----
-from typing_extensions import Literal
 class ResNet50Spec(TypedDict, total=False):
     name: Literal["resnet50"]
-    weights: Literal["default", "none"]
-class VGG16Spec(TypedDict, total=False):
-    name: Literal["vgg16"]
     weights: Literal["default", "none"]
 class MobileNetV2Spec(TypedDict, total=False):
     name: Literal["mobilenet_v2"]
@@ -55,8 +53,14 @@ class MobileNetV2Spec(TypedDict, total=False):
 class MobileNetV3LargeSpec(TypedDict, total=False):
     name: Literal["mobilenet_v3_large"]
     weights: Literal["default", "none"]
+class MobileNetV3SmallSpec(TypedDict, total=False):
+    name: Literal["mobilenet_v3_small"]
+    weights: Literal["default", "none"]
 class EfficientNetB0Spec(TypedDict, total=False):
-    name: Literal["efficientnet_b0"]
+    name: Literal[
+        "efficientnet_b0", "efficientnet_b1", "efficientnet_b2", "efficientnet_b3",
+        "efficientnet_b4", "efficientnet_b5", "efficientnet_b6", "efficientnet_b7",
+    ]
     weights: Literal["default", "none"]
 class DenseNet121Spec(TypedDict, total=False):
     name: Literal["densenet121"]
@@ -69,8 +73,8 @@ class ViTB16Spec(TypedDict, total=False):
     weights: Literal["default", "none"]
 
 ModelSpec = Union[
-    ResNet50Spec, VGG16Spec,
-    MobileNetV2Spec, MobileNetV3LargeSpec,
+    ResNet50Spec,
+    MobileNetV2Spec, MobileNetV3LargeSpec, MobileNetV3SmallSpec,
     EfficientNetB0Spec, DenseNet121Spec,
     ConvNeXtTinySpec, ViTB16Spec,
 ]
@@ -130,8 +134,10 @@ class TrainingConfigModel(BaseModel):
 
     # Model selection (no unions)
     model_name: Literal[
-        "resnet50", "vgg16", "mobilenet_v2", "mobilenet_v3_large",
-        "efficientnet_b0", "densenet121", "convnext_tiny", "vit_b_16"
+        "resnet50", "mobilenet_v2", "mobilenet_v3_large", "mobilenet_v3_small",
+        "efficientnet_b0", "efficientnet_b1", "efficientnet_b2", "efficientnet_b3",
+        "efficientnet_b4", "efficientnet_b5", "efficientnet_b6", "efficientnet_b7",
+        "densenet121", "convnext_tiny", "vit_b_16"
     ]
     model_weights: Literal["default", "none"] = "default"
 
@@ -156,7 +162,7 @@ class TrainingConfigModel(BaseModel):
     pos_weight: Optional[float] = Field(default=None, gt=0)             # bce_with_logit
 
     # Optional: image size or other global params, kept simple
-    image_size: Optional[int] = Field(default=None, ge=16)
+    image_size: Optional[int] = Field(default=None, ge=16, le=MAX_IMAGE_SIDE)
 
     @model_validator(mode="after")
     def _validate_combinations(self):
