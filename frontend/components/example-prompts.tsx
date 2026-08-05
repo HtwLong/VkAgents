@@ -2,7 +2,7 @@
 
 import { GripVertical } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { EXAMPLE_PROMPTS, TASK_LABELS, type ExamplePrompt } from "@/lib/pipeline"
+import { DOMAIN_LABELS, EXAMPLE_PROMPTS, TASK_LABELS, type ExamplePrompt } from "@/lib/pipeline"
 
 export function ExamplePrompts({
   onUse,
@@ -12,8 +12,8 @@ export function ExamplePrompts({
   disabled?: boolean
 }) {
   return (
-    <div className="flex w-full flex-col lg:w-80">
-      <span className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
+    <div className="flex w-full flex-col">
+      <span className="ui-subsection-title mb-1.5 block">
         Example prompts
       </span>
       <div className="flex max-h-[17.5rem] flex-col gap-2 overflow-y-auto rounded-md border border-border bg-card/50 p-2 lg:max-h-none lg:h-44">
@@ -39,10 +39,15 @@ export function ExamplePrompts({
               aria-hidden
             />
             <span className="flex flex-col gap-1">
-              <span className="w-fit rounded-sm bg-secondary px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-secondary-foreground">
-                {TASK_LABELS[p.task]}
+              <span className="flex flex-wrap gap-1">
+                <span className="w-fit rounded-sm border border-sky-500/30 bg-sky-500/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-sky-700 dark:text-sky-300">
+                  Task: {TASK_LABELS[p.task]}
+                </span>
+                <span className="w-fit rounded-sm bg-primary/15 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-primary">
+                  {DOMAIN_LABELS[p.domain]}
+                </span>
               </span>
-              <span className="line-clamp-3 text-xs leading-relaxed text-muted-foreground">
+              <span className="ui-caption line-clamp-3">
                 {p.text}
               </span>
             </span>

@@ -1,10 +1,10 @@
-import { Button as ButtonPrimitive } from '@base-ui/react/button'
+import type { ComponentProps, MouseEvent } from 'react'
 import { cva, type VariantProps } from 'class-variance-authority'
 
 import { cn } from '@/lib/utils'
 
 const buttonVariants = cva(
-  "group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 data-disabled:pointer-events-none data-disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
@@ -44,13 +44,32 @@ function Button({
   className,
   variant = 'default',
   size = 'default',
+  disabled,
+  onClick,
+  tabIndex,
+  type = 'button',
   ...props
-}: ButtonPrimitive.Props & VariantProps<typeof buttonVariants>) {
+}: ComponentProps<'button'> & VariantProps<typeof buttonVariants>) {
+  const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
+    if (disabled) {
+      event.preventDefault()
+      event.stopPropagation()
+      return
+    }
+
+    onClick?.(event)
+  }
+
   return (
-    <ButtonPrimitive
-      data-slot="button"
-      className={cn(buttonVariants({ variant, size, className }))}
+    <button
       {...props}
+      type={type}
+      data-slot="button"
+      data-disabled={disabled ? '' : undefined}
+      aria-disabled={disabled || undefined}
+      tabIndex={disabled ? -1 : tabIndex}
+      className={cn(buttonVariants({ variant, size, className }))}
+      onClick={handleClick}
     />
   )
 }

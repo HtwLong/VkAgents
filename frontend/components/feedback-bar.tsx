@@ -4,7 +4,13 @@ import { useState } from "react"
 import { Check, RotateCcw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
-export function FeedbackBar({ onRetry }: { onRetry: () => void }) {
+export function FeedbackBar({
+  onRetry,
+  disabled,
+}: {
+  onRetry: () => void
+  disabled?: boolean
+}) {
   const [feedback, setFeedback] = useState("")
   const [sent, setSent] = useState(false)
 
@@ -18,14 +24,12 @@ export function FeedbackBar({ onRetry }: { onRetry: () => void }) {
   }
 
   return (
-    <section className="rounded-lg border border-border bg-card p-4">
+    <section className="surface-card rounded-2xl border border-white/80 bg-card p-4 sm:p-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
         <div className="flex flex-1 flex-col gap-2">
-          <label
-            htmlFor="feedback"
-            className="text-xs font-medium uppercase tracking-wider text-muted-foreground"
-          >
-            Feedback to the pipeline
+          <h2 className="ui-card-title">Feedback to the pipeline</h2>
+          <label htmlFor="feedback" className="sr-only">
+            Feedback message
           </label>
           <div className="flex gap-2">
             <input
@@ -47,10 +51,11 @@ export function FeedbackBar({ onRetry }: { onRetry: () => void }) {
             </Button>
           </div>
         </div>
-        <div className="flex flex-col gap-2 sm:pt-[1.625rem]">
+        <div className="flex flex-col gap-2 sm:pt-8">
           <Button
             variant="outline"
             onClick={onRetry}
+            disabled={disabled}
             className="bg-transparent"
           >
             <RotateCcw className="size-4" aria-hidden /> Retry run

@@ -2,6 +2,7 @@
 
 import { Download, FileText, Package } from "lucide-react"
 import { cn } from "@/lib/utils"
+import type { DeliverableArtifact } from "@/lib/pipeline"
 
 function OutputCard({
   icon,
@@ -60,48 +61,49 @@ function OutputCard({
   )
 }
 
-export function PipelineOutputs({ ready }: { ready: boolean }) {
-  const download = (name: string, content: string) => {
-    const blob = new Blob([content], { type: "text/plain" })
-    const url = URL.createObjectURL(blob)
+export function PipelineOutputs({
+  ready,
+  artifacts,
+}: {
+  ready: boolean
+  artifacts: DeliverableArtifact[]
+}) {
+  const download = (url?: string) => {
+    if (!url) return
     const a = document.createElement("a")
     a.href = url
-    a.download = name
+    a.download = ""
     a.click()
-    URL.revokeObjectURL(url)
   }
 
+  const displayedArtifacts = artifacts.length > 0
+    ? artifacts
+    : [
+        {
+          id: "model-placeholder",
+          kind: "full_model",
+          label: "Model artifact",
+          filename: "model artifact",
+        },
+      ]
+
   return (
-    <div className="flex flex-col gap-2">
-      <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-        Deliverables
-      </span>
-      <div className="flex flex-col gap-2.5 sm:flex-row">
-        <OutputCard
-          icon={<Package className="size-5" aria-hidden />}
-          title="Trained model"
-          meta="model.safetensors · 112 MB"
-          ready={ready}
-          onDownload={() =>
-            download(
-              "model.safetensors.txt",
-              "Placeholder model artifact exported by the Adaptive CV Pipeline.",
-            )
-          }
-        />
-        <OutputCard
-          icon={<FileText className="size-5" aria-hidden />}
-          title="PDF summary"
-          meta="report.pdf · 1.4 MB"
-          ready={ready}
-          onDownload={() =>
-            download(
-              "report.txt",
-              "Adaptive CV Pipeline — Training & Evaluation Summary.\nTop-1 accuracy: 0.947 · Latency: 8.3ms/img.",
-            )
-          }
-        />
+    <section className="surface-card flex flex-col gap-3 rounded-2xl border border-white/80 bg-white/82 p-4 sm:p-5">
+      <h2 className="ui-card-title">Deliverables</h2>
+      <div className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
+        {displayedArtifacts.map((artifact) => (
+          <OutputCard
+            key={artifact.id}
+            icon={["configuration", "provenance_audit"].includes(artifact.kind)
+              ? <FileText className="size-5" aria-hidden />
+              : <Package className="size-5" aria-hidden />}
+            title={artifact.label}
+            meta={artifact.description ?? artifact.filename}
+            ready={ready && !!artifact.downloadUrl}
+            onDownload={() => download(artifact.downloadUrl)}
+          />
+        ))}
       </div>
-    </div>
+    </section>
   )
 }
