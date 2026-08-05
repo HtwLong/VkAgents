@@ -5,8 +5,10 @@ from agents import function_tool, RunContextWrapper
 import torch.nn as nn
 import torch.optim as optim
 import torch
+from cvmodellearning.schemas.hpo_runtime import training_compatible_hpo_config
 
 def make_optimizer(params, config: dict):
+    config = training_compatible_hpo_config(config)
     name = config.get("optimizer_name")
     if name == "adamw":
         return optim.AdamW(
@@ -37,6 +39,7 @@ def make_optimizer(params, config: dict):
     raise ValueError(f"Unsupported optimizer: {name}")
 
 def make_criterion(config: dict):
+    config = training_compatible_hpo_config(config)
     name = config["criterion_name"]
     if name == "cross_entropy":
         return nn.CrossEntropyLoss(

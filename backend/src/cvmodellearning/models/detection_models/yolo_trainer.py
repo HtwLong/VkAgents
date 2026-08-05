@@ -1,24 +1,20 @@
 from pathlib import Path
 import torch
 from ultralytics import YOLO
-from ultralytics.models.yolo.detect.train import DetectionTrainer 
-import torch.optim as optim
-import torch.nn as nn
-from typing import List, Literal, Optional, Dict, Any, Union
-import inspect
+from typing import List, Literal, Optional, Dict, Any, Union, Mapping
 import yaml
 import json
 import shutil
-import os
-from agents import function_tool
+from cvmodellearning.download.image_cache import link_or_copy
+from cvmodellearning.jobs.run_control import PipelineCancelled, cancellation_requested, raise_if_cancelled
+from cvmodellearning.training.hardware import detect_training_backend
 
 # --- Import all path functions from your paths.py ---
 from cvmodellearning.paths import (
+    PROJECT_ROOT,
     run_dir, 
-    artifacts_dir, 
     tool_call_args_path, 
     training_log_path, 
-    best_model_path, 
     yolo_data_yaml_path, 
     best_yolo_model_path,
     plots_dir
@@ -53,50 +49,7 @@ def progress_update_callback(trainer, job_id: str):
         print(f"Warning: Could not write progress file {progress_file}: {e}")
 
 
-# --- 1. Custom Trainer Class ---
-class FlexibleYOLODetector(DetectionTrainer):
-    """
-    Overrides the DetectionTrainer to allow passing arbitrary, optimizer-specific arguments 
-    for any Ultralytics-based YOLO version (v8, v10, v11, v12).
-    """
-    def build_optimizer(self, model, name='auto', lr=0.01, momentum=0.937, weight_decay=0.0005, **kwargs):
-        g = [], [], []  # weight_decay, no_weight_decay, bias
-        for p in model.modules():
-            if hasattr(p, 'bias') and p.bias is not None:
-                g[2].append(p.bias)
-            if isinstance(p, nn.BatchNorm2d):
-                g[1].append(p.weight)
-            elif hasattr(p, 'weight') and p.weight is not None:
-                g[0].append(p.weight)
-
-        OptimizerClass = {
-            'sgd': optim.SGD,
-            'adamw': optim.AdamW,
-            'rmsprop': optim.RMSprop,
-            'auto': optim.AdamW
-        }.get(name.lower(), optim.AdamW)
-
-        core_args = {'lr': lr, 'weight_decay': weight_decay}
-        sig = inspect.signature(OptimizerClass)
-        optimizer_args = {}
-
-        if 'momentum' in sig.parameters:
-            optimizer_args['momentum'] = momentum
-        elif 'betas' in sig.parameters:
-            beta1 = momentum
-            beta2 = kwargs.pop('beta2', 0.999) 
-            optimizer_args['betas'] = (beta1, beta2)
-
-        if name.lower() == 'rmsprop' and 'alpha' in sig.parameters:
-            optimizer_args['alpha'] = kwargs.pop('alpha', 0.99)
-            
-        if 'eps' in sig.parameters:
-            optimizer_args['eps'] = kwargs.pop('eps', 1e-8)
-            
-        final_args = {**core_args, **optimizer_args}
-        return OptimizerClass(g[0], **final_args), g
-
-# --- 2. The Flexible Wrapper Function ---
+# --- Training wrapper ---
 
 MODEL_BASE_MAP = {
     'yolo_v8': 'yolov8',
@@ -105,28 +58,49 @@ MODEL_BASE_MAP = {
     'yolo_v12': 'yolo12', # Correct mapping (no 'v')
 }
 
+MPS_CPU_FALLBACK_VERSIONS = {"yolo_v11", "yolo_v12"}
+
 type YoloVersionLiteral = Literal['yolo_v8', 'yolo_v10', 'yolo_v11', 'yolo_v12']
 type YoloSizeLiteral = Literal['n', 's', 'm', 'l', 'x']
-type OptimizerLiteral = Literal['SGD', 'AdamW', 'RMSprop']
+type OptimizerLiteral = Literal['auto', 'SGD', 'AdamW', 'RMSProp']
 
-def ensure_model_exists(model_name: str):
+def ensure_model_exists(model_name: str) -> str:
     """
     Checks if the model file exists locally. If not, explicitly triggers a download.
     This prevents the 'No such file' error when Ultralytics fails to auto-download custom strings.
     """
     if Path(model_name).exists():
-        return
+        return model_name
+    bundled_model = PROJECT_ROOT / "src" / model_name
+    if bundled_model.exists():
+        return str(bundled_model)
 
     print(f"📥 Model '{model_name}' not found locally. Attempting explicit download...")
     try:
         # Initializing YOLO() with a .pt file usually triggers a download if missing
         YOLO(model_name)
         print(f"✅ Download complete: {model_name}")
+        return model_name
     except Exception as e:
         print(f"⚠️ Could not auto-download {model_name}. Please ensure internet access or place the file manually.")
         print(f"Error details: {e}")
+        raise FileNotFoundError(f"Pretrained checkpoint is unavailable: {model_name}") from e
 
-def flexible_yolo_training(
+
+def _move_best_checkpoint(run_directory: Path, target_path: Path) -> None:
+    """Move the best available checkpoint or fail the training run explicitly."""
+    weights_directory = run_directory / "weights"
+    preferred = weights_directory / "best.pt"
+    candidates = [preferred] if preferred.exists() else sorted(weights_directory.glob("*.pt"))
+    if not candidates:
+        raise FileNotFoundError(
+            f"YOLO training produced no checkpoint in {weights_directory}."
+        )
+    if candidates[0] != preferred:
+        print(f"⚠️ 'best.pt' missing, taking {candidates[0].name} instead.")
+    shutil.move(str(candidates[0]), str(target_path))
+
+def _run_yolo_training(
     job_id: str, 
     model_version: YoloVersionLiteral, 
     model_size: YoloSizeLiteral, 
@@ -147,18 +121,27 @@ def flexible_yolo_training(
     dfl: float,
     mosaic: float,
     mixup: float,
+    cutmix: float,
+    copy_paste: float,
     fliplr: float,
     scale: float,
     degrees: float,
     hsv_h: float,
+    hsv_s: float,
+    hsv_v: float,
+    translate: float,
     close_mosaic: int,
+    single_cls: bool,
+    rect: bool,
+    multi_scale: float,
+    amp: bool,
+    seed: int,
     freeze: Optional[int] = None, 
-    **optimizer_kwargs: Dict[str, Any]
 ):
     
     ULTRALYTICS_PROJECT_ROOT = str(run_dir(job_id)) 
     ULTRALYTICS_RUN_NAME = 'temp_run'
-    ultralytics_output_dir = Path(ULTRALYTICS_PROJECT_ROOT) / 'detect' / ULTRALYTICS_RUN_NAME
+    ultralytics_output_dir = Path(ULTRALYTICS_PROJECT_ROOT) / ULTRALYTICS_RUN_NAME
     
     if ultralytics_output_dir.exists():
         print(f"Cleaning up previous run directory to ensure fresh start: {ultralytics_output_dir}")
@@ -176,17 +159,19 @@ def flexible_yolo_training(
         raise ValueError(f"Invalid model_version: {model_version}. Must be one of {list(MODEL_BASE_MAP.keys())}")
     
     # --- Ensure model exists before training ---
-    ensure_model_exists(final_model_name)
+    final_model_name = ensure_model_exists(final_model_name)
     
     print(f"Loading model: {final_model_name}...")
     
     try:
         model = YOLO(final_model_name)
-        model.trainer = FlexibleYOLODetector
-        model.args = {**model.args, **optimizer_kwargs}
 
-        device = select_ultralytics_device_string()
-        model.add_callback('on_train_epoch_end', lambda trainer: progress_update_callback(trainer, job_id=job_id))
+        device = select_yolo_training_device(model_version)
+        def on_epoch_end(trainer):
+            progress_update_callback(trainer, job_id=job_id)
+            if cancellation_requested(job_id):
+                trainer.stop = True
+        model.add_callback('on_train_epoch_end', on_epoch_end)
         
         model.train(
             data=data_yaml_path,
@@ -211,13 +196,26 @@ def flexible_yolo_training(
             dfl=dfl,
             mosaic=mosaic,
             mixup=mixup,
+            cutmix=cutmix,
+            copy_paste=copy_paste,
             fliplr=fliplr,
             scale=scale,
             degrees=degrees,
+            translate=translate,
             hsv_h=hsv_h,
+            hsv_s=hsv_s,
+            hsv_v=hsv_v,
             close_mosaic=close_mosaic,
-            freeze=freeze, 
+            single_cls=single_cls,
+            rect=rect,
+            multi_scale=multi_scale,
+            freeze=freeze,
+            amp=amp,
+            seed=seed,
+            cos_lr=False,
+            deterministic=True,
         )
+        raise_if_cancelled(job_id)
         print(f"Training finished successfully for model {final_model_name}.")
 
         # Post-Training Artifact Relocation
@@ -235,18 +233,8 @@ def flexible_yolo_training(
         target_plots_dir = plots_dir(job_id)
 
         # A. Move Best Model
-        ultralytics_best_pt = actual_run_dir / 'weights' / 'best.pt'
-        if ultralytics_best_pt.exists():
-            shutil.move(ultralytics_best_pt, target_model_path)
-            print(f"✅ Best model moved to: {target_model_path}")
-        else:
-            print(f"❌ Warning: Could not find {ultralytics_best_pt}")
-            weights_dir = actual_run_dir / 'weights'
-            if weights_dir.exists():
-                pt_files = list(weights_dir.glob("*.pt"))
-                if pt_files:
-                    print(f"⚠️ 'best.pt' missing, taking {pt_files[0].name} instead.")
-                    shutil.move(str(pt_files[0]), str(target_model_path))
+        _move_best_checkpoint(actual_run_dir, target_model_path)
+        print(f"✅ Best model moved to: {target_model_path}")
         
         # B. Move Training Log
         ultralytics_results_csv = actual_run_dir / 'results.csv'
@@ -270,21 +258,54 @@ def flexible_yolo_training(
         
         print(f"✅ Copied {files_moved_count} visualization plots.")
 
+    except PipelineCancelled:
+        raise
     except Exception as e:
         print(f"An error occurred during training: {e}")
         raise e # Re-raise to ensure the agent knows it failed
 
-def convert_json_to_yolo_txt(json_path: Path, output_labels_dir: Path, categories: List[Dict]):
-    """
-    Converts COCO JSON to YOLO txt. Uses 'image_path' or 'file_name' to generate 
-    a flattened label name that perfectly matches the flattened image name.
-    """
+def _safe_flattened_image_name(relative_path: str) -> str:
+    normalized = Path(relative_path).as_posix().lstrip("/")
+    if not normalized or ".." in Path(normalized).parts:
+        raise ValueError(f"Unsafe image path in annotations: {relative_path!r}")
+    return normalized.replace("/", "__")
+
+
+def _source_image_path(data_dir_path: Path, relative_path: str) -> Path:
+    path_value = Path(relative_path)
+    if path_value.is_absolute() or ".." in path_value.parts:
+        raise ValueError(f"Unsafe image path in annotations: {relative_path!r}")
+    direct = data_dir_path / path_value
+    if direct.is_file():
+        return direct
+
+    normalized = Path(relative_path).as_posix().lstrip("/")
+    candidates = [
+        path
+        for path in data_dir_path.rglob(Path(normalized).name)
+        if path.is_file()
+        and "yolo_dataset" not in path.parts
+        and path.as_posix().endswith(normalized)
+    ]
+    if len(candidates) == 1:
+        return candidates[0]
+    if not candidates:
+        raise FileNotFoundError(f"Image referenced by annotations was not found: {relative_path}")
+    raise ValueError(f"Image path is ambiguous: {relative_path}; matches={candidates}")
+
+
+def convert_json_to_yolo_split(
+    json_path: Path,
+    data_dir_path: Path,
+    output_images_dir: Path,
+    output_labels_dir: Path,
+    categories: List[Dict],
+) -> None:
+    """Materialize one COCO split as an isolated Ultralytics images/labels pair."""
     with open(json_path, 'r') as f:
         data = json.load(f)
 
     output_labels_dir.mkdir(parents=True, exist_ok=True)
-    images_info = {img['id']: img for img in data['images']}
-    
     sorted_cats = sorted(categories, key=lambda x: x['id'])
     cat_id_to_index = {cat['id']: i for i, cat in enumerate(sorted_cats)}
     
@@ -295,36 +316,55 @@ def convert_json_to_yolo_txt(json_path: Path, output_labels_dir: Path, categorie
             img_annotations[img_id] = []
         img_annotations[img_id].append(ann)
 
-    for img_id, img_data in images_info.items():
-        img_w = img_data['width']
-        img_h = img_data['height']
-        
-        # 1. Grab the most complete path available in your JSON
-        rel_path_str = img_data.get('image_path', img_data.get('file_name'))
-        
-        # 2. Flatten it by replacing slashes with underscores
-        flattened_name = str(Path(rel_path_str).as_posix()).replace('/', '_')
-        txt_name = Path(flattened_name).stem + ".txt"
-        
-        txt_path = output_labels_dir / txt_name
-        
+    output_images_dir.mkdir(parents=True, exist_ok=True)
+    output_labels_dir.mkdir(parents=True, exist_ok=True)
+    used_names: set[str] = set()
+    used_label_names: set[str] = set()
+    for img_data in data['images']:
+        img_id = img_data['id']
+        img_w = float(img_data['width'])
+        img_h = float(img_data['height'])
+        if img_w <= 0 or img_h <= 0:
+            raise ValueError(f"Image {img_id} has invalid dimensions: {img_w}x{img_h}")
+
+        rel_path_str = img_data.get('image_path') or img_data.get('file_name')
+        if not rel_path_str:
+            raise ValueError(f"Image {img_id} has no image_path or file_name")
+        flattened_name = _safe_flattened_image_name(str(rel_path_str))
+        if flattened_name in used_names:
+            raise ValueError(f"Flattened YOLO filename collision: {flattened_name}")
+        used_names.add(flattened_name)
+        label_name = f"{Path(flattened_name).stem}.txt"
+        if label_name in used_label_names:
+            raise ValueError(f"Flattened YOLO label collision: {label_name}")
+        used_label_names.add(label_name)
+
+        source_path = _source_image_path(data_dir_path, str(rel_path_str))
+        link_or_copy(source_path, output_images_dir / flattened_name)
+        txt_path = output_labels_dir / label_name
+
         with open(txt_path, 'w') as f_txt:
-            if img_id in img_annotations:
-                for ann in img_annotations[img_id]:
-                    x_min, y_min, w, h = ann['bbox']
-                    original_cat_id = ann['category_id']
+            for ann in img_annotations.get(img_id, []):
+                x_min, y_min, width, height = map(float, ann['bbox'])
+                original_cat_id = ann['category_id']
+                if original_cat_id not in cat_id_to_index or width <= 0 or height <= 0:
+                    continue
 
-                    if original_cat_id not in cat_id_to_index:
-                        continue
+                x_max = min(img_w, max(0.0, x_min + width))
+                y_max = min(img_h, max(0.0, y_min + height))
+                x_min = min(img_w, max(0.0, x_min))
+                y_min = min(img_h, max(0.0, y_min))
+                width = x_max - x_min
+                height = y_max - y_min
+                if width <= 0 or height <= 0:
+                    continue
 
-                    final_class_idx = cat_id_to_index[original_cat_id]
-
-                    x_center = (x_min + w / 2) / img_w
-                    y_center = (y_min + h / 2) / img_h
-                    w_norm = w / img_w
-                    h_norm = h / img_h
-                    
-                    f_txt.write(f"{final_class_idx} {x_center:.6f} {y_center:.6f} {w_norm:.6f} {h_norm:.6f}\n")
+                f_txt.write(
+                    f"{cat_id_to_index[original_cat_id]} "
+                    f"{(x_min + width / 2) / img_w:.6f} "
+                    f"{(y_min + height / 2) / img_h:.6f} "
+                    f"{width / img_w:.6f} {height / img_h:.6f}\n"
+                )
 
                     
 def create_yolo_data_yaml(
@@ -336,58 +376,32 @@ def create_yolo_data_yaml(
     val_json = data_dir_path / "val_annotations.json"
     test_json = data_dir_path / "test_annotations.json"
 
-    images_dir = data_dir_path / "images"
-    labels_dir = data_dir_path / "labels"
-    
-    images_dir.mkdir(exist_ok=True)
-    labels_dir.mkdir(exist_ok=True)
+    yolo_root = data_dir_path / "yolo_dataset"
+    if yolo_root.exists():
+        shutil.rmtree(yolo_root)
 
-    print("🔄 Reorganizing data with Full Path Flattening to avoid collisions...")
-    
-    for item in data_dir_path.rglob('*'):
-        if item.is_file() and item.suffix.lower() in ['.jpg', '.jpeg', '.png', '.bmp']:
-            
-            # Ensure we aren't moving files already inside the destination directory
-            if item.parent.resolve() != images_dir.resolve():
-                
-                # Get the path relative to the root data folder
-                rel_path = item.relative_to(data_dir_path)
-                
-                # Replace slashes with underscores to create the flattened name
-                new_filename = str(rel_path.as_posix()).replace('/', '_')
-                new_filepath = images_dir / new_filename
-                
-                try:
-                    shutil.move(str(item), str(new_filepath))
-                except shutil.Error as e:
-                    print(f"⚠️ Could not move {item.name}: {e}")
+    split_json = {"train": train_json, "val": val_json, "test": test_json}
+    for split_name, split_path in split_json.items():
+        if not split_path.exists():
+            raise FileNotFoundError(f"Missing {split_name} annotations: {split_path}")
+        convert_json_to_yolo_split(
+            split_path,
+            data_dir_path,
+            yolo_root / "images" / split_name,
+            yolo_root / "labels" / split_name,
+            categories,
+        )
 
-    # Remove empty subfolders to clean up
-    for dir_path in sorted(data_dir_path.rglob('*'), key=lambda x: len(x.parts), reverse=True):
-        if dir_path.is_dir() and dir_path not in [images_dir, labels_dir]:
-            try:
-                dir_path.rmdir() 
-            except OSError:
-                pass 
-
-    print("🔄 Converting COCO JSON to YOLO TXT format...")
-    if train_json.exists():
-        convert_json_to_yolo_txt(train_json, labels_dir, categories)
-    if val_json.exists():
-        convert_json_to_yolo_txt(val_json, labels_dir, categories)
-    if test_json.exists():
-        convert_json_to_yolo_txt(test_json, labels_dir, categories)
-        
-    print(f"✅ Data preparation complete. Images in {images_dir}, Labels in {labels_dir}")
+    print(f"✅ Data preparation complete at {yolo_root}")
 
     class_names = [c['name'] for c in sorted(categories, key=lambda x: x['id'])]
     names_dict = {i: name for i, name in enumerate(class_names)}
 
     yaml_data = {
-        'path': str(data_dir_path.resolve()), 
-        'train': "images", 
-        'val': "images",
-        'test': "images",
+        'path': str(yolo_root.resolve()),
+        'train': "images/train",
+        'val': "images/val",
+        'test': "images/test",
         'nc': len(class_names),
         'names': names_dict
     }
@@ -400,98 +414,119 @@ def create_yolo_data_yaml(
     return yaml_path
 
 def select_ultralytics_device_string() -> Optional[Union[str, int]]:
-    if torch.cuda.is_available():
-        return '0' 
-    elif torch.backends.mps.is_available():
-        return 'mps'
-    else:
-        return None
+    backend = detect_training_backend()
+    if backend == "cuda":
+        return "0"
+    if backend == "mps":
+        return "mps"
+    return None
 
 
-@function_tool(strict_mode=True)
-def train_yolo_model(
-    job_id: str, 
-    model_version: YoloVersionLiteral, 
-    model_size: YoloSizeLiteral, 
-    epochs: int,
-    batch: int,
-    imgsz: int,
-    optimizer: OptimizerLiteral,
-    lr0: float,
-    momentum: float, 
-    weight_decay: float,
-    patience: int, 
-    lrf: float,
-    warmup_epochs: float,
-    warmup_momentum: float,
-    box: float, 
-    cls: float, 
-    dfl: float, 
-    mosaic: float, 
-    mixup: float, 
-    fliplr: float, 
-    scale: float, 
-    degrees: float, 
-    hsv_h: float, 
-    close_mosaic: int, 
-    freeze: Optional[int] = None, 
-    workers: int = 8, 
-    optimizer_override_json: str = "{}"
-) -> str:
-    """
-    Configures and initiates object detection training for Ultralytics YOLO models.
-    """
-
-    call_args = locals()
-    audit_file_path = tool_call_args_path(job_id)
-    try:
-        with open(audit_file_path, 'w') as f:
-            json.dump(call_args, f, indent=4)
-        print(f"✅ Tool call arguments saved to: {audit_file_path}")
-    except Exception as e:
-        print(f"❌ Warning: Could not save tool call arguments for audit: {e}")
-
-    try:
-        flexible_kwargs: Dict[str, Any] = json.loads(optimizer_override_json)
-    except json.JSONDecodeError as e:
-        return f"Error: Failed to parse optimizer_override_json. It must be valid JSON: {e}"
-
-    try:
-        flexible_yolo_training(
-            job_id=job_id,
-            model_version=model_version,
-            model_size=model_size,
-            epochs=epochs,
-            patience=patience,
-            imgsz=imgsz,
-            batch=batch,
-            workers=workers,
-            optimizer=optimizer,
-            lr0=lr0,
-            lrf=lrf,
-            momentum=momentum,
-            weight_decay=weight_decay,
-            warmup_epochs=warmup_epochs,
-            warmup_momentum=warmup_momentum,
-            box=box,
-            cls=cls,
-            dfl=dfl,
-            mosaic=mosaic,
-            mixup=mixup,
-            fliplr=fliplr,
-            scale=scale,
-            degrees=degrees,
-            hsv_h=hsv_h,
-            close_mosaic=close_mosaic,
-            freeze=freeze, 
-            **flexible_kwargs 
+def select_yolo_training_device(model_version: YoloVersionLiteral) -> Optional[Union[str, int]]:
+    """Use CPU for YOLO families known to fail during MPS detection training."""
+    device = select_ultralytics_device_string()
+    if device == "mps" and model_version in MPS_CPU_FALLBACK_VERSIONS:
+        print(
+            f"⚠️ {model_version} training is unreliable with Apple MPS; "
+            "using CPU to avoid detection-loss tensor shape errors."
         )
-        return f"✅ Successfully initiated YOLO training for {model_version} size {model_size} (Job ID: {job_id}). Artifacts moved."
-        
-    except Exception as e:
-        return f"❌ YOLO Training failed with a runtime error for Job ID {job_id}: {e}"
+        return "cpu"
+    return device
 
-def evaluate_yolo_model(batch_size: int, job_id: str) -> Dict[str, Union[float, str]]:
+
+def _yolo_version_and_size(model_name: str) -> tuple[YoloVersionLiteral, YoloSizeLiteral]:
+    family, separator, size = model_name.lower().rpartition("_")
+    version_map = {
+        "yolov8": "yolo_v8",
+        "yolov10": "yolo_v10",
+        "yolov11": "yolo_v11",
+        "yolov12": "yolo_v12",
+    }
+    if not separator or family not in version_map or size not in {"n", "s", "m", "l", "x"}:
+        raise ValueError(f"Unsupported YOLO model_name: {model_name}")
+    return version_map[family], size  # type: ignore[return-value]
+
+
+def train_yolo_from_config(config: Mapping[str, Any], job_id: str) -> str:
+    """Execute a validated HPO configuration without an LLM translation step."""
+    flat = dict(config)
+    optimizer_config = flat.get("optimizer")
+    if isinstance(optimizer_config, Mapping):
+        flat["optimizer_name"] = optimizer_config.get("name")
+        params = optimizer_config.get("params") or {}
+        if isinstance(params, Mapping):
+            flat.update(params)
+
+    model_version, model_size = _yolo_version_and_size(str(flat["model_name"]))
+    optimizer_name = str(flat.get("optimizer_name", "auto")).lower()
+    optimizer_map = {
+        "auto": "auto",
+        "adamw": "AdamW",
+        "sgd": "SGD",
+        "rmsprop": "RMSProp",
+    }
+    if optimizer_name not in optimizer_map:
+        raise ValueError(f"Unsupported YOLO optimizer: {optimizer_name}")
+    momentum = (
+        float(flat.get("beta1", 0.9))
+        if optimizer_name == "adamw"
+        else float(flat.get("momentum", 0.9))
+    )
+
+    training_args = dict(
+        model_version=model_version,
+        model_size=model_size,
+        epochs=int(flat["num_epochs"]),
+        batch=int(flat.get("batch_size", 16)),
+        imgsz=int(flat.get("input_size", 640)),
+        optimizer=optimizer_map[optimizer_name],  # type: ignore[arg-type]
+        lr0=float(flat.get("learning_rate", 0.01)),
+        momentum=momentum,
+        weight_decay=float(flat.get("weight_decay", 0.0005)),
+        patience=int(flat.get("patience", 20)),
+        lrf=float(flat.get("final_learning_rate_factor", 0.01)),
+        warmup_epochs=float(flat.get("warmup_epochs", 3.0)),
+        warmup_momentum=float(flat.get("warmup_momentum", 0.8)),
+        box=float(flat.get("lambda_box", 7.5)),
+        cls=float(flat.get("lambda_cls", 0.5)),
+        dfl=float(flat.get("lambda_dfl", 1.5)),
+        mosaic=float(flat.get("mosaic", 1.0)),
+        mixup=float(flat.get("mixup", 0.0)),
+        cutmix=float(flat.get("cutmix", 0.0)),
+        copy_paste=float(flat.get("copy_paste", 0.0)),
+        fliplr=float(flat.get("fliplr", 0.5)),
+        scale=float(flat.get("scale", 0.5)),
+        degrees=float(flat.get("degrees", 0.0)),
+        translate=float(flat.get("translate", 0.1)),
+        hsv_h=float(flat.get("hsv_h", 0.015)),
+        hsv_s=float(flat.get("hsv_s", 0.7)),
+        hsv_v=float(flat.get("hsv_v", 0.4)),
+        close_mosaic=int(flat.get("close_mosaic", 10)),
+        single_cls=bool(flat.get("single_cls", False)),
+        rect=bool(flat.get("rect", False)),
+        multi_scale=float(flat.get("multi_scale", 0.0)),
+        freeze=flat.get("freeze"),
+        workers=int(flat.get("workers", 8)),
+        amp=bool(flat.get("amp", True)),
+        seed=int(flat.get("seed", 0)),
+    )
+    audit_file_path = tool_call_args_path(job_id)
+    audit_file_path.write_text(
+        json.dumps({"job_id": job_id, **training_args}, indent=4),
+        encoding="utf-8",
+    )
+    try:
+        _run_yolo_training(job_id=job_id, **training_args)
+    except Exception as exc:
+        raise RuntimeError(f"YOLO training failed for job {job_id}: {exc}") from exc
+    return f"✅ Successfully trained {flat['model_name']} (Job ID: {job_id})."
+
+
+def evaluate_yolo_model(
+    batch_size: int,
+    image_size: int,
+    job_id: str,
+) -> Dict[str, Union[float, str]]:
     """
     Loads the best trained YOLO model and runs evaluation.
     """
@@ -515,7 +550,11 @@ def evaluate_yolo_model(batch_size: int, job_id: str) -> Dict[str, Union[float, 
         metrics = model.val(
             data=str(data_yaml_path),
             split='test',  
-            batch=batch_size,      
+            batch=batch_size,
+            imgsz=image_size,
+            project=str(run_dir(job_id)),
+            name="test_evaluation",
+            exist_ok=True,
         )
         
         mAP50_95 = metrics.box.map

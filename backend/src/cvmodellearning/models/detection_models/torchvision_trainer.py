@@ -1,477 +1,650 @@
-import os
-from agents import function_tool
-import torch
+from __future__ import annotations
+
 import json
+import math
 import time
-from typing import Dict, Any, List, Literal, Tuple, Union
 from pathlib import Path
-from torch.utils.data import DataLoader
-from torchvision.models.detection import fasterrcnn_resnet50_fpn, maskrcnn_resnet50_fpn, retinanet_resnet50_fpn
-from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
-from torchvision.models.detection.mask_rcnn import MaskRCNNPredictor
-from torchvision.models.detection.retinanet import RetinaNetHead
-from torchvision.datasets import CocoDetection 
-from torchvision.transforms import v2 as T
-from pycocotools.cocoeval import COCOeval
-from pycocotools.coco import COCO
+from typing import Any, Dict, List, Literal, Mapping, Tuple, Union
+
 import numpy as np
+import torch
+from agents import function_tool
 from PIL import Image
+from pycocotools.coco import COCO
+from pycocotools.cocoeval import COCOeval
+from torch import nn
+from torch.utils.data import DataLoader
+from torchvision.datasets import CocoDetection
+from torchvision import tv_tensors
+from torchvision.models import VGG16_Weights
+from torchvision.models.detection import (
+    fasterrcnn_resnet50_fpn,
+    retinanet_resnet50_fpn,
+    ssd300_vgg16,
+)
+from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
+from torchvision.transforms import v2 as T
 
 from cvmodellearning.paths import (
-    run_dir, data_dir, metrics_json_path, best_model_path, 
-    training_log_path, train_json_path, val_json_path, test_json_path, 
-    tool_call_args_path
+    best_model_path,
+    data_dir,
+    metrics_json_path,
+    run_dir,
+    test_json_path,
+    tool_call_args_path,
+    train_json_path,
+    training_log_path,
+    val_json_path,
 )
+from cvmodellearning.schemas.hpo_runtime import training_compatible_hpo_config
+from cvmodellearning.jobs.run_control import raise_if_cancelled
 
-# --- Configuration and Type Definitions ---
 
-TVModel = Literal['retinanet_r50_fpn', 'faster_rcnn_r50_fpn', 'mask_rcnn_r50_fpn']
-MonitorMetric = Literal['coco/bbox_mAP', 'coco/bbox_mAP_50', 'coco/bbox_mAP_75']
+TVModel = Literal[
+    "retinanet_r50_fpn",
+    "faster_rcnn_r50_fpn",
+    "ssd300_vgg16",
+]
+MonitorMetric = Literal["coco/bbox_mAP", "coco/bbox_mAP_50", "coco/bbox_mAP_75"]
 
 TV_MODEL_NAME_MAP: Dict[str, TVModel] = {
-    "retinanet_r50": 'retinanet_r50_fpn',
-    "faster_rcnn_r50": 'faster_rcnn_r50_fpn',
-    "mask_rcnn_r50": 'mask_rcnn_r50_fpn',
+    "retinanet_r50": "retinanet_r50_fpn",
+    "retinanet": "retinanet_r50_fpn",
+    "retinanet_resnet50_fpn": "retinanet_r50_fpn",
+    "retinanet_r50_fpn_1x_coco": "retinanet_r50_fpn",
+    "faster_rcnn_r50": "faster_rcnn_r50_fpn",
+    "faster-rcnn_r50_fpn_1x_coco": "faster_rcnn_r50_fpn",
+    "fasterrcnn_resnet50_fpn": "faster_rcnn_r50_fpn",
+    "ssd300": "ssd300_vgg16",
+    "ssd": "ssd300_vgg16",
+    "ssd300_coco": "ssd300_vgg16",
+    "ssd300_vgg16": "ssd300_vgg16",
 }
 
-# --- 1. Model Adaptation ---
 
-def get_detection_model(model_name: TVModel, num_classes: int, pre_trained: bool = True) -> torch.nn.Module:
-    """Loads and adapts a TorchVision model for N classes."""
+def _adapt_retinanet_classification_head(model: nn.Module, num_classes: int) -> None:
+    """Replace only the COCO logits while preserving the pretrained conv tower."""
+    head = model.head.classification_head
+    num_anchors = head.num_anchors
+    old_logits = head.cls_logits
+    head.num_classes = num_classes
+    head.cls_logits = nn.Conv2d(
+        old_logits.in_channels,
+        num_anchors * num_classes,
+        old_logits.kernel_size,
+        old_logits.stride,
+        old_logits.padding,
+    )
+    nn.init.normal_(head.cls_logits.weight, std=0.01)
+    nn.init.constant_(head.cls_logits.bias, -math.log((1 - 0.01) / 0.01))
+
+
+def get_detection_model(
+    model_name: TVModel,
+    num_classes: int,
+    *,
+    pre_trained: bool = True,
+    pretrained_backbone_only: bool = False,
+    input_size: int = 800,
+    max_size: int = 1333,
+    trainable_backbone_layers: int = 3,
+    confidence_threshold: float = 0.05,
+    nms_iou_threshold: float = 0.5,
+    max_detections: int = 300,
+    topk_candidates: int = 400,
+    positive_fraction: float = 0.25,
+    matching_iou_threshold: float = 0.5,
+) -> nn.Module:
+    """Build a TorchVision detector with one consistent custom-class head."""
+    common = {
+        "min_size": input_size,
+        "max_size": max_size,
+    }
+    if pre_trained:
+        common["trainable_backbone_layers"] = trainable_backbone_layers
     weights = "DEFAULT" if pre_trained else None
-    
-    if model_name == 'faster_rcnn_r50_fpn':
-        model = fasterrcnn_resnet50_fpn(weights=weights)
+    weights_backbone = None if not pre_trained else "DEFAULT"
+
+    if model_name == "ssd300_vgg16":
+        if input_size != 300 or max_size != 300:
+            raise ValueError("SSD300 VGG16 requires input_size=max_size=300.")
+        return ssd300_vgg16(
+            weights=None,
+            weights_backbone=(
+                VGG16_Weights.IMAGENET1K_FEATURES if pretrained_backbone_only else None
+            ),
+            num_classes=num_classes,
+            trainable_backbone_layers=(
+                trainable_backbone_layers if pretrained_backbone_only else None
+            ),
+            score_thresh=confidence_threshold,
+            nms_thresh=nms_iou_threshold,
+            detections_per_img=max_detections,
+            topk_candidates=topk_candidates,
+            positive_fraction=positive_fraction,
+            iou_thresh=matching_iou_threshold,
+        )
+
+    if model_name == "retinanet_r50_fpn":
+        model = retinanet_resnet50_fpn(
+            weights=weights,
+            weights_backbone=weights_backbone,
+            num_classes=None if pre_trained else num_classes,
+            score_thresh=confidence_threshold,
+            nms_thresh=nms_iou_threshold,
+            detections_per_img=max_detections,
+            **common,
+        )
+        if pre_trained:
+            _adapt_retinanet_classification_head(model, num_classes)
+        return model
+
+    if model_name == "faster_rcnn_r50_fpn":
+        model = fasterrcnn_resnet50_fpn(
+            weights=weights,
+            weights_backbone=weights_backbone,
+            box_score_thresh=confidence_threshold,
+            box_nms_thresh=nms_iou_threshold,
+            box_detections_per_img=max_detections,
+            **common,
+        )
         in_features = model.roi_heads.box_predictor.cls_score.in_features
         model.roi_heads.box_predictor = FastRCNNPredictor(in_features, num_classes)
-    
-    elif model_name == 'mask_rcnn_r50_fpn':
-        model = maskrcnn_resnet50_fpn(weights=weights)
-        in_features = model.roi_heads.box_predictor.cls_score.in_features
-        model.roi_heads.box_predictor = FastRCNNPredictor(in_features, num_classes)
-        in_features_mask = model.roi_heads.mask_predictor.conv5_mask.in_channels
-        hidden_layer = model.roi_heads.mask_predictor.mask_fcn5.out_channels
-        model.roi_heads.mask_predictor = MaskRCNNPredictor(in_features_mask, hidden_layer, num_classes)
-        
-    elif model_name == 'retinanet_r50_fpn':
-        model = retinanet_resnet50_fpn(weights=weights)
-        num_anchors = model.head.classification_head.num_anchors
-        model.head.classification_head = RetinaNetHead(in_channels=256, num_anchors=num_anchors, num_classes=num_classes)
-        
-    else:
-        # Fallback to general error if an unsupported model name gets through the type check
-        raise ValueError(f"Unsupported model name: {model_name}")
+        return model
 
-    return model
+    raise ValueError(f"Unsupported model name: {model_name}")
 
-# --- 2. Data Loading (COCO Format) ---
 
-def get_data_loaders(job_id: str, batch_size: int) -> Tuple[DataLoader, DataLoader, COCO]:
-    """Sets up PyTorch DataLoaders using the TorchVision CocoDetection class."""
-    
-    data_root = str(data_dir(job_id))
-    
-    # Standard transforms for detection
-    detection_transforms = T.Compose([
-        T.ToDtype(torch.float32, scale=True),
-        T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+def _ssd_target_fields(inputs):
+    target = inputs[1]
+    return target["labels"], target["iscrowd"]
+
+
+def _ssd_training_transform(horizontal_flip_probability: float) -> T.Compose:
+    """TorchVision's reference SSD augmentation policy for box targets."""
+    return T.Compose([
+        T.RandomPhotometricDistort(),
+        T.RandomZoomOut(fill={tv_tensors.Image: (123, 117, 104), "others": 0}),
+        T.RandomIoUCrop(),
+        T.RandomHorizontalFlip(horizontal_flip_probability),
+        T.SanitizeBoundingBoxes(labels_getter=_ssd_target_fields),
     ])
 
-    train_dataset = CocoDetection(root=data_root, annFile=str(train_json_path(job_id)), transforms=detection_transforms)
-    val_dataset = CocoDetection(root=data_root, annFile=str(val_json_path(job_id)), transforms=detection_transforms)
-    
-    # Custom collate function to handle variable number of targets per image
-    def collate_fn(batch):
-        return tuple(zip(*batch))
 
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, collate_fn=collate_fn)
-    val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, collate_fn=collate_fn)
-    
-    coco_gt_val = COCO(str(val_json_path(job_id)))
-    
-    print(f"Loaded {len(train_dataset)} training samples and {len(val_dataset)} validation samples.")
-    return train_loader, val_loader, coco_gt_val
+class DetectionCocoDataset(CocoDetection):
+    """Convert COCO annotations into the tensor contract expected by detectors."""
 
-# --- 3. COCO Evaluation ---
+    def __init__(
+        self,
+        root: str,
+        ann_file: str,
+        *,
+        horizontal_flip_probability: float = 0.0,
+        augmentation_policy: str = "basic",
+    ):
+        super().__init__(root=root, annFile=ann_file)
+        self.horizontal_flip_probability = horizontal_flip_probability
+        self.augmentation_policy = augmentation_policy
+        self.training_transform = (
+            _ssd_training_transform(horizontal_flip_probability)
+            if augmentation_policy == "ssd"
+            else None
+        )
+        category_ids = sorted(self.coco.getCatIds())
+        self.category_to_label = {category_id: index + 1 for index, category_id in enumerate(category_ids)}
+        self.label_to_category = {label: category for category, label in self.category_to_label.items()}
 
-def evaluate_coco_metrics(model: torch.nn.Module, data_loader: DataLoader, coco_gt: COCO, device: torch.device) -> Dict[str, float]:
-    """Runs prediction and calculates all COCO bounding box metrics using pycocotools."""
+    def _load_image(self, image_id: int) -> Image.Image:
+        image_record = self.coco.loadImgs(image_id)[0]
+        relative_path = image_record.get("image_path") or image_record["file_name"]
+        return Image.open(Path(self.root) / relative_path).convert("RGB")
+
+    def __getitem__(self, index: int):
+        image, annotations = super().__getitem__(index)
+        width, height = image.size
+        boxes: list[list[float]] = []
+        labels: list[int] = []
+        crowds: list[int] = []
+
+        for annotation in annotations:
+            x, y, box_width, box_height = map(float, annotation["bbox"])
+            x1, y1 = max(0.0, x), max(0.0, y)
+            x2 = min(float(width), x + box_width)
+            y2 = min(float(height), y + box_height)
+            category_id = int(annotation["category_id"])
+            if x2 <= x1 or y2 <= y1 or category_id not in self.category_to_label:
+                continue
+            boxes.append([x1, y1, x2, y2])
+            labels.append(self.category_to_label[category_id])
+            crowds.append(int(annotation.get("iscrowd", 0)))
+
+        boxes_tensor = torch.as_tensor(boxes, dtype=torch.float32).reshape(-1, 4)
+        labels_tensor = torch.as_tensor(labels, dtype=torch.int64)
+        image_tensor = T.functional.to_image(image)
+        crowds_tensor = torch.as_tensor(crowds, dtype=torch.int64)
+        if self.training_transform is not None:
+            transform_target = {
+                "boxes": tv_tensors.BoundingBoxes(
+                    boxes_tensor,
+                    format="XYXY",
+                    canvas_size=(height, width),
+                ),
+                "labels": labels_tensor,
+                "iscrowd": crowds_tensor,
+            }
+            image_tensor, transform_target = self.training_transform(image_tensor, transform_target)
+            boxes_tensor = torch.as_tensor(transform_target["boxes"], dtype=torch.float32)
+            labels_tensor = transform_target["labels"]
+            crowds_tensor = transform_target["iscrowd"]
+        elif self.horizontal_flip_probability and torch.rand(()) < self.horizontal_flip_probability:
+            image_tensor = T.functional.horizontal_flip(image_tensor)
+            if boxes_tensor.numel():
+                old_x1 = boxes_tensor[:, 0].clone()
+                old_x2 = boxes_tensor[:, 2].clone()
+                boxes_tensor[:, 0] = width - old_x2
+                boxes_tensor[:, 2] = width - old_x1
+
+        image_tensor = T.functional.to_dtype(image_tensor, torch.float32, scale=True)
+        areas_tensor = (
+            (boxes_tensor[:, 2] - boxes_tensor[:, 0])
+            * (boxes_tensor[:, 3] - boxes_tensor[:, 1])
+        )
+
+        target = {
+            "boxes": boxes_tensor,
+            "labels": labels_tensor,
+            "image_id": torch.tensor(int(self.ids[index]), dtype=torch.int64),
+            "area": areas_tensor,
+            "iscrowd": crowds_tensor,
+        }
+        return image_tensor, target
+
+
+def _collate_detection_batch(batch):
+    return tuple(zip(*batch))
+
+
+def _data_loader(
+    job_id: str,
+    annotation_path: Path,
+    batch_size: int,
+    workers: int,
+    *,
+    shuffle: bool,
+    horizontal_flip_probability: float = 0.0,
+    augmentation_policy: str = "basic",
+) -> tuple[DataLoader, DetectionCocoDataset]:
+    dataset = DetectionCocoDataset(
+        str(data_dir(job_id)),
+        str(annotation_path),
+        horizontal_flip_probability=horizontal_flip_probability,
+        augmentation_policy=augmentation_policy,
+    )
+    loader = DataLoader(
+        dataset,
+        batch_size=batch_size,
+        shuffle=shuffle,
+        num_workers=workers,
+        collate_fn=_collate_detection_batch,
+    )
+    return loader, dataset
+
+
+def get_data_loaders(
+    job_id: str,
+    batch_size: int,
+    workers: int = 0,
+    horizontal_flip_probability: float = 0.5,
+    augmentation_policy: str = "basic",
+) -> tuple[DataLoader, DataLoader, COCO, dict[int, int]]:
+    train_loader, _ = _data_loader(
+        job_id,
+        train_json_path(job_id),
+        batch_size,
+        workers,
+        shuffle=True,
+        horizontal_flip_probability=horizontal_flip_probability,
+        augmentation_policy=augmentation_policy,
+    )
+    val_loader, val_dataset = _data_loader(
+        job_id, val_json_path(job_id), batch_size, workers, shuffle=False
+    )
+    return train_loader, val_loader, val_dataset.coco, val_dataset.label_to_category
+
+
+def evaluate_coco_metrics(
+    model: nn.Module,
+    data_loader: DataLoader,
+    coco_gt: COCO,
+    device: torch.device,
+    label_to_category: Mapping[int, int],
+) -> Dict[str, float]:
     model.eval()
     results = []
-    
     with torch.no_grad():
-        for i_batch, (images, targets_tuple) in enumerate(data_loader):
-            
-            images = list(img.to(device) for img in images)
-            outputs = model(images)
-
-            # targets_list is the list of dictionaries, one per image in the batch
-            targets_list = targets_tuple
-            
-            # Loop through the outputs and corresponding ground truth targets
-            for i, output in enumerate(outputs):
-                # Extract image_id from the ground truth target dictionary
-                try:
-                    image_id = targets_list[i]['image_id'].item()
-                except Exception:
-                    # Fallback if targets structure is unexpected
-                    print("Warning: Could not reliably extract image_id from targets.")
-                    continue
-                
-                boxes = output['boxes'].cpu().numpy()
-                scores = output['scores'].cpu().numpy()
-                labels = output['labels'].cpu().numpy()
-                
-                # Convert boxes from [x1, y1, x2, y2] to COCO [x, y, w, h] format
-                boxes[:, 2] = boxes[:, 2] - boxes[:, 0]
-                boxes[:, 3] = boxes[:, 3] - boxes[:, 1] 
-
-                for box, score, label in zip(boxes, scores, labels):
-                    if score > 0.001:
+        for images, targets in data_loader:
+            outputs = model([image.to(device) for image in images])
+            for output, target in zip(outputs, targets):
+                boxes = output["boxes"].detach().cpu().clone()
+                boxes[:, 2:] -= boxes[:, :2]
+                for box, score, label in zip(boxes, output["scores"].cpu(), output["labels"].cpu()):
+                    category_id = label_to_category.get(int(label))
+                    if category_id is not None:
                         results.append({
-                            "image_id": int(image_id),
-                            "category_id": int(label),
+                            "image_id": int(target["image_id"]),
+                            "category_id": category_id,
                             "bbox": box.tolist(),
                             "score": float(score),
                         })
-    
-    if not results:
-        print("Warning: COCO evaluation failed - No predictions were generated.")
-        return {'coco/bbox_mAP': 0.0, 'coco/bbox_mAP_50': 0.0, 'coco/bbox_mAP_75': 0.0}
 
-    # Use COCO API to evaluate
-    tmp_results_file = Path("tmp_results_eval.json")
-    with open(tmp_results_file, 'w') as f:
-        json.dump(results, f)
-        
-    coco_dt = coco_gt.loadRes(str(tmp_results_file))
-    coco_eval = COCOeval(coco_gt, coco_dt, 'bbox')
+    if not results:
+        return {"coco/bbox_mAP": 0.0, "coco/bbox_mAP_50": 0.0, "coco/bbox_mAP_75": 0.0}
+
+    coco_eval = COCOeval(coco_gt, coco_gt.loadRes(results), "bbox")
     coco_eval.evaluate()
     coco_eval.accumulate()
     coco_eval.summarize()
-    tmp_results_file.unlink()
-
-    metrics = {
-        'coco/bbox_mAP': np.float64(coco_eval.stats[0]).item(),
-        'coco/bbox_mAP_50': np.float64(coco_eval.stats[1]).item(),
-        'coco/bbox_mAP_75': np.float64(coco_eval.stats[2]).item(),
+    return {
+        "coco/bbox_mAP": np.float64(coco_eval.stats[0]).item(),
+        "coco/bbox_mAP_50": np.float64(coco_eval.stats[1]).item(),
+        "coco/bbox_mAP_75": np.float64(coco_eval.stats[2]).item(),
     }
-    return metrics
 
-# Helper function for device
+
 def _choose_device() -> torch.device:
-        if torch.backends.mps.is_available():
-            return torch.device("mps")
-        elif torch.cuda.is_available():
-            return torch.device("cuda")
-        else:
-            return torch.device("cpu")
+    if torch.cuda.is_available():
+        return torch.device("cuda")
+    if torch.backends.mps.is_available():
+        return torch.device("mps")
+    return torch.device("cpu")
 
-# --- 4. Flexible Training Loop ---
 
-def flexible_torchvision_training(
-    model_name: TVModel, num_classes: int, batch_size: int, learning_rate: float,
-    epochs: int, monitor_metric: MonitorMetric, patience: int, 
-    save_best_model: bool, job_id: str, **kwargs: Dict[str, Any]
-):
-    """Main training function implementing the full PyTorch workflow with COCO evaluation."""
-    
-    # 0. Setup Paths and Device
-    custom_best_model_path = str(best_model_path(job_id))
-    custom_training_log_path = str(training_log_path(job_id))
-    Path(custom_best_model_path).parent.mkdir(parents=True, exist_ok=True)
+def _optimizer(name: str, parameters, config: Mapping[str, Any]):
+    learning_rate = float(config["learning_rate"])
+    weight_decay = float(config.get("weight_decay", 0.0001))
+    if name in {"auto", "sgd"}:
+        return torch.optim.SGD(
+            parameters,
+            lr=learning_rate,
+            momentum=float(config.get("momentum", 0.9)),
+            weight_decay=weight_decay,
+        )
+    if name == "adamw":
+        return torch.optim.AdamW(
+            parameters,
+            lr=learning_rate,
+            betas=(float(config.get("beta1", 0.9)), 0.999),
+            weight_decay=weight_decay,
+        )
+    if name == "rmsprop":
+        return torch.optim.RMSprop(
+            parameters,
+            lr=learning_rate,
+            momentum=float(config.get("momentum", 0.9)),
+            weight_decay=weight_decay,
+        )
+    raise ValueError(f"Unsupported TorchVision optimizer: {name}")
+
+
+def flexible_torchvision_training(config: Mapping[str, Any], job_id: str) -> None:
+    """Train one saved, schema-validated TorchVision detection configuration."""
+    torch.manual_seed(int(config.get("seed", 0)))
+    model_name = TV_MODEL_NAME_MAP[str(config["model_name"])]
+    num_classes = len(config["classes"]) + 1
     device = _choose_device()
-    print(f"Using device: {device}")
+    model = get_detection_model(
+        model_name,
+        num_classes,
+        pre_trained=config.get("model_weights") in {"default", "coco"},
+        pretrained_backbone_only=config.get("model_weights") == "imagenet_backbone",
+        input_size=int(config.get("input_size", 800)),
+        max_size=int(config.get("max_size", 1333)),
+        trainable_backbone_layers=int(config.get("trainable_backbone_layers", 3)),
+        confidence_threshold=float(config.get("confidence_threshold", 0.05)),
+        nms_iou_threshold=float(config.get("nms_iou_threshold", 0.5)),
+        max_detections=int(config.get("max_detections", 300)),
+        topk_candidates=int(config.get("topk_candidates", 400)),
+        positive_fraction=float(config.get("positive_fraction", 0.25)),
+        matching_iou_threshold=float(config.get("matching_iou_threshold", 0.5)),
+    ).to(device)
+    train_loader, val_loader, coco_gt, label_to_category = get_data_loaders(
+        job_id,
+        int(config["batch_size"]),
+        int(config.get("workers", 0)),
+        float(config.get("horizontal_flip_probability", 0.5)),
+        str(config.get("augmentation_policy", "basic")),
+    )
+    if not train_loader:
+        raise ValueError("The training split is empty.")
 
-    progress_file_path = run_dir(job_id) / "progress.json"
+    optimizer = _optimizer(
+        str(config.get("optimizer_name", "sgd")),
+        [parameter for parameter in model.parameters() if parameter.requires_grad],
+        config,
+    )
+    scheduler = None
+    if config.get("scheduler_name", "multistep") == "multistep":
+        scheduler = torch.optim.lr_scheduler.MultiStepLR(
+            optimizer,
+            milestones=list(config.get("lr_milestones", [16, 22])),
+            gamma=float(config.get("scheduler_gamma", 0.1)),
+        )
 
-    # 1. Load Model and Data
-    model = get_detection_model(model_name, num_classes, pre_trained=True)
-    model.to(device)
-    train_loader, val_loader, coco_gt_val = get_data_loaders(job_id, batch_size)
-    
-    # 2. Setup Optimizer
-    params = [p for p in model.parameters() if p.requires_grad]
-    optimizer = torch.optim.SGD(params, lr=learning_rate, momentum=0.9, weight_decay=1e-4)
-
-    # 3. Early Stopping and Checkpoint Variables
-    best_val_metric = -float('inf')
-    epochs_no_improve = 0
+    metric_names = {
+        "val_mAP": "coco/bbox_mAP",
+        "val_mAP_50": "coco/bbox_mAP_50",
+        "val_mAP_75": "coco/bbox_mAP_75",
+    }
+    monitor_metric = metric_names.get(str(config.get("track_metric")), "coco/bbox_mAP")
+    use_amp = bool(config.get("amp", False)) and device.type == "cuda"
+    scaler = torch.amp.GradScaler("cuda", enabled=use_amp)
+    best_metric = -math.inf
+    stale_epochs = 0
     start_time = time.time()
-    
-    # --- Training Loop ---
-    with open(custom_training_log_path, 'w') as log_file:
-        for epoch in range(epochs):
-            # --- Training Phase ---
+    checkpoint = best_model_path(job_id)
+    log_path = training_log_path(job_id)
+
+    with log_path.open("w", encoding="utf-8") as log_file:
+        for epoch in range(int(config["num_epochs"])):
+            raise_if_cancelled(job_id)
             model.train()
-            epoch_loss = 0.0
-            
-            for i, (images_tuple, targets_tuple) in enumerate(train_loader):
-                images = list(img.to(device) for img in images_tuple)
-                # Targets are extracted from the list tuple returned by collate_fn
-                targets = [{k: v.to(device) for k, v in t.items()} for t in targets_tuple]
-                
-                loss_dict = model(images, targets)
-                losses = sum(loss for loss in loss_dict.values())
+            total_loss = 0.0
+            for images, targets in train_loader:
+                raise_if_cancelled(job_id)
+                images = [image.to(device) for image in images]
+                targets = [{key: value.to(device) for key, value in target.items()} for target in targets]
+                optimizer.zero_grad(set_to_none=True)
+                with torch.autocast(device_type=device.type, enabled=use_amp):
+                    losses = sum(model(images, targets).values())
+                scaler.scale(losses).backward()
+                scaler.step(optimizer)
+                scaler.update()
+                total_loss += float(losses.detach())
+            if scheduler is not None:
+                scheduler.step()
 
-                optimizer.zero_grad()
-                losses.backward()
-                optimizer.step()
-                epoch_loss += losses.item()
-                
-            avg_train_loss = epoch_loss / len(train_loader)
-            
-            # --- Validation Phase ---
-            val_metrics = evaluate_coco_metrics(model, val_loader, coco_gt_val, device)
-            current_val_metric = val_metrics.get(monitor_metric, -float('inf'))
-            
-            # --- Logging ---
-            log_message = (
-                f"Epoch {epoch+1}/{epochs} | Loss: {avg_train_loss:.4f} | "
-                f"Val Metric ({monitor_metric}): {current_val_metric:.4f} | "
-                f"mAP@50: {val_metrics.get('coco/bbox_mAP_50', 0.0):.4f} | Time: {time.time() - start_time:.2f}s"
+            metrics = evaluate_coco_metrics(model, val_loader, coco_gt, device, label_to_category)
+            current_metric = metrics[monitor_metric]
+            average_loss = total_loss / len(train_loader)
+            message = (
+                f"Epoch {epoch + 1}/{config['num_epochs']} | Loss: {average_loss:.4f} | "
+                f"{monitor_metric}: {current_metric:.4f} | Time: {time.time() - start_time:.2f}s"
             )
-            print(log_message)
-            log_file.write(log_message + '\n')
-
-            # --- PROGRESS TRACKING: Write current status to file --- <--- CRITICAL ADDITION
-            progress_data = {
+            print(message)
+            log_file.write(message + "\n")
+            (run_dir(job_id) / "progress.json").write_text(json.dumps({
                 "status": "running",
                 "current_epoch": epoch + 1,
-                "total_epochs": epochs,
-                "train_loss": avg_train_loss,
-                "val_mAP": val_metrics.get('coco/bbox_mAP'),
-                "val_mAP50": val_metrics.get('coco/bbox_mAP_50'),
-            }
-            try:
-                with open(progress_file_path, 'w') as f:
-                    json.dump(progress_data, f, indent=4)
-            except Exception as e:
-                print(f"Warning: Could not write progress file {progress_file_path}: {e}")
-            
-            # --- Early Stopping/Checkpointing Logic ---
-            if current_val_metric > best_val_metric:
-                print(f"🔥 Metric improved from {best_val_metric:.4f} to {current_val_metric:.4f}. Saving checkpoint.")
-                best_val_metric = current_val_metric
-                epochs_no_improve = 0
-                if save_best_model:
-                    torch.save(model.state_dict(), custom_best_model_path)
-            else:
-                epochs_no_improve += 1
-            
-            if patience > 0 and epochs_no_improve >= patience:
-                print(f"🛑 Early stopping triggered after {patience} epochs with no improvement on {monitor_metric}.")
-                break
-                
-    print(f"Training finished. Best model saved to: {custom_best_model_path}")
+                "total_epochs": int(config["num_epochs"]),
+                "train_loss": average_loss,
+                "val_mAP": metrics["coco/bbox_mAP"],
+                "val_mAP50": metrics["coco/bbox_mAP_50"],
+            }, indent=2), encoding="utf-8")
 
-# --- 5. Agent Callable Functions ---
+            if current_metric > best_metric:
+                best_metric = current_metric
+                stale_epochs = 0
+                temporary_checkpoint = checkpoint.with_suffix(checkpoint.suffix + ".tmp")
+                torch.save(model.state_dict(), temporary_checkpoint)
+                temporary_checkpoint.replace(checkpoint)
+            else:
+                stale_epochs += 1
+            patience = int(config.get("patience", 0))
+            if patience and stale_epochs >= patience:
+                break
+
+
+def train_torchvision_from_config(config: Mapping[str, Any], job_id: str) -> str:
+    """Deterministic entry point used by the execution pipeline."""
+    config = training_compatible_hpo_config(config)
+    audit_path = tool_call_args_path(job_id)
+    audit_path.write_text(json.dumps(dict(config), indent=2, default=str), encoding="utf-8")
+    flexible_torchvision_training(config, job_id)
+    return f"Successfully trained {config['model_name']}; checkpoint saved to {best_model_path(job_id)}."
+
+
 @function_tool(strict_mode=True)
 def train_torchvision_model(
-    model_name: str, num_classes: int, batch_size: int, learning_rate: float,
-    epochs: int, monitor_metric: MonitorMetric, patience: int, 
-    save_best_model: bool, job_id: str, config_override_json: str = "{}" 
+    model_name: str,
+    num_classes: int,
+    batch_size: int,
+    learning_rate: float,
+    epochs: int,
+    monitor_metric: MonitorMetric,
+    patience: int,
+    save_best_model: bool,
+    job_id: str,
+    config_override_json: str = "{}",
 ) -> str:
-    """
-    Executes flexible PyTorch/TorchVision object detection training (Faster R-CNN, Mask R-CNN, RetinaNet) 
-    using a custom COCO-style workflow and manages checkpointing and early stopping.
-    
-    This function is the primary entry point for the Agent to launch TorchVision training.
-    
-    Args:
-        model_name (str): 
-            The name of the model architecture to train. Must be one of: 
-            'retinanet_r50', 'faster_rcnn_r50', or 'mask_rcnn_r50'.
-        num_classes (int): 
-            The total number of classes in the dataset, which MUST include the background class (N + 1).
-        batch_size (int): 
-            The number of samples per batch for training and validation.
-        learning_rate (float): 
-            The initial learning rate for the SGD optimizer (e.g., 0.001).
-        epochs (int): 
-            The total number of training epochs to run.
-        monitor_metric (Literal['coco/bbox_mAP', 'coco/bbox_mAP_50', 'coco/bbox_mAP_75']): 
-            The COCO bounding box metric used to track improvement, decide on early stopping, 
-            and determine the best checkpoint.
-        patience (int): 
-            Number of epochs with no improvement on the 'monitor_metric' to wait before 
-            triggering early stopping. Use 0 to disable early stopping.
-        save_best_model (bool): 
-            If True, the model state_dict that achieved the best 'monitor_metric' on 
-            the validation set will be saved.
-        job_id (str): 
-            The unique identifier for the training job, used for resolving data paths and 
-            artifact saving locations.
-        config_override_json (str, optional): 
-            A JSON string containing extra configuration arguments to override defaults 
-            in the underlying training logic (e.g., custom optimizer parameters or 
-            learning rate scheduler settings). Defaults to "{}".
-
-    Returns:
-        str: A message indicating the success of the training initiation or the failure reason.
-    """
-    
-    call_args = locals()
-    
+    """Compatibility wrapper for older agent callers."""
+    del save_best_model
     try:
-        tv_model_name = TV_MODEL_NAME_MAP[model_name]
-    except KeyError:
-        return f"Error: Unknown model name: {model_name}. Must be one of {list(TV_MODEL_NAME_MAP.keys())}"
-        
-    audit_file_path = tool_call_args_path(job_id)
-    try:
-        with open(audit_file_path, 'w') as f:
-            json.dump(call_args, f, indent=4)
-        print(f"✅ Tool call arguments saved to: {audit_file_path}")
-    except Exception as e:
-        print(f"❌ Warning: Could not save tool call arguments for audit: {e}")
-
-    try:
-        cfg_overrides: Dict[str, Any] = json.loads(config_override_json)
-    except json.JSONDecodeError as e:
-        return f"Error: Failed to parse config_override_json. It must be valid JSON: {e}"
-        
-    try:
-        flexible_torchvision_training(
-            model_name=tv_model_name, num_classes=num_classes, batch_size=batch_size,
-            learning_rate=learning_rate, epochs=epochs, monitor_metric=monitor_metric,
-            patience=patience, save_best_model=save_best_model, job_id=job_id,
-            **cfg_overrides 
+        overrides = json.loads(config_override_json)
+        classes = overrides.pop(
+            "classes",
+            [f"class_{index}" for index in range(1, max(1, num_classes))],
         )
-        return (f"Successfully initiated TorchVision training for **{model_name}** (Job ID: {job_id}). "
-                f"Monitoring metric: **{monitor_metric}**. Checkpoint saved to: {best_model_path(job_id)}.")
-        
-    except Exception as e:
-        return f"Training failed with a runtime error for {tv_model_name}: {e}"
+        config = {
+            "model_name": model_name,
+            "classes": classes,
+            "batch_size": batch_size,
+            "learning_rate": learning_rate,
+            "num_epochs": epochs,
+            "patience": patience,
+            "track_metric": {
+                "coco/bbox_mAP": "val_mAP",
+                "coco/bbox_mAP_50": "val_mAP_50",
+                "coco/bbox_mAP_75": "val_mAP_75",
+            }[monitor_metric],
+            "model_weights": (
+                "imagenet_backbone" if "ssd" in model_name.lower() else "coco"
+            ),
+            **overrides,
+        }
+        return train_torchvision_from_config(config, job_id)
+    except Exception as exc:
+        return f"Training failed: {exc}"
 
 
 def evaluate_torchvision_model(
-    model_name: str, num_classes: int, job_id: str, batch_size: int = 1
+    model_name: str,
+    num_classes: int,
+    job_id: str,
+    batch_size: int = 1,
+    *,
+    input_size: int = 800,
+    max_size: int = 1333,
+    workers: int = 0,
+    confidence_threshold: float = 0.05,
+    nms_iou_threshold: float = 0.5,
+    max_detections: int = 300,
+    topk_candidates: int = 400,
+    positive_fraction: float = 0.25,
+    matching_iou_threshold: float = 0.5,
 ) -> Dict[str, Any]:
-    """
-    Performs final evaluation on the test dataset using the saved TorchVision checkpoint.
-    """
-    if not job_id:
-        return {"error": "job_id must be provided for evaluation path resolution."}
-
-    try:
-        tv_model_name = TV_MODEL_NAME_MAP[model_name]
-    except KeyError:
+    if model_name not in TV_MODEL_NAME_MAP:
         return {"error": f"Unknown model name: {model_name}"}
+    checkpoint = best_model_path(job_id)
+    if not checkpoint.exists():
+        return {"error": f"Model checkpoint not found at: {checkpoint}"}
 
     device = _choose_device()
-    checkpoint_path = str(best_model_path(job_id))
-    test_metrics_file_path = str(metrics_json_path(job_id))
-    
-    if not Path(checkpoint_path).exists():
-        return {"error": f"Model checkpoint not found at: {checkpoint_path}"}
-        
-    # 1. Load Model and Weights
-    model = get_detection_model(tv_model_name, num_classes, pre_trained=False)
-    model.load_state_dict(torch.load(checkpoint_path, map_location=device))
-    model.to(device)
-    
-    # 2. Setup Test DataLoader
-    data_root = str(data_dir(job_id))
-    test_ann_file = str(test_json_path(job_id))
-    
-    test_dataset = CocoDetection(
-        root=data_root,
-        annFile=test_ann_file,
-        transforms=T.Compose([T.ToDtype(torch.float32, scale=True), T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
+    model = get_detection_model(
+        TV_MODEL_NAME_MAP[model_name],
+        num_classes,
+        pre_trained=False,
+        input_size=input_size,
+        max_size=max_size,
+        confidence_threshold=confidence_threshold,
+        nms_iou_threshold=nms_iou_threshold,
+        max_detections=max_detections,
+        topk_candidates=topk_candidates,
+        positive_fraction=positive_fraction,
+        matching_iou_threshold=matching_iou_threshold,
     )
-    def collate_fn(batch):
-        return tuple(zip(*batch))
-        
-    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, collate_fn=collate_fn)
-    coco_gt_test = COCO(test_ann_file)
+    model.load_state_dict(torch.load(checkpoint, map_location=device, weights_only=True))
+    model.to(device)
+    test_loader, test_dataset = _data_loader(
+        job_id, test_json_path(job_id), batch_size, workers, shuffle=False
+    )
+    metrics = evaluate_coco_metrics(
+        model, test_loader, test_dataset.coco, device, test_dataset.label_to_category
+    )
+    metrics_json_path(job_id).write_text(json.dumps(metrics, indent=2), encoding="utf-8")
+    return metrics
 
-    # 3. Perform Evaluation
-    print(f"Starting final evaluation for job: {job_id}")
-    final_metrics = evaluate_coco_metrics(model, test_loader, coco_gt_test, device)
-
-    with open(test_metrics_file_path, 'w') as f:
-        json.dump(final_metrics, f, indent=4)
-
-    print(f"Final Evaluation Metrics saved to: {test_metrics_file_path}")
-    return final_metrics
 
 def load_torchvision_model_for_inference(
-    model_name: str, 
-    model_path: Path, 
-    num_classes: int, 
-    device: torch.device
-) -> Tuple[torch.nn.Module, T.Compose]:
-    """
-    Instantiates a TorchVision model, loads weights, sets to eval mode, 
-    and returns the model and its required inference transform.
-    """
-    model_name_lower = model_name.lower()
-    
-    # 1. Instantiate the base model architecture
-    if model_name_lower in ("faster_rcnn", "fasterrcnn_resnet50_fpn"):
-        model = fasterrcnn_resnet50_fpn(weights=None, num_classes=num_classes)
-    elif model_name_lower in ("retinanet", "retinanet_resnet50_fpn"):
-        model = retinanet_resnet50_fpn(weights=None, num_classes=num_classes)
-    elif model_name_lower in ("mask_rcnn", "maskrcnn_resnet50_fpn"):
-        # We need to manually ensure the MaskRCNN head is configured with the correct number of classes 
-        # as done in the training function (using FastRCNNPredictor and MaskRCNNPredictor)
-        # However, for simplicity here, we rely on the num_classes parameter if the function supports it.
-        # For TorchVision models that have been customized, full model adaptation may be needed here.
-        model_tv_literal = TV_MODEL_NAME_MAP.get(model_name)
-        if model_tv_literal:
-            model = get_detection_model(model_tv_literal, num_classes, pre_trained=False)
-        else:
-            raise ValueError(f"Unsupported torchvision model for loading: {model_name}")
-    else:
+    model_name: str,
+    model_path: Path,
+    num_classes: int,
+    device: torch.device,
+    *,
+    input_size: int = 800,
+    max_size: int = 1333,
+    confidence_threshold: float = 0.05,
+    nms_iou_threshold: float = 0.5,
+    max_detections: int = 300,
+    topk_candidates: int = 400,
+    positive_fraction: float = 0.25,
+    matching_iou_threshold: float = 0.5,
+) -> Tuple[nn.Module, T.Compose]:
+    if model_name not in TV_MODEL_NAME_MAP:
         raise ValueError(f"Unsupported torchvision model for loading: {model_name}")
-    
-    # 2. Load the trained state_dict and set to evaluation mode
-    model.load_state_dict(torch.load(model_path, map_location=device))
+    model = get_detection_model(
+        TV_MODEL_NAME_MAP[model_name],
+        num_classes,
+        pre_trained=False,
+        input_size=input_size,
+        max_size=max_size,
+        confidence_threshold=confidence_threshold,
+        nms_iou_threshold=nms_iou_threshold,
+        max_detections=max_detections,
+        topk_candidates=topk_candidates,
+        positive_fraction=positive_fraction,
+        matching_iou_threshold=matching_iou_threshold,
+    )
+    model.load_state_dict(torch.load(model_path, map_location=device, weights_only=True))
     model.to(device).eval()
-    
-    # 3. Define the minimal inference transform: PIL Image to Tensor
-    transform = T.Compose([
-        T.ToDtype(torch.float32, scale=True),
-        T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-    ])
-    
-    return model, transform
+    return model, T.Compose([T.ToImage(), T.ToDtype(torch.float32, scale=True)])
+
 
 def run_torchvision_inference(
-    model: torch.nn.Module, 
-    image: Image.Image, 
+    model: nn.Module,
+    image: Image.Image,
     transform: T.Compose,
-    device: torch.device
+    device: torch.device,
+    *,
+    confidence_threshold: float = 0.05,
 ) -> List[List[Union[float, int]]]:
-    """
-    Runs inference on a single PIL image using a TorchVision model and returns 
-    detections in the format: [x_min, y_min, x_max, y_max, score, class_id].
-    """
-    detections: List[List[Union[float, int]]] = []
-    SCORE_THRESHOLD = 0.5 
-
-    # 1. Apply Transform: PIL Image -> Tensor, Add Batch Dim, Move to Device
-    image_tensor = transform(image).to(device)
-    input_list = [image_tensor]
-    
-    # 2. Run Inference
     with torch.no_grad():
-        # Output is a list of dicts: [{'boxes': tensor, 'labels': tensor, 'scores': tensor}]
-        outputs = model(input_list) 
-    
-    # 3. Parse and Format Output
-    if outputs and len(outputs) > 0:
-        output = outputs[0]
-        
-        boxes = output['boxes'].cpu().tolist()
-        scores = output['scores'].cpu().tolist()
-        labels = output['labels'].cpu().tolist()
-        
-        # Combine and filter
-        for box, score, label in zip(boxes, scores, labels):
-            if score >= SCORE_THRESHOLD:
-                 # Standard format: [x_min, y_min, x_max, y_max, score, class_id]
-                 detections.append([*box, score, float(label)])
-             
-    return detections
+        output = model([transform(image).to(device)])[0]
+    return [
+        [*box, score, float(int(label) - 1)]
+        for box, score, label in zip(
+            output["boxes"].cpu().tolist(),
+            output["scores"].cpu().tolist(),
+            output["labels"].cpu().tolist(),
+        )
+        if score >= confidence_threshold and int(label) > 0
+    ]
