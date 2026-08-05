@@ -3,17 +3,7 @@ from pydantic import BaseModel, Field, ConfigDict, model_validator
 from typing_extensions import Self
 from cvmodellearning.models.registry import VQAModelId
 from cvmodellearning.schemas.interpretation_schema import PerformanceSpecModel
-
-# --- Helper Models for Strict JSON Schema ---
-class DatasetSourceCount(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-    dataset_name: str = Field(..., description="The name of the dataset")
-    count: int = Field(..., description="Number of images selected from this dataset")
-
-class ClassDataSelection(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-    class_name: str = Field(..., description="The name of the class or subset")
-    sources: List[DatasetSourceCount] = Field(..., description="List of datasets and their counts")
+from cvmodellearning.schemas.dataset_assignment import ClassDataSelection, DatasetSourceCount
 
 class VQAModelSpecModel(BaseModel):
     """
@@ -76,7 +66,7 @@ class VQAOutputModel(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     # Problem
-    task: Literal["classification", "detection", "segmentation", "visual question answering"] = Field(...)
+    task: Literal["classification", "detection", "visual question answering"] = Field(...)
     application_domain: str = Field(..., min_length=1, description="Application domain.")
     description: str = Field(..., min_length=1, description="Problem description and objectives.")
     user_query: str = Field(..., min_length=1, description="Original user prompt or query.")
@@ -91,7 +81,7 @@ class VQAOutputModel(BaseModel):
     augmentation: Optional[str] = Field(None, description="Augmentation strategy.")
     performance_requirements: Optional[PerformanceSpecModel] = Field(
         None,
-        description="Performance targets, constraints, and optimization priority.",
+        description="Performance targets, constraints, and latency/accuracy categories.",
     )
     
     # NEW: Added num_qa_pairs as requested previously

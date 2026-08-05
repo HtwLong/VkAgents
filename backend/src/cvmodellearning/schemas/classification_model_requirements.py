@@ -7,18 +7,7 @@ from cvmodellearning.models.registry import (
     family_by_model_id,
 )
 from cvmodellearning.schemas.interpretation_schema import PerformanceSpecModel
-
-# --- Helper Models for Strict JSON Schema ---
-class DatasetSourceCount(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-    dataset_name: str = Field(..., description="The name of the dataset")
-    count: int = Field(..., description="Number of images from this dataset")
-
-class ClassDataSelection(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-    class_name: str = Field(..., description="The name of the class or subset")
-    sources: List[DatasetSourceCount] = Field(..., description="List of datasets and their counts")
-
+from cvmodellearning.schemas.dataset_assignment import ClassDataSelection, DatasetSourceCount
 
 class ModelSpecModel(BaseModel):
     """
@@ -26,9 +15,9 @@ class ModelSpecModel(BaseModel):
     """
     model_config = ConfigDict(extra="forbid", use_enum_values=True)
 
-    model_architecture: Optional[ClassificationModelId] = Field(
-        None,
-        description="Backbone architecture identifier; optional to allow other values downstream."
+    model_architecture: ClassificationModelId = Field(
+        ...,
+        description="The single executable classification architecture selected for downstream planning."
     )
     architecture_family: Optional[ClassificationModelFamily] = Field(
         None,
@@ -75,7 +64,7 @@ class ClassificationOutputModel(BaseModel):
     augmentation: Optional[str] = Field(None, description="Text description of augmentation strategy.")
     performance_requirements: Optional[PerformanceSpecModel] = Field(
         None,
-        description="Performance targets, constraints, and optimization priority.",
+        description="Performance targets, constraints, and latency/accuracy categories.",
     )
     
     # CHANGED: Replaced Dicts with Strictly Typed Lists

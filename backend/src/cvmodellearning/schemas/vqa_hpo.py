@@ -2,17 +2,19 @@ import math
 from typing import List, Literal, Optional, Self
 from pydantic import BaseModel, Field, ConfigDict, model_validator
 from cvmodellearning.models.registry import VQAModelId
+from cvmodellearning.schemas.hpo_runtime import build_runtime_hpo_config
+from cvmodellearning.schemas.dataset_assignment import (
+    ClassDataAssignment,
+    DatasetSourceCount,
+    normalize_dataset_assignments,
+)
 
-# --- Helper Models for Strict JSON Schema ---
-class DatasetSourceCount(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-    dataset_name: str = Field(..., description="The name of the dataset")
-    count: int = Field(..., description="Number of images selected from this dataset")
-
-class ClassDataSelection(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-    class_name: str = Field(..., description="The name of the class or subset")
-    sources: List[DatasetSourceCount] = Field(..., description="List of datasets and their counts")
+VQA_OPTIMIZER_PARAM_FIELDS = {
+    "adamw": ("learning_rate", "weight_decay", "eps", "beta1", "beta2"),
+    "paged_adamw_8bit": ("learning_rate", "weight_decay", "eps", "beta1", "beta2"),
+    "sgd": ("learning_rate", "weight_decay", "momentum", "nesterov"),
+    "rmsprop": ("learning_rate", "weight_decay", "eps", "momentum", "alpha", "centered"),
+}
 
 class VQAConfigModel(BaseModel):
     """
@@ -33,22 +35,33 @@ class VQAConfigModel(BaseModel):
     )
     
     # CHANGED: Now uses the strict-compatible list structure
-    selected_data: List[ClassDataSelection] = Field(
-        ..., 
-        description="List of dataset sources and respective image/question counts."
+    selected_data: List[ClassDataAssignment] = Field(
+        ..., min_length=1,
+        description="Authoritative class/source train, validation, and test assignments from dataset planning."
     )
+
+    @model_validator(mode="before")
+    @classmethod
+    def _normalize_legacy_selected_data(cls, value):
+        if isinstance(value, dict) and "selected_data" in value:
+            value = dict(value)
+            value["selected_data"] = [
+                item.model_dump(mode="json")
+                for item in normalize_dataset_assignments(value["selected_data"] or [])
+            ]
+        return value
     
     train_data_ratio: float = Field(
         0.8, ge=0.0, lt=1.0,
-        description="Proportion of the dataset allocated for training; must be in [0, 1)."
+        description="Deprecated execution compatibility ratio derived from the planned assignments."
     )
     val_data_ratio: float = Field(
         0.1, ge=0.0, lt=1.0,
-        description="Proportion of the dataset allocated for validation; must be in [0, 1)."
+        description="Deprecated execution compatibility ratio derived from the planned assignments."
     )
     test_data_ratio: float = Field(
         0.1, ge=0.0, lt=1.0,
-        description="Proportion of the dataset allocated for testing; must be in [0, 1)."
+        description="Deprecated execution compatibility ratio derived from the planned assignments."
     )
     
     # --- Training Loop ---
@@ -120,6 +133,10 @@ class VQAConfigModel(BaseModel):
     )
     beta1: float = Field(0.9, gt=0, lt=1, description="AdamW β1 parameter.")
     beta2: float = Field(0.999, gt=0, lt=1, description="AdamW β2 parameter.")
+    nesterov: bool = Field(False, description="Enable Nesterov momentum for SGD.")
+    momentum: float = Field(0.0, ge=0, description="Set momentum factor for SGD/RMSprop.")
+    alpha: float = Field(0.99, gt=0, lt=1, description="Set RMSprop smoothing constant α.")
+    centered: bool = Field(False, description="Use centered RMSprop variant.")
     
     rationale: str = Field(
         ..., 
@@ -136,3 +153,9 @@ class VQAConfigModel(BaseModel):
             raise ValueError("Learning rate is suspiciously high for a pre-trained VLM. It should typically be <= 1e-3 to avoid catastrophic forgetting.")
 
         return self
+
+    def runtime_config(self) -> dict:
+        return build_runtime_hpo_config(
+            self.model_dump(exclude_none=True),
+            VQA_OPTIMIZER_PARAM_FIELDS,
+        )

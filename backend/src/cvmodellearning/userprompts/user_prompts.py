@@ -1,7 +1,6 @@
 # image classification, user provides data
 simple_prompt = """Please build me a model that classifies whether a fruit in a photo 
 is fresh or rotten. I have a thousand of labeled images for both classes."""
-
 simple_prompt2 = """Please build a wildlife monitoring model to detect and localize 
 each animal in camera trap images from African savanna. I need the model to work 
 for elephants, lions, and zebras"""
@@ -32,13 +31,3 @@ advanced_prompt3 = """I need a YOLOv5-based object detection model that counts a
 localizes cars, bicycles, and trucks in city street photos. The model should be able 
 to process images efficiently for practical use. Since I don’t have my own dataset, 
 please recommend a suitable open-source dataset for this task."""
-
-advanced_prompt4 = """Train a U-Net model to segment tumors from healthy tissue in MRI 
-scans. The model should be able to run on a hospital workstation with limited GPU resources 
-(8GB VRAM max). My data includes paired MR images and binary masks. Aim for at least 
-85% Dice coefficient on the test set."""
-
-advanced_prompt5 = """Implement a DeepLabV3+ model to segment and label each piece 
-of furniture (chair, sofa, table) in photos of living rooms. The model should support 
-efficient batch inference for moderate image processing workloads. I have annotated 
-segmentation masks for training."""

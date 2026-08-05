@@ -3,17 +3,7 @@ from pydantic import BaseModel, Field, ConfigDict, model_validator
 from typing_extensions import Self
 from cvmodellearning.models.registry import DetectionModelFamily, DetectionModelId, family_by_model_id
 from cvmodellearning.schemas.interpretation_schema import PerformanceSpecModel
-
-# --- Unified Helper Models for Strict JSON Schema ---
-class DatasetSourceCount(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-    dataset_name: str = Field(..., description="The name of the dataset")
-    count: int = Field(..., description="Number of images from this dataset")
-
-class ClassDataSelection(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-    class_name: str = Field(..., description="The name of the class or subset")
-    sources: List[DatasetSourceCount] = Field(..., description="List of datasets and their counts")
+from cvmodellearning.schemas.dataset_assignment import ClassDataSelection, DatasetSourceCount
 
 # --- Model Specification ---
 class ObjectDetectionModelSpecModel(BaseModel):
@@ -22,9 +12,9 @@ class ObjectDetectionModelSpecModel(BaseModel):
     """
     model_config = ConfigDict(extra="forbid", use_enum_values=True)
 
-    model_architecture: Optional[DetectionModelId] = Field(
-        None,
-        description="Backbone architecture identifier; optional to allow other values downstream."
+    model_architecture: DetectionModelId = Field(
+        ...,
+        description="The single executable detection architecture selected for downstream planning."
     )
     architecture_family: Optional[DetectionModelFamily] = Field(
         None,
@@ -77,8 +67,8 @@ class DetectionOutputModel(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     # Problem
-    task: Literal["classification", "detection", "segmentation", "visual question answering"] = Field(
-        ..., description="Primary Computer Vision task; set to 'classificaiton', 'detection', 'segmentation', or 'visual question answering'."
+    task: Literal["detection"] = Field(
+        ..., description="The supported task is bounding-box object detection."
     )
     application_domain: str = Field(..., min_length=1, description="Application domain (e.g., aerial imagery, retail shelf scanning).")
     description: str = Field(..., min_length=1, description="Problem description and objectives, including detection scope.")
@@ -88,7 +78,7 @@ class DetectionOutputModel(BaseModel):
     dataset_name: str = Field(..., min_length=1, description="Dataset name or identifier.")
     classes: List[str] = Field(..., min_length=1, description="Class names in label order; list must be non-empty.")
     annotations_format: Literal["coco", "yolo", "pascal_voc"] = Field(
-        ..., description="The format of the ground truth bounding box/segmentation annotations."
+        ..., description="The format of the ground-truth bounding-box annotations."
     )
     source: Optional[str] = Field(None, description="Dataset source (URL, paper, registry, or internal ID).")
     path_images: Optional[str] = Field(None, description="Local/remote path to images if applicable.")
@@ -97,7 +87,7 @@ class DetectionOutputModel(BaseModel):
     augmentation: Optional[str] = Field(None, description="Text description of augmentation strategy (e.g., Mosaic, CutMix, H-Flip).")
     performance_requirements: Optional[PerformanceSpecModel] = Field(
         None,
-        description="Performance targets, constraints, and optimization priority.",
+        description="Performance targets, constraints, and latency/accuracy categories.",
     )
     
     # CHANGED: Replaced Dicts with strictly typed Lists
@@ -119,17 +109,3 @@ class DetectionOutputModel(BaseModel):
         ..., 
         description="A clear explanation of why you've chosen specific field values. Cite sources or dataset characteristics."
     )
-
-    @model_validator(mode="after")
-    def _validate_consistency(self) -> Self:                
-        if self.task == "instance_segmentation":
-            valid_is_models = ["mask-rcnn", "yolo"]
-            
-            if not any(
-                m.architecture_family in valid_is_models 
-                or m.model_architecture in ["yolov8", "yolov10", "yolov11", "yolov12", "mask-rcnn_r50_fpn_1x_coco"]
-                for m in self.model
-            ):
-                 raise ValueError("Task is 'instance_segmentation', but no 'mask-rcnn' or YOLO-family model is listed in 'model'.")
-                 
-        return self
