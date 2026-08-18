@@ -1,5 +1,9 @@
+import asyncio
+import hashlib
 import json
-from typing import Union
+import math
+from collections.abc import Awaitable, Callable
+from typing import TypeVar, Union
 from openai import AsyncOpenAI
 from pydantic import BaseModel, ValidationError
 
@@ -15,18 +19,17 @@ from cvmodellearning.schemas.detection_hpo import (
 )
 from cvmodellearning.schemas.detection_hpo_completion import complete_detection_config
 from cvmodellearning.schemas.vqa_hpo import VQAConfigModel
-from cvmodellearning.schemas.decision_schema import HpoDecision
+from cvmodellearning.schemas.decision_schema import HpoDecision, HpoFinding
 from cvmodellearning.agents.agents_utils import log_planning_step
 from cvmodellearning.graphrag.hyperparameter_context import (
     llm_controlled_fields,
     validate_executable_recipe_config,
-    validate_detection_graph_grounded_config,
-    validate_graph_grounded_config,
 )
 from cvmodellearning.models.classification_capabilities import (
     classification_prompt_constraints,
     selected_classification_model_id,
 )
+from cvmodellearning.models.detection_capabilities import detection_prompt_constraints
 from cvmodellearning.models.registry import (
     DETECTION_HPO_MODEL_IDS,
     enabled_models,
@@ -34,12 +37,50 @@ from cvmodellearning.models.registry import (
 )
 from cvmodellearning.schemas.classification_hpo_completion import complete_classification_config
 from cvmodellearning.schemas.dataset_assignment import planned_split_ratios
-from cvmodellearning.policies.hyperparameter_policy_registry import (
-    normalize_policy_rationales,
-    policy_fields,
-    policy_ids_by_field,
-    validate_policy_rationales,
-)
+from cvmodellearning.schemas.revision import hpo_override_values
+from cvmodellearning.skills import load_cv_skill
+from cvmodellearning.training.resource_guard import validate_training_resource_config
+from cvmodellearning.llm_config import PLANNING_MODEL
+from cvmodellearning.observability.planning_usage import run_planning_completion
+
+
+class HpoPhaseTimeout(TimeoutError):
+    """Identifies the model phase that exceeded its bounded request timeout."""
+
+    def __init__(self, phase: str, round_idx: int, timeout_seconds: int, attempts: int):
+        self.phase = phase
+        self.round_idx = round_idx
+        self.timeout_seconds = timeout_seconds
+        self.attempts = attempts
+        super().__init__(
+            f"{phase} timed out after {attempts} attempts of {timeout_seconds} seconds "
+            f"in round {round_idx}"
+        )
+
+
+_HpoCallResult = TypeVar("_HpoCallResult")
+
+
+async def _hpo_model_call(
+    awaitable_factory: Callable[[], Awaitable[_HpoCallResult]],
+    *,
+    phase: str,
+    round_idx: int,
+) -> _HpoCallResult:
+    """Retry one isolated timed-out model request without replaying prior stages."""
+    timeout_seconds = 180
+    attempts = 2
+    for attempt in range(1, attempts + 1):
+        try:
+            return await asyncio.wait_for(
+                awaitable_factory(), timeout=timeout_seconds,
+            )
+        except asyncio.TimeoutError as exc:
+            if attempt == attempts:
+                raise HpoPhaseTimeout(
+                    phase, round_idx, timeout_seconds, attempts,
+                ) from exc
+    raise AssertionError("unreachable")
 
 
 def format_pydantic_validation_errors(error: ValidationError) -> list[dict]:
@@ -68,45 +109,6 @@ def build_validation_error_summary(errors: list[dict]) -> str:
     )
 
 
-def _ensure_llm_rationales_on_dict(
-    config: dict,
-    missing_fields: set[str],
-    policy_context: dict | None = None,
-) -> dict:
-    """Insert concise fallback llm_field_rationales for missing fields.
-
-    This is a deterministic, auditable fallback used when the LLM omitted
-    required field-level rationales. It appends brief reasons and updates the
-    main rationale to mention the auto-generated entries.
-    """
-    if not missing_fields:
-        return config
-    rationales = list(config.get("llm_field_rationales") or [])
-    existing = {r.get("field") for r in rationales}
-    policy_ids = policy_ids_by_field(policy_context or {})
-    added = []
-    for f in sorted(missing_fields):
-        if f in existing:
-            continue
-        applicable_ids = policy_ids.get(f, [])
-        reason = f"The generated value for {f} was documented automatically"
-        if applicable_ids:
-            reason += " and checked against its applicable policy guidance"
-        entry = {
-            "field": f,
-            "reason": f"{reason}.",
-            "applied_policy_ids": applicable_ids,
-        }
-        rationales.append(entry)
-        added.append(f)
-    config["llm_field_rationales"] = rationales
-    if added:
-        prev = config.get("rationale", "")
-        addition = " Added fallback rationales for: " + ", ".join(added) + "."
-        config["rationale"] = (prev + addition).strip()
-    return config
-
-
 def normalize_hpo_decision(
     decision: HpoDecision,
     blocking_findings: list,
@@ -132,6 +134,9 @@ HPO_EXTERNAL_DEPLOYMENT_FIELDS = frozenset({
     "max_parameters_m",
     "max_cpu_latency_ms",
 })
+HPO_QUALITY_ADVISORY_FIELDS = frozenset({
+    "num_epochs", "input_size", "batch_size", "translate", "scale",
+})
 
 
 def demote_external_deployment_findings(
@@ -153,11 +158,140 @@ def demote_external_deployment_findings(
     return decision.model_copy(update={"findings": findings}), sorted(set(demoted_fields))
 
 
+def demote_quality_heuristic_findings(decision: HpoDecision) -> tuple[HpoDecision, list[str]]:
+    """Keep subjective quality advice visible after deterministic safety checks pass."""
+    findings = []
+    demoted = []
+    for finding in decision.findings:
+        if finding.field in HPO_QUALITY_ADVISORY_FIELDS and finding.severity != "preference":
+            finding = finding.model_copy(update={"severity": "preference"})
+            demoted.append(finding.field)
+        findings.append(finding)
+    if not demoted:
+        return decision, []
+    return decision.model_copy(update={"findings": findings}), sorted(set(demoted))
+
+
+def _parse_recommended_value(value: str):
+    """Parse the evaluator's text replacement without guessing at its type."""
+    try:
+        return json.loads(value)
+    except (json.JSONDecodeError, TypeError):
+        return value
+
+
+def compact_evaluator_context(context_data: dict) -> dict:
+    """Keep reviewer inputs relevant and bounded instead of replaying full evidence."""
+    keys = {
+        "task", "classes", "selected_model_info", "selected_data",
+        "performance_requirements", "robustness_requirements",
+        "training_hardware", "available_hardware", "use_graphrag",
+    }
+    compact = {key: context_data[key] for key in keys if key in context_data}
+    graph = context_data.get("hyperparameter_graph_context") or {}
+    compact["hyperparameter_graph_context"] = {
+        key: graph[key]
+        for key in (
+            "selected_model_id", "reference_configuration", "matched_adjustment_rules",
+            "allowed_adjustment_fields",
+        )
+        if key in graph
+    }
+    return compact
+
+
+HPO_REVIEW_HISTORY_LIMIT = 3
+
+
+def rejected_review_record(
+    *, round_idx: int, candidate: dict, decision: HpoDecision,
+    previous_candidate: dict | None,
+) -> dict:
+    """Create a bounded, JSON-safe record for reviewer continuity."""
+    ignored_comparison_fields = {"rationale", "llm_field_rationales"}
+    comparable_candidate = {
+        field: value for field, value in candidate.items()
+        if field not in ignored_comparison_fields
+    }
+    canonical_candidate = json.dumps(
+        comparable_candidate, sort_keys=True, separators=(",", ":"), default=str
+    )
+    changes = {}
+    if previous_candidate is not None:
+        comparable_previous = {
+            field: value for field, value in previous_candidate.items()
+            if field not in ignored_comparison_fields
+        }
+        for field in sorted(set(comparable_previous) | set(comparable_candidate)):
+            old_value = comparable_previous.get(field)
+            new_value = comparable_candidate.get(field)
+            if old_value != new_value:
+                changes[field] = {"from": old_value, "to": new_value}
+    return {
+        "round": round_idx,
+        "candidate_fingerprint": hashlib.sha256(
+            canonical_candidate.encode("utf-8")
+        ).hexdigest()[:16],
+        "active_configuration": candidate,
+        "changes_from_previous_rejected_candidate": changes,
+        "decision_reason": decision.reason,
+        "blocking_findings": [
+            finding.model_dump(mode="json") for finding in decision.findings
+            if finding.severity in {"hard_error", "safety_warning"}
+        ],
+    }
+
+
+def append_rejected_review_record(history: list[dict], record: dict) -> None:
+    """Append a rejection while retaining only the most recent review rounds."""
+    history.append(record)
+    del history[:-HPO_REVIEW_HISTORY_LIMIT]
+
+
+def build_evaluator_messages(
+    *, system_prompt: str, evaluator_context_json: str, runtime_guidance: str,
+    candidate: dict, rejected_review_history: list[dict],
+) -> list[dict]:
+    """Build a fresh review request with bounded structured rejection memory."""
+    history_json = json.dumps(rejected_review_history, indent=2, default=str)
+    return [
+        {"role": "system", "content": system_prompt},
+        {
+            "role": "user",
+            "content": (
+                f"Relevant Task Context: {evaluator_context_json}\n\n"
+                f"{runtime_guidance}\n\n"
+                "Previous Rejected Review Rounds (oldest to newest, maximum 3):\n"
+                f"{history_json}\n\n"
+                "Use this history to verify that earlier blocking findings were resolved "
+                "and to keep judgments consistent. Evaluate the current configuration on "
+                "its own merits. Do not repeat a resolved finding, and explicitly explain "
+                "any reversal of an earlier judgment. Matching fingerprints identify an "
+                "unchanged active configuration.\n\n"
+                "Proposed Active Runtime Configuration:\n"
+                f"{json.dumps(candidate, indent=2)}"
+            ),
+        },
+    ]
+
+
 HPO_SCHEMA_FIELDS = frozenset().union(
     ClassificationConfigDraft.model_fields,
     DetectionConfigDraft.model_fields,
     VQAConfigModel.model_fields,
 )
+
+PIPELINE_OWNED_HPO_CONTEXT_FIELDS = frozenset({
+    "task_type",
+    "classes",
+    "selected_data",
+    "data_plan_constraints",
+    "train_data_ratio",
+    "val_data_ratio",
+    "test_data_ratio",
+    "model_name",
+    "training_recipe_id",
+})
 
 
 def evaluator_active_configuration(proposal: BaseModel, task: str) -> dict:
@@ -170,8 +304,62 @@ def evaluator_active_configuration(proposal: BaseModel, task: str) -> dict:
     else:
         active_fields = set(data)
 
+    active_fields -= PIPELINE_OWNED_HPO_CONTEXT_FIELDS
     active_fields |= {"rationale", "llm_field_rationales"}
     return {field: value for field, value in data.items() if field in active_fields}
+
+
+def reconcile_optimizer_explanations(
+    previous: BaseModel | None,
+    proposal: BaseModel,
+) -> BaseModel:
+    """Keep explanations only for fields the optimizer owns and actually changed."""
+
+    rationales = [
+        item for item in getattr(proposal, "llm_field_rationales", [])
+        if item.field not in PIPELINE_OWNED_HPO_CONTEXT_FIELDS
+    ]
+    if previous is None:
+        rationale = " ".join(
+            f"{item.field}: {item.reason}" for item in rationales
+        ).strip()
+        if not rationale:
+            rationale = "Optimizer-owned fields were normalized against authoritative pipeline context."
+        return proposal.model_copy(update={
+            "llm_field_rationales": rationales,
+            "rationale": rationale,
+        })
+
+    changed = changed_configuration_fields(previous, proposal)
+    previous_rationales = {
+        item.field: item
+        for item in getattr(previous, "llm_field_rationales", [])
+        if item.field not in PIPELINE_OWNED_HPO_CONTEXT_FIELDS
+    }
+    repaired_rationales = {item.field: item for item in rationales}
+    merged_rationales = [
+        repaired_rationales.get(field, item)
+        for field, item in previous_rationales.items()
+        if field not in changed
+    ]
+    merged_rationales.extend(
+        repaired_rationales[field]
+        for field in sorted(changed)
+        if field in repaired_rationales
+        and field not in PIPELINE_OWNED_HPO_CONTEXT_FIELDS
+    )
+    change_summary = "; ".join(
+        f"{field}: {getattr(previous, field, None)!r} -> {getattr(proposal, field, None)!r}"
+        for field in sorted(changed)
+        if field not in PIPELINE_OWNED_HPO_CONTEXT_FIELDS
+    )
+    rationale = str(getattr(previous, "rationale", "")).strip()
+    if change_summary:
+        rationale = f"{rationale} Evaluator-authorized repair: {change_summary}.".strip()
+    return proposal.model_copy(update={
+        "llm_field_rationales": merged_rationales,
+        "rationale": rationale,
+    })
 
 
 def discard_inactive_schema_findings(
@@ -286,6 +474,8 @@ You are receiving a full PipelineState JSON containing:
 - `selected_data`: The authoritative train/validation/test dataset assignments from planning.
 - `selected_model_info`: The architecture chosen in previous steps.
 - `augmentation`, `preprocessing`: The data transformation strategies.
+- `revision.active`: Confirmed user changes. Required HPO `set` operations are enforced
+  deterministically; use preferred changes as advisory guidance when compatible.
 """
 
 def changed_configuration_fields(previous: BaseModel, repaired: BaseModel) -> set[str]:
@@ -352,6 +542,10 @@ def apply_owned_pipeline_fields(
         data["model_name"] = selected_model_name
     data["classes"] = list(context.get("classes") or [])
     data["selected_data"] = list(context.get("selected_data") or [])
+    if str(context.get("task", "")).lower() == "detection":
+        data["data_plan_constraints"] = dict(
+            context.get("data_plan_constraints") or {}
+        )
     data.update(planned_split_ratios(context) or {})
 
     # A recipe ID is ontology provenance, never a free-form LLM decision.
@@ -379,18 +573,177 @@ def apply_owned_pipeline_fields(
     return type(proposal).model_validate(data)
 
 
-def changed_grounded_fields(
+def complete_required_field_rationales(
     proposal: BaseModel,
-    base_configuration: dict,
-    allowed_adjustment_fields: set[str],
-) -> set[str]:
-    """Return graph-grounded fields changed without an applicable rule."""
-    proposed = proposal.model_dump(mode="json")
-    return {
-        field
-        for field, grounded_value in base_configuration.items()
-        if field not in allowed_adjustment_fields and proposed.get(field) != grounded_value
+    required_fields: set[str],
+    graph_context: dict | None = None,
+) -> tuple[BaseModel, list[str]]:
+    """Add auditable provenance when generation omitted explanation metadata."""
+    if not required_fields:
+        return proposal, []
+
+    graph_fields = set(((graph_context or {}).get("reference_configuration") or {}).keys())
+    rationales = list(getattr(proposal, "llm_field_rationales", []))
+    existing = {str(item.field) for item in rationales}
+    rationale_type = type(proposal).model_fields["llm_field_rationales"].annotation
+    item_type = rationale_type.__args__[0]
+    added: list[str] = []
+
+    for field in sorted(required_fields - existing):
+        if field in graph_fields:
+            reason = (
+                f"The value for {field} was retained from or selected relative to "
+                "the GraphRAG-grounded configuration."
+            )
+        else:
+            reason = (
+                f"The value for {field} was selected by the optimizer and passed "
+                "the executable schema constraints."
+            )
+        rationales.append(item_type.model_validate({
+            "field": field,
+            "reason": reason,
+        }))
+        added.append(field)
+
+    if not added:
+        return proposal, []
+
+    rationale = str(getattr(proposal, "rationale", "")).strip()
+    provenance_note = (
+        " Deterministic provenance was completed for: " + ", ".join(added) + "."
+    )
+    return proposal.model_copy(update={
+        "llm_field_rationales": rationales,
+        "rationale": (rationale + provenance_note).strip(),
+    }), added
+
+
+def validate_hpo_cross_field_configuration(
+    proposal: BaseModel,
+    context_data: dict,
+) -> list[dict]:
+    """Return deterministic schedule/override violations for an HPO proposal."""
+    if context_data.get("task") != "detection":
+        return []
+    data = proposal.model_dump(mode="json")
+    model_name = str(data.get("model_name", ""))
+    if not model_name.startswith(("yolov8_", "yolov10_", "yolov11_", "yolov12_")):
+        return []
+
+    epochs = int(data.get("num_epochs") or 0)
+    patience = int(data.get("patience") or 0)
+    warmup = float(data.get("warmup_epochs") or 0)
+    mosaic = float(data.get("mosaic") or 0)
+    close_mosaic = int(data.get("close_mosaic") or 0)
+    violations: list[dict] = []
+
+    if epochs >= 10 and warmup > epochs * 0.20:
+        violations.append({
+            "fields": ["num_epochs", "warmup_epochs"],
+            "message": (
+                f"warmup_epochs={warmup:g} consumes more than 20% of the {epochs}-epoch schedule."
+            ),
+        })
+
+    if mosaic > 0 and close_mosaic > 0:
+        normal_mosaic_epochs = epochs - close_mosaic
+        minimum_normal_phase = min(20, max(5, epochs // 2))
+        if normal_mosaic_epochs < minimum_normal_phase:
+            violations.append({
+                "fields": ["num_epochs", "close_mosaic"],
+                "message": (
+                    f"mosaic is active for only {normal_mosaic_epochs} epoch(s) before "
+                    f"close_mosaic={close_mosaic}; require at least {minimum_normal_phase}."
+                ),
+            })
+
+    if epochs >= 10 and 0 < patience < max(3, int(epochs * 0.10)):
+        violations.append({
+            "fields": ["num_epochs", "patience"],
+            "message": (
+                f"patience={patience} is too short for a {epochs}-epoch fine-tuning schedule; "
+                "use 0 to disable early stopping or a coherent patience value."
+            ),
+        })
+
+    return violations
+
+
+def hpo_advisory_findings(proposal: BaseModel, context_data: dict) -> list[dict]:
+    """Return quality recommendations that must remain visible but non-blocking."""
+    if context_data.get("task") != "detection":
+        return []
+    data = proposal.model_dump(mode="json")
+    model_name = str(data.get("model_name", ""))
+    if not model_name.startswith(("yolov8_", "yolov10_", "yolov11_", "yolov12_")):
+        return []
+    findings: list[dict] = []
+    reference = ((context_data.get("hyperparameter_graph_context") or {}).get("reference_configuration") or {})
+    reference_epochs = int(reference.get("num_epochs") or 0)
+    epochs = int(data.get("num_epochs") or 0)
+    query = str(context_data.get("user_query") or "").lower()
+    time_limited = any(phrase in query for phrase in (
+        "time limit", "training time", "finish within", "maximum epochs",
+        "max epochs", "only have", "budget of", "quick experiment", "smoke test",
+    ))
+    threshold = max(20, math.ceil(reference_epochs * 0.75)) if reference_epochs else 0
+    if reference_epochs >= 40 and epochs < threshold and not time_limited:
+        findings.append({
+            "field": "num_epochs",
+            "severity": "preference",
+            "reason": (
+                f"num_epochs={epochs} is substantially below the GraphRAG reference of "
+                f"{reference_epochs}; consider at least {threshold} unless the reduction is justified."
+            ),
+            "recommended_value": str(threshold),
+            "rule_id": "hpo.recipe_epoch_deviation.v1",
+        })
+    robustness = context_data.get("robustness_requirements") or {}
+    requested_scales = {
+        str(value).strip().lower()
+        for value in (
+            robustness.get("object_scale", [])
+            if isinstance(robustness, dict)
+            else getattr(robustness, "object_scale", [])
+        )
     }
+    query = str(context_data.get("user_query") or "").lower()
+    small_objects_requested = "small" in requested_scales or any(
+        phrase in query
+        for phrase in ("small object", "small and far", "far away", "distant object")
+    )
+    hardware = context_data.get("training_hardware") or {}
+    budget = float(hardware.get("training_memory_budget_gb") or 0)
+    if small_objects_requested:
+        translate = float(data.get("translate") or 0)
+        scale = float(data.get("scale") or 0)
+        input_size = int(data.get("input_size") or 0)
+        batch_size = int(data.get("batch_size") or 0)
+        if translate == 0 and scale == 0:
+            findings.append({
+                "field": "translate",
+                "severity": "preference",
+                "reason": (
+                    "Small-object detection requires bounded geometric variation; do not "
+                    "disable both translate and scale without measured dataset evidence."
+                ),
+                "recommended_value": "0.05",
+                "rule_id": "hpo.small_object_augmentation.v1",
+            })
+        if 0 < budget <= 6 and input_size < 768:
+            findings.append({
+                "field": "input_size", "severity": "preference",
+                "reason": "Consider input_size=768 for small objects on the low-memory profile; resource validation remains authoritative.",
+                "recommended_value": "768", "rule_id": "hpo.small_object_resolution.v1",
+            })
+        if 0 < budget <= 6 and input_size >= 768 and batch_size > 2:
+            findings.append({
+                "field": "batch_size", "severity": "preference",
+                "reason": "Consider batch_size<=2 with input_size>=768 on a <=6 GiB training budget.",
+                "recommended_value": "2", "rule_id": "hpo.small_object_resolution.v1",
+            })
+    return findings
 
 
 async def generate_and_evaluate_hpo(
@@ -412,6 +765,20 @@ async def generate_and_evaluate_hpo(
     except json.JSONDecodeError:
         print("Error: Invalid JSON data provided.")
         return None, None
+
+    use_graphrag = bool(context_data.get("use_graphrag", True))
+    if use_graphrag:
+        authority_guidance = (
+            "Use the GraphRAG reference recipe as a starting point. Preserve or adapt each "
+            "schema-configurable field based on the selected model, datasets, task, and "
+            "hardware, and explain the decision. GraphRAG is evidence, not field authority."
+        )
+    else:
+        authority_guidance = (
+            "Choose any schema-valid, runtime-compatible hyperparameter values. Task, "
+            "classes, selected model, dataset assignments, split ratios, hardware limits, "
+            "and structural model-family invariants remain pipeline-owned."
+        )
 
     # 2. Map the task to the correct Pydantic schema
     schema_mapping = {
@@ -440,7 +807,7 @@ async def generate_and_evaluate_hpo(
         if selected_model_name is None:
             print("Error: No supported selected detection model was found.")
             return None, None
-        model_constraints = {"model_name": selected_model_name}
+        model_constraints = detection_prompt_constraints(selected_model_name)
 
     # 3. Setup the initial Optimizer conversation history
     optimizer_messages = [
@@ -448,31 +815,38 @@ async def generate_and_evaluate_hpo(
             "role": "system",
             "content": (
                 f"{PIPELINE_STATE_BLUEPRINT}\n\n"
-                "You are a strict, deterministic Machine Learning configuration engine. "
+                "You are a careful Machine Learning engineer proposing an executable initial configuration. "
                 "Review the `selected_model_info`, `selected_data`, and `task` from the state. "
                 "Based on this context, generate a safe hyperparameter configuration. "
-                "The state may include `hyperparameter_graph_context.base_configuration`; copy every field in that "
-                "deterministic baseline exactly unless the field appears in `allowed_adjustment_fields`. Apply only rules "
+                f"Authority mode: {authority_guidance} "
+                f"\n\n{load_cv_skill('diagnose')}\n\n{load_cv_skill('recipe-adaptation')}\n\n"
+                f"{load_cv_skill('data-problems')}\n\n"
+                "The state may include `hyperparameter_graph_context.reference_configuration`. "
+                "Treat it as a reference recipe, not "
+                "an immutable baseline. Apply only graph rules "
                 "listed in `matched_adjustment_rules`; model-scoped rules whose conditions were not matched are informational. "
                 "Fields listed in `fields_requiring_llm_completion` are deliberately missing from the recipe: choose safe "
                 "values for them from the model, data, hardware, schema constraints, and retrieved evidence. Do not describe "
-                "an LLM-completed value as recipe-sourced. Use only policies in "
-                "`hyperparameter_policy_context.applicable_policies`; policies are advisory and never override recipe-grounded "
-                "fields or runtime constraints, except that a recipe-backed Ultralytics optimizer='auto' may be changed to a "
+                "an LLM-completed value as recipe-sourced. A recipe-backed Ultralytics optimizer='auto' may be changed to a "
                 "supported explicit optimizer when the data, effective batch, or stability evidence specifically justifies it. "
+                "Use `selected_model_info` only to identify the selected architecture; never copy epochs, patience, "
+                "optimizer, losses, resolution, batch size, or augmentations from model selection. The HPO stage owns "
+                "those fields. You may adapt GraphRAG defaults, but for each changed recipe-backed field state whether "
+                "the basis is a user requirement, dataset profile, training hardware, matched adjustment rule, or runtime "
+                "constraint. Never describe an adapted value as GraphRAG-sourced. Evaluate epochs, patience, warmup, "
+                "and close_mosaic as one coherent schedule. "
                 "When optimizer='auto', Ultralytics owns learning_rate and momentum, so do not claim to tune them. To control "
-                "learning_rate, select an explicit optimizer and justify both optimizer_name and learning_rate. For each "
-                "policy-guided field, add one `llm_field_rationales` entry whose "
-                "`applied_policy_ids` cites the applicable policy IDs that influenced the value. "
-                "Independently assess every active field in `fields_available_for_policy_guidance`; do not retain a schema "
-                "default merely because the recipe omitted the field. Keep the default only when the applicable policy and "
-                "training problem profile support it. "
+                "learning_rate, select an explicit optimizer and justify both optimizer_name and learning_rate. "
                 "For other fields absent from the baseline, use schema defaults unless the PipelineState provides a concrete reason. "
                 "`training_recipe_id` is provenance, not a name you may invent: when `use_graphrag` is false it MUST be "
-                "the empty string; when GraphRAG is enabled copy it exactly from the base configuration. "
+                "the empty string; when GraphRAG is enabled copy it exactly from the reference recipe. "
                 "You must rely ONLY on standard, universally accepted heuristics. Do not attempt creative, novel, or experimental configurations. "
                 "If a parameter is standard, use the standard value. Hallucination or guessing outside of the provided context is strictly prohibited. "
                 "Pay strict attention to memory constraints and learning rates for the selected architecture. "
+                "For TorchVision Faster R-CNN, RetinaNet, and SSD, every YOLO-only augmentation field "
+                "(`mosaic`, `mixup`, `cutmix`, `copy_paste`, `degrees`, `translate`, `scale`, `fliplr`, "
+                "`hsv_h`, `hsv_s`, `hsv_v`, and `close_mosaic`) must be zero. Use the active "
+                "`horizontal_flip_probability` field for supported horizontal flipping. "
                 "Respect `performance_requirements.latency_category` and `performance_requirements.accuracy_category` "
                 "when present: favor stronger training choices for MediumHigh or High accuracy requirements, "
                 "efficient settings for VeryLow or Low latency requirements, and moderate defaults when both matter. "
@@ -481,7 +855,7 @@ async def generate_and_evaluate_hpo(
                 "\n\nOUTPUT FORMAT REQUIREMENTS: Return a single JSON object matching the executable schema for the task. "
                 "The JSON MUST include a top-level llm_field_rationales array with one object per field that you set or completed. "
                 "Each entry must be an object with a string `field` and a string `reason`. Do not include explanatory prose outside the JSON object. "
-                "Example: {\"llm_field_rationales\": [{\"field\": \"patience\", \"reason\": \"Scaled to the small validation set and training duration\", \"applied_policy_ids\": [\"hpo.common.schedule_data_size.v1\"]}] }"
+                "Example: {\"llm_field_rationales\": [{\"field\": \"patience\", \"reason\": \"Scaled to the small validation set and training duration\"}] }"
             )
         },
         {
@@ -491,6 +865,8 @@ async def generate_and_evaluate_hpo(
                 "Mandatory executable model constraints:\n"
                 f"{json.dumps(model_constraints, indent=2)}\n\n"
                 "These constraints come from the registered runtime and must be obeyed. "
+                "Choose weights and training_mode only from the supplied executable capabilities; "
+                "do not infer implementation support from general ML knowledge. "
                 "The selected model, classes, selected_data, and compatibility split ratios are owned by earlier pipeline steps."
             )
         }
@@ -502,13 +878,18 @@ async def generate_and_evaluate_hpo(
         "Look for catastrophic errors: Out of Memory risks based on the chosen model, exploding gradients, or logical mismatches. "
         "Check that the proposal is consistent with `performance_requirements.latency_category` and "
         "`performance_requirements.accuracy_category` when they are present. "
-        "When a field-level rationale cites a policy, verify that the ID appears in "
-        "`hyperparameter_policy_context.applicable_policies` and that its guidance applies to that field. "
         "Be ruthless but constructive. If it is safe and adheres to standard practices, accept it."
         " Return structured findings. Every hard_error or safety_warning MUST name exactly one top-level configuration `field`. "
-        "Evaluate only fields present in Proposed Active Runtime Configuration. Do not infer candidate fields from "
+        "Evaluate only optimizer-owned fields present in Proposed Active Runtime Configuration. Earlier pipeline outputs "
+        "such as classes, selected_data, split ratios, data_plan_constraints, selected model identity, and recipe provenance "
+        "are authoritative context: use them to evaluate optimizer-owned fields but never return a blocking finding against them. "
+        "GraphRAG recipe-backed hyperparameters that appear in the active configuration remain optimizer-owned and adjustable. "
+        "Do not infer candidate fields from "
         "GraphRAG metadata or the broader PipelineState. A blocking finding must name a field present in that active "
         "configuration. `available_hardware` describes deployment, while `training_hardware` determines training AMP support. "
+        "For YOLO and RT-DETR with scheduler_name='linear', final_learning_rate_factor is an active runtime field passed "
+        "to Ultralytics as lrf; it is not an inactive sentinel and must not be set to zero or a near-zero placeholder. "
+        "The standard grounded default is 0.01. "
         "Use `preference` for optional alternatives; preferences must not cause rejection. Cite a recipe/rule ID when available. "
         "Reject only for concrete compatibility, safety, constraint, or ontology-grounding problems—not because another valid value might perform better."
         " The configuration schema is deliberately union-free: optimizer- and scheduler-specific fields are always present. "
@@ -517,7 +898,7 @@ async def generate_and_evaluate_hpo(
         "and never recommend removing a required field or setting it to null. `alpha` belongs to RMSprop, `eps` belongs to "
         "AdamW/RMSprop, and `beta1`/`beta2` belong to AdamW. For StepLR or no scheduler, min_learning_rate=0 is the required "
         "inactive sentinel. `scheduler_step_size` and `scheduler_gamma` remain schema-valid but are ignored for cosine/no scheduler. "
-        "Use preference, not safety_warning, for optional cleanup, uncited advisory policies, or alternative valid values. "
+        "Use preference, not safety_warning, for optional cleanup or alternative valid values. "
         "Runtime-supported but potentially inefficient or suboptimal values are preferences, not blocking findings. "
         "Deployment constraints are owned and validated by model selection. Report residual uncertainty for "
         "memory_category, max_runtime_memory_mb, max_model_size_mb, max_parameters_m, or max_cpu_latency_ms "
@@ -527,6 +908,8 @@ async def generate_and_evaluate_hpo(
         "Do not infer an input incompatibility from a classification dataset's native resolution or channel count when "
         "the supplied registered constraints allow the configured size; the runtime converts images to RGB and resizes them. "
         "If accept=true, all findings must be preferences; hard_error and safety_warning require accept=false."
+        " Recipe deviations, preferred small-object resolution, and augmentation-strength advice are preferences, "
+        "not execution failures, unless a supplied runtime capability or resource check is actually violated."
     )
 
     print(f"Starting Multi-Agent Optimization for task: {task.upper()} (Job ID: {job_id})")
@@ -540,12 +923,11 @@ async def generate_and_evaluate_hpo(
     proposal = None
     decision = None
     round_diagnostics: list[dict] = []
+    rejected_review_history: list[dict] = []
+    previous_rejected_candidate: dict | None = None
     graph_context = context_data.get("hyperparameter_graph_context") or {}
-    policy_context = context_data.get("hyperparameter_policy_context") or {}
-    use_graphrag = bool(context_data.get("use_graphrag", True))
-    use_policy_registry = bool(context_data.get("use_policy_registry", True))
-    base_configuration = graph_context.get("base_configuration") or {}
-    allowed_graph_adjustments = set(graph_context.get("allowed_adjustment_fields") or [])
+    evaluator_context_json = json.dumps(compact_evaluator_context(context_data))
+
 
     # 4. The Evaluator-Optimizer Loop. Generation/schema retries have their
     # own budget so they cannot consume all evaluator rounds.
@@ -561,10 +943,19 @@ async def generate_and_evaluate_hpo(
         
         # Phase A: The Optimizer proposes a configuration (wrapped in try/except for self-healing)
         try:
-            optimizer_response = await client.beta.chat.completions.parse(
-                model="gpt-5-nano",
-                messages=optimizer_messages,
-                response_format=TargetSchema
+            optimizer_response = await _hpo_model_call(
+                lambda: run_planning_completion(
+                        job_id=job_id,
+                        operation="hpo_optimizer",
+                        model=PLANNING_MODEL,
+                        awaitable=client.beta.chat.completions.parse(
+                            model=PLANNING_MODEL,
+                            messages=optimizer_messages,
+                            response_format=TargetSchema,
+                        ),
+                    ),
+                phase="optimizer",
+                round_idx=round_idx,
             )
 
             opt_message = optimizer_response.choices[0].message
@@ -592,6 +983,7 @@ async def generate_and_evaluate_hpo(
                 if completion_adjustments:
                     round_diagnostics.append({
                         "round": round_idx,
+                        "generation_attempt": generation_attempt,
                         "phase": "draft_completion",
                         "reason": "applied_authoritative_detection_fields",
                         "adjustments": completion_adjustments,
@@ -603,25 +995,41 @@ async def generate_and_evaluate_hpo(
                 context_data,
                 selected_model_name=selected_model_name,
             )
+            required_hpo_overrides = hpo_override_values(context_data)
+            if required_hpo_overrides:
+                proposal_data = proposal.model_dump(mode="json")
+                unknown_fields = set(required_hpo_overrides) - set(proposal_data)
+                if unknown_fields:
+                    raise ValueError(
+                        "User revision names unsupported hyperparameter fields: "
+                        f"{sorted(unknown_fields)}"
+                    )
+                proposal_data.update(required_hpo_overrides)
+                proposal = type(proposal).model_validate(proposal_data)
             if previous_proposal is not None:
                 proposal = merge_authorized_repair_fields(
                     previous_proposal,
                     proposal,
                     repairable_fields,
                 )
+            proposal = reconcile_optimizer_explanations(
+                previous_proposal,
+                proposal,
+            )
             proposal_changes = (
                 changed_configuration_fields(previous_proposal, proposal)
                 if previous_proposal is not None
                 else set()
             )
 
-            if task in {"classification", "detection"} and (use_graphrag or use_policy_registry):
+            if task in {"classification", "detection"} and use_graphrag:
                 proposal_data = proposal.model_dump(mode="json")
                 active_fields = (
                     active_classification_config_fields(proposal_data)
                     if task == "classification"
                     else active_detection_config_fields(proposal_data)
                 )
+                active_fields -= PIPELINE_OWNED_HPO_CONTEXT_FIELDS
                 active_explanations = [
                     item
                     for item in getattr(proposal, "llm_field_rationales", [])
@@ -643,189 +1051,70 @@ async def generate_and_evaluate_hpo(
                 ) | (
                     proposal_changes & repairable_fields
                 )
-                if use_policy_registry and not use_graphrag:
-                    required_explanations |= policy_fields(policy_context)
                 required_explanations &= active_fields
                 missing_explanations = required_explanations - explained_fields
                 if missing_explanations:
-                    # Attempt an automatic, deterministic fallback: add short
-                    # llm_field_rationales entries and continue. This reduces
-                    # brittle round trips when the LLM omits only explanatory
-                    # text but otherwise produced a valid configuration.
-                    try:
-                        proposal_dict = proposal.model_dump()
-                        proposal_dict = _ensure_llm_rationales_on_dict(
-                            proposal_dict,
-                            missing_explanations,
-                            policy_context if use_policy_registry else None,
-                        )
-                        # Re-validate after inserting rationales.
-                        proposal = type(proposal).model_validate(proposal_dict)
-                        active_explanations = [
-                            item
-                            for item in getattr(proposal, "llm_field_rationales", [])
-                            if item.field in active_fields
-                        ]
-                        # Record a diagnostic that we auto-filled explanations
-                        diagnostic = {
-                            "round": round_idx,
-                            "phase": "optimizer_precheck",
-                            "reason": "auto_filled_llm_field_rationales",
-                            "fields": sorted(missing_explanations),
-                        }
-                        round_diagnostics.append(diagnostic)
-                        print(f"ℹ️ Auto-filled missing llm_field_rationales for fields: {sorted(missing_explanations)}")
-                    except ValidationError as exc:
-                        # If inserting fallback rationales caused validation to fail
-                        # (unexpected), fall back to the previous behavior and ask
-                        # the optimizer LLM to provide the missing explanations.
-                        validation_errors = format_pydantic_validation_errors(exc)
-                        diagnostic = {
-                            "round": round_idx,
-                            "phase": "optimizer_precheck",
-                            "reason": "missing_llm_field_rationales",
-                            "fields": sorted(missing_explanations),
-                            "errors": validation_errors,
-                        }
-                        round_diagnostics.append(diagnostic)
-                        print(f"⚠️ Round {round_idx} skipped before evaluation: {json.dumps(diagnostic)}")
-                        optimizer_messages.append({
-                            "role": "user",
-                            "content": (
-                                "Your configuration is missing field-specific explanations for LLM decisions: "
-                                f"{sorted(missing_explanations)}. Add one llm_field_rationales entry per field and "
-                                "also mention each field and reason in the main rationale. Do not change configuration values."
-                            ),
-                        })
-                        continue
-
-                if use_policy_registry:
-                    active_explanations = normalize_policy_rationales(
-                        active_explanations,
-                        policy_context,
+                    proposal, completed_fields = complete_required_field_rationales(
+                        proposal,
+                        missing_explanations,
+                        graph_context=graph_context if use_graphrag else None,
                     )
-                    proposal = proposal.model_copy(
-                        update={"llm_field_rationales": active_explanations}
-                    )
-
-                policy_guided_fields = (
-                    required_explanations & policy_fields(policy_context)
-                    if use_policy_registry
-                    else set()
-                )
-                policy_errors = validate_policy_rationales(
-                    active_explanations,
-                    policy_guided_fields,
-                    policy_context,
-                )
-                if policy_errors:
                     diagnostic = {
                         "round": round_idx,
+                        "generation_attempt": generation_attempt,
                         "phase": "optimizer_precheck",
-                        "reason": "invalid_policy_citations",
-                        "errors": policy_errors,
+                        "reason": "auto_completed_field_rationales",
+                        "fields": completed_fields,
                     }
                     round_diagnostics.append(diagnostic)
-                    optimizer_messages.append({
-                        "role": "user",
-                        "content": (
-                            "Policy-guided decisions require valid policy citations: "
-                            f"{policy_errors}. Add applicable IDs from "
-                            "hyperparameter_policy_context.applicable_policies; do not change values."
-                        ),
-                    })
-                    continue
-
-            unauthorized_grounded_changes = (
-                changed_grounded_fields(
-                    proposal,
-                    base_configuration,
-                    allowed_graph_adjustments | authorized_repair_fields | repairable_fields,
-                )
-                if use_graphrag
-                else set()
-            )
-            if unauthorized_grounded_changes:
-                diagnostic = {
-                    "round": round_idx,
-                    "phase": "optimizer_precheck",
-                    "reason": "unauthorized_graph_grounded_changes",
-                    "fields": sorted(unauthorized_grounded_changes),
-                }
-                round_diagnostics.append(diagnostic)
-                print(f"⚠️ Round {round_idx} skipped before evaluation: {json.dumps(diagnostic)}")
-                optimizer_messages.append({
-                    "role": "user",
-                    "content": (
-                        "Your proposal changed graph-grounded base fields without a matched adjustment rule: "
-                        f"{sorted(unauthorized_grounded_changes)}. Copy their exact values from "
-                        "hyperparameter_graph_context.base_configuration. You may deviate only for fields in "
-                        f"allowed_adjustment_fields={sorted(allowed_graph_adjustments)} or fields explicitly "
-                        f"authorized by the reviewer={sorted(repairable_fields)}."
-                    ),
-                })
-                continue
-
-            if task in {"classification", "detection"} and use_graphrag:
-                try:
-                    if task == "classification":
-                        validate_graph_grounded_config(
-                            proposal.model_dump(mode="json"),
-                            graph_context,
-                            additional_allowed_fields=authorized_repair_fields | repairable_fields,
-                        )
-                    else:
-                        validate_detection_graph_grounded_config(
-                            proposal.model_dump(mode="json"),
-                            graph_context,
-                            additional_allowed_fields=authorized_repair_fields | repairable_fields,
-                        )
-                except ValueError as exc:
-                    diagnostic = {
-                        "round": round_idx,
-                        "phase": "ontology_validation",
-                        "reason": "graph_grounded_config_invalid",
-                        "message": str(exc),
-                    }
-                    round_diagnostics.append(diagnostic)
-                    print(f"⚠️ Round {round_idx} skipped before evaluation: {json.dumps(diagnostic)}")
-                    optimizer_messages.append({
-                        "role": "user",
-                        "content": (
-                            "Your proposal failed deterministic ontology recipe validation. Repair only the field named "
-                            f"by this error and preserve the graph baseline: {exc}"
-                        ),
-                    })
-                    continue
+                    active_explanations = list(proposal.llm_field_rationales)
 
             if task in {"classification", "detection"}:
+                cross_field_violations: list[dict] = []
                 try:
+                    cross_field_violations = validate_hpo_cross_field_configuration(
+                        proposal,
+                        context_data,
+                    )
+                    if cross_field_violations:
+                        raise ValueError(
+                            "Cross-field HPO validation failed: "
+                            + "; ".join(item["message"] for item in cross_field_violations)
+                        )
                     validate_executable_recipe_config(
+                        proposal.model_dump(mode="json")
+                    )
+                    validate_training_resource_config(
                         proposal.model_dump(mode="json")
                     )
                 except ValueError as exc:
                     diagnostic = {
                         "round": round_idx,
+                        "generation_attempt": generation_attempt,
                         "phase": "executable_validation",
                         "reason": "executable_config_invalid",
                         "message": str(exc),
+                        "cross_field_violations": cross_field_violations,
                     }
                     round_diagnostics.append(diagnostic)
                     optimizer_messages.append({
                         "role": "user",
                         "content": (
                             "Your proposal failed deterministic execution validation: "
-                            f"{exc}. Correct only the invalid field and preserve all "
-                            "pipeline-owned values."
+                            f"{exc}. Correct the named interacting fields together and preserve all "
+                            "pipeline-owned values. GraphRAG defaults remain context, not immutable values."
                         ),
                     })
                     continue
 
             if previous_proposal is not None:
-                unauthorized_fields = proposal_changes - repairable_fields
+                unauthorized_fields = (
+                    proposal_changes - repairable_fields - set(required_hpo_overrides)
+                )
                 if unauthorized_fields:
                     diagnostic = {
                         "round": round_idx,
+                        "generation_attempt": generation_attempt,
                         "phase": "repair_validation",
                         "reason": "unauthorized_repair_changes",
                         "fields": sorted(unauthorized_fields),
@@ -847,6 +1136,7 @@ async def generate_and_evaluate_hpo(
                 validation_errors = format_pydantic_validation_errors(e)
                 diagnostic = {
                     "round": round_idx,
+                    "generation_attempt": generation_attempt,
                     "phase": "schema_validation",
                     "reason": "pydantic_validation_error",
                     "errors": validation_errors,
@@ -879,23 +1169,27 @@ async def generate_and_evaluate_hpo(
             "rationale",
             "llm_field_rationales",
         }
-        evaluator_messages = [
-            {"role": "system", "content": evaluator_system_prompt},
-            {
-                "role": "user",
-                "content": (
-                    f"Task Context: {json_data}\n\n"
-                    f"{evaluator_runtime_guidance(task, model_constraints)}\n\n"
-                    "Proposed Active Runtime Configuration:\n"
-                    f"{json.dumps(evaluator_candidate, indent=2)}"
-                ),
-            },
-        ]
+        evaluator_messages = build_evaluator_messages(
+            system_prompt=evaluator_system_prompt,
+            evaluator_context_json=evaluator_context_json,
+            runtime_guidance=evaluator_runtime_guidance(task, model_constraints),
+            candidate=evaluator_candidate,
+            rejected_review_history=rejected_review_history,
+        )
         
-        evaluator_response = await client.beta.chat.completions.parse(
-            model="gpt-5-nano",
-            messages=evaluator_messages,
-            response_format=HpoDecision
+        evaluator_response = await _hpo_model_call(
+            lambda: run_planning_completion(
+                    job_id=job_id,
+                    operation="hpo_evaluator",
+                    model=PLANNING_MODEL,
+                    awaitable=client.beta.chat.completions.parse(
+                        model=PLANNING_MODEL,
+                        messages=evaluator_messages,
+                        response_format=HpoDecision,
+                    ),
+                ),
+            phase="evaluator",
+            round_idx=round_idx,
         )
         
         eval_message = evaluator_response.choices[0].message
@@ -933,6 +1227,15 @@ async def generate_and_evaluate_hpo(
             round_diagnostics.append(diagnostic)
             print(f"ℹ️ Evaluator deployment finding demoted: {json.dumps(diagnostic)}")
 
+        decision, demoted_quality_fields = demote_quality_heuristic_findings(decision)
+        if demoted_quality_fields:
+            diagnostic = {
+                "round": round_idx, "phase": "evaluator_normalization",
+                "reason": "quality_heuristic_is_advisory",
+                "fields": demoted_quality_fields,
+            }
+            round_diagnostics.append(diagnostic)
+
         decision, discarded_inactive_fields = discard_inactive_schema_findings(
             decision,
             evaluator_active_fields,
@@ -946,6 +1249,20 @@ async def generate_and_evaluate_hpo(
             }
             round_diagnostics.append(diagnostic)
             print(f"ℹ️ Inactive evaluator findings discarded: {json.dumps(diagnostic)}")
+
+        advisory = hpo_advisory_findings(proposal, context_data)
+        if advisory:
+            existing = {(finding.field, finding.rule_id) for finding in decision.findings}
+            additions = [
+                HpoFinding.model_validate(item)
+                for item in advisory
+                if (item["field"], item.get("rule_id")) not in existing
+            ]
+            decision = decision.model_copy(update={"findings": [*decision.findings, *additions]})
+            round_diagnostics.append({
+                "round": round_idx, "phase": "advisory_validation",
+                "reason": "non_blocking_quality_recommendations", "findings": advisory,
+            })
 
         blocking_findings = [
             finding for finding in decision.findings
@@ -1024,6 +1341,15 @@ async def generate_and_evaluate_hpo(
             return proposal, decision
         else:
             print(f"❌ Evaluator rejected the configuration. Reason: {decision.reason}")
+
+            review_record = rejected_review_record(
+                round_idx=round_idx,
+                candidate=evaluator_candidate,
+                decision=decision,
+                previous_candidate=previous_rejected_candidate,
+            )
+            append_rejected_review_record(rejected_review_history, review_record)
+            previous_rejected_candidate = evaluator_candidate
             
             if decision.reason == last_reason:
                 rejection_count += 1
@@ -1041,7 +1367,7 @@ async def generate_and_evaluate_hpo(
                 f"Evaluator findings:\n{findings_json}\n"
                 f"You may change ONLY these top-level fields: {sorted(repairable_fields)}.\n"
                 "Copy every other field exactly from your previous configuration. Add an llm_field_rationales entry for "
-                "each changed field, cite any applicable policy IDs in applied_policy_ids, and explain the adjustment "
+                "each changed field and explain the adjustment "
                 "in the main rationale. Return the complete repaired configuration."
                 " Evaluator recommended values are advisory text: do not apply null/removal or any value that violates the "
                 "structured-output schema. Preserve schema-valid sentinel values for inactive fields."

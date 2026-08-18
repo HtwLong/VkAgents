@@ -1,12 +1,16 @@
 from typing import List, Tuple, Optional, Literal
 from pydantic import BaseModel, Field
-from agents import Agent, Runner
+from agents import Agent
+from cvmodellearning.llm_config import PLANNING_MODEL
+from cvmodellearning.observability.planning_usage import run_planning_agent
 from cvmodellearning.schemas.decision_schema import Decision
 from cvmodellearning.schemas.interpretation_schema import (
     DeploymentConstraints,
     HardwareSpecModel,
     ModelSpecModel,
     PerformanceSpecModel,
+    ConstraintStrengths,
+    RobustnessRequirements,
     SynonymMatch,
 )
 
@@ -24,6 +28,8 @@ class TaskExtractionPatch(BaseModel):
             "Infer categories from user intent when possible, even if no numeric target is provided."
         ),
     )
+    constraint_strengths: ConstraintStrengths = Field(default_factory=ConstraintStrengths)
+    robustness_requirements: RobustnessRequirements = Field(default_factory=RobustnessRequirements)
     deployment_constraints: Optional[DeploymentConstraints] = Field(
         None,
         description="Explicit or qualitative inference memory, model-size, parameter, or CPU-latency limits.",
@@ -51,7 +57,7 @@ readiness_check_agent = Agent(
         "Return only a pydantic Decision."
     ),
     output_type=Decision,
-    model="gpt-5-nano"
+    model=PLANNING_MODEL
 )
 
 task_interpretation_agent = Agent(
@@ -62,6 +68,9 @@ task_interpretation_agent = Agent(
         "For the classes mentioned, turn them into singular form. "
         "If classes are not explicitly mentioned, try to infer them. "
         "Also extract explicit performance requirements, available hardware, and model requirements if provided. "
+        "For each model requirement, set requirement_strength=required for directives such as 'must use', "
+        "'use exactly', or 'please use', and preferred for 'prefer', 'ideally', or 'if possible'. "
+        "Normalize an explicit LoRA request as training_mode='lora' and extract rank, alpha, or dropout when stated. "
         "For performance_requirements.latency_category and performance_requirements.accuracy_category, "
         "use only VeryLow, Low, Medium, MediumHigh, or High. "
         "Use latency_category for speed, real-time, low-latency, edge, mobile, interactive, fast-response, "
@@ -71,6 +80,13 @@ task_interpretation_agent = Agent(
         "MediumHigh accuracy_category. Reserve High for explicit high, critical, maximum, or best-possible accuracy. "
         "Set performance_requirements.target_is_hard=true only for an explicit mandatory numeric target such as "
         "'must achieve at least 90%'; qualitative statements such as 'accuracy is important' are soft preferences. "
+        "Represent how strongly objectives are stated in constraint_strengths using hard, soft, preference, or "
+        "unspecified. Extract robustness into robustness_requirements using normalized dimensions for lighting, "
+        "weather, object_scale, scene_density, motion_blur, occlusion, and viewpoint. "
+        "Also extract augmentation semantics only when explicitly supported: set color_semantics=true when "
+        "changing colors could change labels or meaning; set horizontal_flip_safe=false when mirroring would "
+        "change meaning; and set text_or_symbols_present=true when readable text or directional symbols must "
+        "be preserved. Do not infer these properties merely from a class name. "
         "Extract inference footprint separately into deployment_constraints: 'very low memory footprint' means "
         "memory_category=VeryLow, 'low memory' or 'small model' means memory_category=Low, and explicit limits map "
         "to max_runtime_memory_mb, max_model_size_mb, max_parameters_m, or max_cpu_latency_ms. "
@@ -92,7 +108,7 @@ task_interpretation_agent = Agent(
         "such as latency, throughput, accuracy, F1, mAP, or balanced_performance."
     ),
     output_type=TaskExtractionPatch, 
-    model="gpt-5-nano"
+    model=PLANNING_MODEL
 )
 
 synonym_check_agent = Agent(
@@ -100,28 +116,43 @@ synonym_check_agent = Agent(
     instructions=(
         "You are an expert ontology matcher for computer vision datasets. "
         "You will be given a User Class and a list of Allowed Dataset Classes. "
-        "Task: Determine if the User Class maps to one or more allowed dataset classes.\n"
+        "Task: Determine if the User Class maps to one or more allowed dataset classes in the given application domain.\n"
         "Return only exact strings from the Allowed Dataset Classes in dataset_classes.\n"
         "1. If the User Class is a synonym or alternative name of one allowed class, "
         "set found_match=True and return that one valid class.\n"
         "2. If the User Class is a subcategory of one allowed class, set found_match=True "
-        "and return that broader valid class. Example: 'sports car' may map to 'car' if 'car' is allowed.\n"
+        "and return that broader valid class. \n"
         "3. If the User Class is a supercategory of multiple allowed classes, set found_match=True "
-        "and return the most appropriate non-overlapping allowed classes, with a maximum of ten classes. "
+        "and return the most appropriate non-overlapping allowed classes but only if they also fall "
+        "into the given application domain, with a maximum of ten classes. "
         "Do not return both a parent and child class if both are allowed; choose the non-overlapping set.\n"
-        "4. If no synonym, subcategory, or supercategory relationship exists, set found_match=False "
+        "Treat equivalent textual and symbolic number labels as aliases when the symbolic label is allowed; "
+        "for example, 'zero' maps to '0', 'one' to '1', through 'nine' to '9'.\n"
+        "4. If no synonym, subcategory, supercategory, or representation-equivalence relationship exists, "
+        "set found_match=False "
         "and return an empty dataset_classes list."
     ),
     output_type=SynonymMatch,
-    model="gpt-5-nano"
+    model=PLANNING_MODEL
 )
 
-async def interpretation_loop(initial_context: str, user_replies: Optional[List[str]] = None, max_rounds: int = 3) -> Tuple[str, Decision]:
+async def interpretation_loop(
+    initial_context: str,
+    *,
+    job_id: str,
+    user_replies: Optional[List[str]] = None,
+    max_rounds: int = 3,
+) -> Tuple[str, Decision]:
     context = initial_context
     last_decision = None
     user_replies = user_replies or []
     for r in range(1, max_rounds + 1):
-        res = await Runner.run(readiness_check_agent, context)
+        res = await run_planning_agent(
+            job_id=job_id,
+            operation="completeness_check",
+            agent=readiness_check_agent,
+            input=context,
+        )
         decision: Decision = res.final_output
         last_decision = decision
         if decision.accept:

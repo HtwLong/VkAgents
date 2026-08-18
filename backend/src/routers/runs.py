@@ -2,15 +2,25 @@ import json
 from pathlib import Path
 
 from fastapi import APIRouter, HTTPException
+from openai import AsyncOpenAI
 from pydantic import BaseModel, Field
 
 from cvmodellearning.paths import RUNS_ROOT
 from cvmodellearning.jobs.job_manager import JOB_MANAGER
 from cvmodellearning.jobs.run_control import mark_stopped, read_run_state, request_cancellation
 from cvmodellearning.graphrag.decision_evidence import build_dataset_selection_decision_evidence
+from cvmodellearning.evaluation.result_report import DETECTION_REPORT_SCHEMA_VERSION, normalize_report
+from cvmodellearning.models.registry import enabled_models
+from cvmodellearning.schemas.post_training_assessment import (
+    AssessmentEligibility,
+    PostTrainingAssessment,
+)
+from cvmodellearning.schemas.revision import RevisionPlan
+from cvmodellearning.llm_config import ASSESSMENT_MODEL
 
 
 router = APIRouter(prefix="/runs", tags=["4 - Runs"])
+ASSESSMENT_FILE = "artifacts/post_training_assessment.json"
 
 STEP_FILES = {
     "task-interpretation": ["artifacts/planning/STATE_01_INTERPRETATION.json"],
@@ -96,6 +106,257 @@ OUTPUT_LABELS = {
 class StepTimingUpdate(BaseModel):
     duration_ms: int = Field(ge=0)
     status: str
+
+
+def _assessment_eligibility(run: Path) -> AssessmentEligibility:
+    report = _json_object(run / "artifacts" / "evaluation_report.json")
+    state = _latest_state(run)
+    if report is None:
+        return AssessmentEligibility(
+            eligible=False,
+            reason="A completed evaluation report is required.",
+        )
+    if not isinstance(state, dict) or not str(state.get("user_query") or "").strip():
+        return AssessmentEligibility(
+            eligible=False,
+            reason="The original user request is unavailable.",
+        )
+    planning = run / "artifacts" / "planning"
+    has_restart_state = any(
+        (planning / name).is_file()
+        for name in (
+            "STATE_01_INTERPRETATION.json",
+            "STATE_02_DATA_CHECK.json",
+            "STATE_03_MODEL_SELECTION.json",
+            "STATE_04_DATASET_SELECTION.json",
+        )
+    )
+    return AssessmentEligibility(
+        eligible=True,
+        can_create_revision=has_restart_state,
+        revision_reason=(
+            None if has_restart_state
+            else "Historical planning checkpoints are unavailable; results can be assessed but not safely forked."
+        ),
+    )
+
+
+def _write_json_atomic(path: Path, value: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_suffix(path.suffix + ".tmp")
+    temporary.write_text(json.dumps(value, indent=2, default=str), encoding="utf-8")
+    temporary.replace(path)
+
+
+@router.get("/{job_id}/assessment")
+def get_assessment(job_id: str):
+    run = _existing_run(job_id)
+    eligibility = _assessment_eligibility(run)
+    assessment = _read_json(run / ASSESSMENT_FILE)
+    return {
+        "assessment": assessment if isinstance(assessment, dict) else None,
+        "eligibility": eligibility.model_dump(mode="json"),
+    }
+
+
+def _validate_assessment_recommendation(
+    assessment: PostTrainingAssessment,
+    state: dict,
+) -> None:
+    plan = assessment.recommended_plan
+    if plan is None:
+        return
+    allowed_targets = {"model-selection", "dataset-selection", "choose-hyperparameters"}
+    targets = {change.target_step for change in plan.changes}
+    if not targets <= allowed_targets or len(targets) != 1:
+        raise HTTPException(
+            status_code=502,
+            detail=(
+                "The assessment recommendation must change exactly one area: model selection, "
+                "dataset selection, or hyperparameter selection."
+            ),
+        )
+    if plan.restart_from not in targets:
+        raise HTTPException(status_code=502, detail="The recommendation restart step is inconsistent.")
+    for change in plan.changes:
+        if change.strength != "required" or change.operation not in {"set", "include", "exclude"}:
+            raise HTTPException(
+                status_code=502,
+                detail="Approved recommendations must contain concrete, enforceable required changes.",
+            )
+        if change.target_step == "model-selection" and change.field != "model_name":
+            raise HTTPException(status_code=502, detail="The model recommendation field is unsupported.")
+        if change.target_step == "dataset-selection" and change.field not in {
+            "dataset.include", "dataset.exclude"
+        }:
+            raise HTTPException(status_code=502, detail="The dataset recommendation field is unsupported.")
+        if change.target_step == "choose-hyperparameters":
+            field = change.field.removeprefix("hpo_config.")
+            if not change.field.startswith("hpo_config.") or field not in (state.get("hpo_config") or {}):
+                raise HTTPException(status_code=502, detail="The hyperparameter recommendation field is unsupported.")
+
+
+@router.post("/{job_id}/assessment")
+async def create_assessment(job_id: str):
+    run = _existing_run(job_id)
+    eligibility = _assessment_eligibility(run)
+    if not eligibility.eligible:
+        raise HTTPException(status_code=409, detail=eligibility.reason)
+    existing = _read_json(run / ASSESSMENT_FILE)
+    if isinstance(existing, dict):
+        return {
+            "assessment": existing,
+            "eligibility": eligibility.model_dump(mode="json"),
+        }
+
+    state = _latest_state(run) or {}
+    report = normalize_report(_json_object(run / "artifacts" / "evaluation_report.json") or {})
+    review_input = {
+        "original_user_request": state.get("user_query"),
+        "interpreted_requirements": {
+            "task": state.get("task"),
+            "classes": state.get("classes"),
+            "performance_requirements": state.get("performance_requirements"),
+            "deployment_constraints": state.get("deployment_constraints"),
+            "available_hardware": state.get("available_hardware"),
+        },
+        "planning": {
+            "selected_model_info": state.get("selected_model_info"),
+            "selected_data": state.get("selected_data"),
+            "dataset_profile": state.get("dataset_profile"),
+            "hpo_config": state.get("hpo_config"),
+            "executable_model_options": [
+                {"id": model.id, "display_name": model.display_name, "family": model.family}
+                for model in enabled_models(state.get("task"))
+            ] if state.get("task") in {
+                "classification", "detection", "visual question answering"
+            } else [],
+        },
+        "evaluation_report": report,
+    }
+    prompt = f"""
+Evaluate whether this completed computer-vision run satisfied the original user's requirements.
+Use only the supplied evidence. Mark a requirement unknown when it was not measured; do not
+invent metrics, gains, datasets, or configuration values. Preserve the user's requested task,
+classes, deployment constraints, priorities, and other requirements. Do not optimize a metric by
+violating the original request. Do not blindly increase epochs, batch size, input size, dataset
+size, augmentation, or model capacity. Prefer the smallest evidence-backed intervention and
+explain its trade-off. A recommendation must choose exactly ONE of these planning areas:
+- model-selection: model_name (required set; use an executable ID from the supplied options)
+- dataset-selection: dataset.include or dataset.exclude (required include/exclude)
+- choose-hyperparameters: hpo_config.<existing configuration field> (required set)
+Multiple changes are allowed only when they belong to that same area and are jointly necessary.
+Set required_text or preferred_text consistently with change strengths. Recommend no plan when
+the evidence does not justify a concrete actionable improvement. A concrete option presented for
+approval must use strength=required with an enforcing operation (set/include/exclude), not merely
+prefer or avoid. The server will verify the plan.
+
+RUN EVIDENCE:
+{json.dumps(review_input, indent=2, default=str)}
+"""
+    try:
+        response = await AsyncOpenAI().beta.chat.completions.parse(
+            model=ASSESSMENT_MODEL,
+            messages=[{"role": "user", "content": prompt}],
+            response_format=PostTrainingAssessment,
+        )
+        assessment = response.choices[0].message.parsed
+    except Exception as exc:
+        raise HTTPException(
+            status_code=502,
+            detail=f"The post-training assessment could not be generated: {exc}",
+        ) from exc
+    if assessment is None:
+        raise HTTPException(status_code=502, detail="The assessment model returned no result.")
+    assessment = assessment.model_copy(update={"job_id": job_id})
+    _validate_assessment_recommendation(assessment, state)
+    _write_json_atomic(run / ASSESSMENT_FILE, assessment.model_dump(mode="json"))
+    return {
+        "assessment": assessment.model_dump(mode="json"),
+        "eligibility": eligibility.model_dump(mode="json"),
+    }
+
+
+@router.post("/{job_id}/assessment/recommendation")
+async def regenerate_recommendation(job_id: str):
+    """Keep the assessment verdict and generate only an alternative revision plan."""
+    run = _existing_run(job_id)
+    eligibility = _assessment_eligibility(run)
+    if not eligibility.eligible:
+        raise HTTPException(status_code=409, detail=eligibility.reason)
+    saved = _read_json(run / ASSESSMENT_FILE)
+    if not isinstance(saved, dict):
+        raise HTTPException(status_code=409, detail="Generate the assessment first.")
+    try:
+        assessment = PostTrainingAssessment.model_validate(saved)
+    except Exception as exc:
+        raise HTTPException(status_code=409, detail="The saved assessment is invalid.") from exc
+    state = _latest_state(run) or {}
+    report = normalize_report(_json_object(run / "artifacts" / "evaluation_report.json") or {})
+    current_plan = (
+        assessment.recommended_plan.model_dump(mode="json")
+        if assessment.recommended_plan else None
+    )
+    prompt = f"""
+Generate an alternative, concrete planning recommendation for improving this completed run.
+Do NOT reassess or change the existing verdict, requirement statuses, or explanations. Preserve
+the original task, classes, constraints, and priorities. Use only the supplied evidence. Do not
+blindly increase epochs, batch size, input size, augmentation, dataset size, or model capacity.
+Prefer the smallest evidence-backed intervention with a clear causal rationale. Avoid repeating
+the previous recommendation when another supported option exists.
+
+Choose exactly ONE area:
+- model-selection: required set of model_name using an executable ID from the options
+- dataset-selection: required include/exclude of dataset.include or dataset.exclude
+- choose-hyperparameters: required set of hpo_config.<existing field>
+Multiple changes are allowed only within the same area when jointly necessary. Return null when
+no different evidence-backed recommendation is available.
+
+ORIGINAL REQUEST: {json.dumps(state.get("user_query"), default=str)}
+INTERPRETED REQUIREMENTS: {json.dumps({
+    "task": state.get("task"), "classes": state.get("classes"),
+    "performance_requirements": state.get("performance_requirements"),
+    "deployment_constraints": state.get("deployment_constraints"),
+}, indent=2, default=str)}
+EXISTING ASSESSMENT: {json.dumps({
+    "verdict": assessment.verdict,
+    "requirements": [item.model_dump(mode="json") for item in assessment.requirements],
+    "limitations": assessment.limitations,
+}, indent=2, default=str)}
+PREVIOUS RECOMMENDATION: {json.dumps(current_plan, indent=2, default=str)}
+MODEL OPTIONS: {json.dumps([
+    {"id": model.id, "display_name": model.display_name, "family": model.family}
+    for model in enabled_models(state.get("task"))
+] if state.get("task") in {"classification", "detection", "visual question answering"} else [])}
+CURRENT HYPERPARAMETERS: {json.dumps(state.get("hpo_config") or {}, indent=2, default=str)}
+SELECTED DATA: {json.dumps(state.get("selected_data") or [], indent=2, default=str)}
+EVALUATION: {json.dumps(report, indent=2, default=str)}
+"""
+    # A small wrapper is required so structured output can represent "no alternative".
+    class ParsedRecommendation(BaseModel):
+        recommended_plan: RevisionPlan | None = None
+
+    try:
+        response = await AsyncOpenAI().beta.chat.completions.parse(
+            model=ASSESSMENT_MODEL,
+            messages=[{"role": "user", "content": prompt}],
+            response_format=ParsedRecommendation,
+        )
+        parsed = response.choices[0].message.parsed
+    except Exception as exc:
+        raise HTTPException(
+            status_code=502,
+            detail=f"The improvement recommendation could not be generated: {exc}",
+        ) from exc
+    if parsed is None:
+        raise HTTPException(status_code=502, detail="The recommendation model returned no result.")
+    updated = assessment.model_copy(update={"recommended_plan": parsed.recommended_plan})
+    _validate_assessment_recommendation(updated, state)
+    _write_json_atomic(run / ASSESSMENT_FILE, updated.model_dump(mode="json"))
+    return {
+        "assessment": updated.model_dump(mode="json"),
+        "eligibility": eligibility.model_dump(mode="json"),
+    }
 
 
 @router.post("/{job_id}/cancel")
@@ -184,13 +445,21 @@ def _step_complete(run: Path, step_id: str) -> bool:
     ))
     if step_id == "train-model":
         return model_ready and _json_object(run / "summary.json") is not None
-    report_ready = _json_object(run / "artifacts" / "evaluation_report.json") is not None
+    report_value = _json_object(run / "artifacts" / "evaluation_report.json")
+    report_ready = report_value is not None
+    rich_detection_report_ready = bool(
+        report_value
+        and (
+            report_value.get("task") != "detection"
+            or int(report_value.get("schema_version", 1)) >= DETECTION_REPORT_SCHEMA_VERSION
+        )
+    )
     if step_id == "running-evaluation":
-        return report_ready
+        return rich_detection_report_ready
     if step_id == "preparing-trained-model":
         return model_ready
     if step_id == "preparing-results":
-        return report_ready
+        return rich_detection_report_ready
     return False
 
 
@@ -232,6 +501,7 @@ def save_step_timing(job_id: str, step_id: str, timing: StepTimingUpdate):
 def _latest_state(run: Path):
     planning = run / "artifacts" / "planning"
     candidates = [
+        planning / "STATE_ACTIVE_REVISION.json",
         planning / "STATE_USER_CHANGE_REQUEST.json",
         planning / "STATE_05_HYPERPARAMETERS.json",
         planning / "STATE_04_DATASET_SELECTION.json",
@@ -356,6 +626,8 @@ def run_snapshot(job_id: str):
             )
 
     report = _read_json(run / "artifacts" / "evaluation_report.json")
+    if isinstance(report, dict):
+        report = normalize_report(report)
     errors = _read_json(run / "errors.json")
     artifacts = _deliverables(job_id, run)
     run_state = read_run_state(job_id)
@@ -369,7 +641,10 @@ def run_snapshot(job_id: str):
         if active_step in steps and steps[active_step]["status"] != "done":
             steps[active_step]["status"] = "running"
 
-    terminal_complete = bool(report) and _step_complete(run, "preparing-trained-model")
+    terminal_complete = (
+        _step_complete(run, "running-evaluation")
+        and _step_complete(run, "preparing-trained-model")
+    )
     if terminal_complete:
         # A valid final report and model are conclusive evidence that this linear
         # pipeline finished, including for runs created before every checkpoint existed.
@@ -379,12 +654,14 @@ def run_snapshot(job_id: str):
     any_running = any(step["status"] == "running" for step in steps.values())
     if all_complete:
         status = "done"
+    elif errors:
+        # A persisted request failure is stronger evidence than a stale
+        # synchronous-step "running" marker left behind by the failed request.
+        status = "failed"
     elif run_state and run_state.get("status") in {"running", "cancelling", "stopped"}:
         status = run_state["status"]
     elif any_running:
         status = "running"
-    elif errors:
-        status = "failed"
     elif state and state.get("hpo_config"):
         status = "waiting"
     else:
@@ -398,9 +675,14 @@ def run_snapshot(job_id: str):
         "chosen_parameters": saved_config,
         "decision_evidence": evidence,
         "evaluation_report": report,
+        "planning_llm_usage": _read_json(
+            run / "artifacts" / "planning" / "planning_llm_usage.json"
+        ),
         "artifacts": artifacts,
         "errors": errors,
         "run_state": run_state,
+        "post_training_assessment": _read_json(run / ASSESSMENT_FILE),
+        "assessment_eligibility": _assessment_eligibility(run).model_dump(mode="json"),
     }
 
 
