@@ -24,8 +24,8 @@ REPETITIONS = 10
 GRAPHRAG = "enabled"
 
 # None runs all currently defined prompts. To select individual prompts, use e.g.:
-# CASE_IDS = ["ex-furniture-classification", "ex-handwritten-numbers"]
-CASE_IDS: list[str] | None = None # ["traffic-participants", "traffic-lights-signs", "ex-furniture-classification"]
+# CASE_IDS = ["furniture-image-classification", "handwritten-digit-classification"]
+CASE_IDS: list[str] | None = None
 
 # None creates benchmark_results/<timestamp>. Set a stable directory when you
 # want to resume an interrupted experiment.

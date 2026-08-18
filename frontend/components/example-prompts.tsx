@@ -39,6 +39,9 @@ export function ExamplePrompts({
               aria-hidden
             />
             <span className="flex flex-col gap-1">
+              <span className="text-sm font-medium text-foreground">
+                {p.name}
+              </span>
               <span className="flex flex-wrap gap-1">
                 <span className="w-fit rounded-sm border border-sky-500/30 bg-sky-500/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-sky-700 dark:text-sky-300">
                   Task: {TASK_LABELS[p.task]}
