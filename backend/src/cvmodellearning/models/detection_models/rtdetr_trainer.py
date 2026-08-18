@@ -6,10 +6,13 @@ import json
 import shutil
 from pathlib import Path
 from typing import Any, Mapping
+import yaml
 
 from ultralytics import RTDETR
+from ultralytics.models.rtdetr.train import RTDETRTrainer
 
 from cvmodellearning.models.detection_models.yolo_trainer import (
+    effective_yolo_worker_count,
     select_ultralytics_device_string,
 )
 from cvmodellearning.paths import (
@@ -22,9 +25,36 @@ from cvmodellearning.paths import (
     yolo_data_yaml_path,
 )
 from cvmodellearning.jobs.run_control import PipelineCancelled, cancellation_requested, raise_if_cancelled
+from cvmodellearning.evaluation.detection_result import collect_ultralytics_metrics
+from cvmodellearning.models.detection_models.rtdetr_lora import (
+    apply_rtdetr_lora,
+    rtdetr_lora_summary,
+    set_rtdetr_lora_trainability,
+)
 
 
 RTDETR_CHECKPOINTS = {"rtdetr_hgnetv2_l": "rtdetr-l.pt"}
+
+
+def _lora_trainer_class(config: Mapping[str, Any]):
+    """Build a trainer that injects LoRA after weight loading and before optimizer setup."""
+    lora_config = dict(config)
+
+    class LoRARTDETRTrainer(RTDETRTrainer):
+        def get_model(self, cfg=None, weights=None, verbose=True):
+            model = super().get_model(cfg=cfg, weights=weights, verbose=verbose)
+            summary = apply_rtdetr_lora(model, lora_config)
+            self.lora_summary = summary
+            return model
+
+        def _build_train_pipeline(self):
+            # BaseTrainer._setup_train re-enables frozen floating tensors. Restore
+            # the adapter/head-only contract immediately before it builds the optimizer.
+            set_rtdetr_lora_trainability(self.model)
+            self.lora_summary = rtdetr_lora_summary(self.model)
+            return super()._build_train_pipeline()
+
+    return LoRARTDETRTrainer
 
 
 def _checkpoint_path(model_name: str) -> str:
@@ -106,8 +136,17 @@ def train_rtdetr_from_config(config: Mapping[str, Any], job_id: str) -> str:
         "name": "temp_run",
         "exist_ok": True,
     }
+    execution_record = {"job_id": job_id, "model_name": model_name, **args}
+    if flat.get("training_mode") == "lora":
+        execution_record["lora"] = {
+            "rank": int(flat.get("lora_rank", 8)),
+            "alpha": int(flat.get("lora_alpha", 16)),
+            "dropout": float(flat.get("lora_dropout", 0.05)),
+            "target_profile": str(flat.get("lora_target_profile", "decoder_attention")),
+            "train_detection_head": bool(flat.get("train_detection_head", True)),
+        }
     tool_call_args_path(job_id).write_text(
-        json.dumps({"job_id": job_id, "model_name": model_name, **args}, indent=4),
+        json.dumps(execution_record, indent=4),
         encoding="utf-8",
     )
 
@@ -123,7 +162,10 @@ def train_rtdetr_from_config(config: Mapping[str, Any], job_id: str) -> str:
                 if cancellation_requested(job_id)
                 else None,
             )
-        model.train(**args)
+        if flat.get("training_mode") == "lora":
+            model.train(trainer=_lora_trainer_class(flat), **args)
+        else:
+            model.train(**args)
         raise_if_cancelled(job_id)
         _move_training_artifacts(model, job_id)
     except PipelineCancelled:
@@ -134,25 +176,36 @@ def train_rtdetr_from_config(config: Mapping[str, Any], job_id: str) -> str:
 
 
 def evaluate_rtdetr_model(
-    *, batch_size: int, image_size: int, job_id: str
-) -> dict[str, float | str]:
-    model_path = best_yolo_model_path(job_id)
+    *, batch_size: int, image_size: int, job_id: str, model_path: str | Path | None = None,
+    evaluation_name: str = "test_evaluation"
+) -> dict[str, Any]:
+    model_path = Path(model_path) if model_path is not None else best_yolo_model_path(job_id)
     data_path = yolo_data_yaml_path(job_id)
     if not model_path.exists():
         return {"error": f"Best RT-DETR model not found at: {model_path}"}
     if not data_path.exists():
         return {"error": f"RT-DETR data YAML not found at: {data_path}"}
     try:
-        metrics = RTDETR(str(model_path)).val(
+        model = RTDETR(str(model_path))
+        data_config = yaml.safe_load(data_path.read_text(encoding="utf-8")) or {}
+        configured_names = data_config.get("names", {})
+        if isinstance(configured_names, dict):
+            classes = [str(configured_names[key]) for key in sorted(configured_names, key=int)]
+        else:
+            classes = [str(name) for name in configured_names]
+        if classes and getattr(model, "model", None) is not None:
+            model.model.names = {index: name for index, name in enumerate(classes)}
+        metrics = model.val(
             data=str(data_path),
             split="test",
             batch=batch_size,
             imgsz=image_size,
             project=str(run_dir(job_id)),
-            name="test_evaluation",
+            name=evaluation_name,
             exist_ok=True,
+            workers=effective_yolo_worker_count(8),
         )
-        return {
+        result = {
             "mAP@.50:.95": float(metrics.box.map),
             "mAP@.50": float(metrics.box.map50),
             "mAP@.75": float(metrics.box.map75),
@@ -160,5 +213,7 @@ def evaluate_rtdetr_model(
             "recall": float(metrics.box.mr),
             "results_dir": str(Path(metrics.save_dir).resolve()),
         }
+        result.update(collect_ultralytics_metrics(metrics, job_id, classes, evaluation_name))
+        return result
     except Exception as exc:
         return {"error": f"RT-DETR evaluation failed for Job ID {job_id}: {exc}"}

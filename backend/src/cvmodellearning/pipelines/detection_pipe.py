@@ -2,6 +2,7 @@ import asyncio
 import hashlib
 import inspect
 import json
+import math
 from pathlib import Path
 import time
 from typing import Dict, Any, List, Literal, Union
@@ -17,6 +18,8 @@ from cvmodellearning.jobs.run_control import PipelineCancelled, raise_if_cancell
 from cvmodellearning.datasets.provenance import record_split_access
 from cvmodellearning.download.assignment_manifest import (
     assignment_fingerprint,
+    detection_coverage_requirements,
+    evaluate_detection_coverage_acceptance,
     file_sha256,
     iter_download_allocations,
     load_dataset_manifest,
@@ -80,6 +83,7 @@ def _get_device() -> str:
         return 'mps'
     return 'cpu'
 
+
 def _get_category_map(job_id: str) -> Dict[int, str]:
     """Loads the category list from the consolidated JSON file."""
     annotations_path = train_json_path(job_id)  # Can use any split since categories are the same across all
@@ -140,7 +144,7 @@ class DetectionPipeline:
         data_base.mkdir(parents=True, exist_ok=True)
                 
         total = sum(item.count for item in iter_download_allocations(selected_data))
-        progress = DownloadProgressTracker(job_id, total)
+        progress = DownloadProgressTracker(job_id, total, resume=True)
         try:
             kwargs = {}
             if "progress_callback" in inspect.signature(
@@ -154,7 +158,17 @@ class DetectionPipeline:
                 download_visionkg_mixed_datasets_detection
             ).parameters:
                 kwargs["cancel_check"] = lambda: raise_if_cancelled(job_id)
-            report = download_visionkg_mixed_datasets_detection(job_id, selected_data, **kwargs)
+            if "data_plan_constraints" in inspect.signature(
+                download_visionkg_mixed_datasets_detection
+            ).parameters:
+                kwargs["data_plan_constraints"] = (
+                    config.get("data_plan_constraints") or None
+                )
+            report = download_visionkg_mixed_datasets_detection(
+                job_id,
+                selected_data,
+                **kwargs,
+            )
         except PipelineCancelled:
             progress.finish("stopped")
             raise
@@ -166,15 +180,36 @@ class DetectionPipeline:
                 item["dataset_name"] for item in report["sources"] if item["shortfall"]
             ])
             progress.finish("failed")
-            shortfalls = ", ".join(
+            source_shortfalls = [
                 f"{item['class_name']} from {item['dataset_name']} "
                 f"for {item['assigned_split']}: {item['downloaded']}/{item['requested']}"
                 for item in report["sources"]
                 if item["shortfall"]
-            )
+            ]
+            coverage = report.get("coverage") or {}
+            coverage_shortfalls = []
+            requirements = coverage.get("requirements") or {}
+            verified_by_split = coverage.get("verified_unique_images_by_split") or {}
+            for split, required in (
+                requirements.get("target_unique_images_by_split") or {}
+            ).items():
+                verified = int(verified_by_split.get(split, 0))
+                if verified < int(required):
+                    coverage_shortfalls.append(
+                        f"{split} unique images: {verified}/{required}"
+                    )
+            for class_name, shortfall in (
+                coverage.get("class_image_shortfalls") or {}
+            ).items():
+                if shortfall:
+                    coverage_shortfalls.append(
+                        f"{class_name} image coverage shortfall: {shortfall}"
+                    )
+            shortfalls = ", ".join(source_shortfalls + coverage_shortfalls)
             raise RuntimeError(
                 "Detection data download was incomplete. "
-                f"Shortfalls: {shortfalls}. See artifacts/download_report.json."
+                f"Shortfalls: {shortfalls or 'unknown coverage shortfall'}. "
+                "See artifacts/download_report.json."
             )
         progress.finish("completed")
         return report
@@ -203,6 +238,15 @@ class DetectionPipeline:
                 f"{len(missing_files)} detection samples reference missing image files; "
                 f"first missing path: {missing_files[0]}"
             )
+        image_dimensions: dict[object, tuple[int, int] | None] = {}
+        for image in data.get("images", []):
+            width, height = image.get("width"), image.get("height")
+            image_dimensions[image.get("id")] = (
+                (int(width), int(height))
+                if isinstance(width, (int, float)) and isinstance(height, (int, float))
+                and width > 0 and height > 0
+                else None
+            )
         content_isolation = validate_content_isolation(manifest, data_dir(job_id))
 
         uuid_to_int = {}
@@ -215,9 +259,40 @@ class DetectionPipeline:
             img['id'] = new_id
 
         valid_annotations = []
+        invalid_boxes: list[dict[str, Any]] = []
+        projected_short_sides_at_640: list[float] = []
+        projected_areas_at_640: list[float] = []
         for ann in data.get('annotations', []):
             old_img_id = ann['image_id']
             if old_img_id in uuid_to_int:
+                bbox = ann.get("bbox")
+                dimensions = image_dimensions.get(old_img_id)
+                if (
+                    not isinstance(bbox, (list, tuple))
+                    or len(bbox) != 4
+                    or any(
+                        isinstance(value, bool)
+                        or not isinstance(value, (int, float))
+                        or not math.isfinite(value)
+                        for value in (bbox or [])
+                    )
+                    or bbox[2] <= 0
+                    or bbox[3] <= 0
+                    or bbox[0] < 0
+                    or bbox[1] < 0
+                    or (dimensions is not None and bbox[0] + bbox[2] > dimensions[0])
+                    or (dimensions is not None and bbox[1] + bbox[3] > dimensions[1])
+                ):
+                    invalid_boxes.append({"annotation_id": ann.get("id"), "bbox": bbox})
+                    continue
+                if dimensions is not None:
+                    projection_scale = 640.0 / max(dimensions)
+                    projected_width = float(bbox[2]) * projection_scale
+                    projected_height = float(bbox[3]) * projection_scale
+                    projected_short_sides_at_640.append(
+                        min(projected_width, projected_height)
+                    )
+                    projected_areas_at_640.append(projected_width * projected_height)
                 ann['image_id'] = uuid_to_int[old_img_id]
                 # Ensure category_id exists
                 if 'category_id' not in ann and 'category_id_seq' in ann:
@@ -232,6 +307,12 @@ class DetectionPipeline:
                 
                 valid_annotations.append(ann)
 
+        if invalid_boxes:
+            raise ValueError(
+                f"Detection annotations contain {len(invalid_boxes)} invalid or out-of-bounds boxes; "
+                f"first invalid annotation: {invalid_boxes[0]}"
+            )
+
         data['annotations'] = valid_annotations
         categories = data.get('categories', [])
         info = data.get('info', {})
@@ -240,6 +321,18 @@ class DetectionPipeline:
         unexpected = sorted(set(category_names.values()) - allowed_classes)
         if unexpected:
             raise ValueError(f"Downloaded annotations contain unexpected classes: {unexpected}")
+        instance_counts: dict[str, int] = {}
+        object_size_counts = {"small": 0, "medium": 0, "large": 0}
+        for annotation in valid_annotations:
+            class_name = category_names.get(annotation.get("category_id"))
+            if class_name is None:
+                raise ValueError(
+                    f"Annotation {annotation.get('id')} refers to an unknown category_id."
+                )
+            instance_counts[class_name] = instance_counts.get(class_name, 0) + 1
+            area = float(annotation["bbox"][2]) * float(annotation["bbox"][3])
+            bucket = "small" if area < 32**2 else "medium" if area < 96**2 else "large"
+            object_size_counts[bucket] += 1
 
         images_by_split = {split: [] for split in ("train", "validation", "test")}
         for image in data["images"]:
@@ -281,6 +374,105 @@ class DetectionPipeline:
                 class_image_counts[class_name][split] = sum(
                     class_name in names for names in image_classes.values()
                 )
+
+        coverage_requirements = detection_coverage_requirements(
+            config["selected_data"], config.get("data_plan_constraints") or None,
+        )
+        verified_images_per_class = {
+            class_name: sum(split_counts.values())
+            for class_name, split_counts in class_image_counts.items()
+        }
+        coverage_shortfalls = {
+            class_name: max(
+                0,
+                int(required) - verified_images_per_class.get(class_name, 0),
+            )
+            for class_name, required in coverage_requirements[
+                "minimum_images_per_class"
+            ].items()
+        }
+        unique_image_count = sum(len(images) for images in images_by_split.values())
+        unique_image_shortfall = max(
+            0,
+            coverage_requirements["target_unique_images"] - unique_image_count,
+        )
+        minimum_unique_image_shortfall = max(
+            0,
+            coverage_requirements["minimum_unique_images"] - unique_image_count,
+        )
+        class_split_shortfalls = {
+            class_name: {
+                split: max(
+                    0,
+                    int(required)
+                    - class_image_counts.get(class_name, {}).get(split, 0),
+                )
+                for split, required in split_requirements.items()
+            }
+            for class_name, split_requirements in coverage_requirements[
+                "minimum_images_per_class_by_split"
+            ].items()
+        }
+        target_unique_images = coverage_requirements["target_unique_images"]
+        unique_coverage_ratio = (
+            min(1.0, unique_image_count / target_unique_images)
+            if target_unique_images
+            else 1.0
+        )
+        class_split_coverage_satisfied = not any(
+            shortfall
+            for split_shortfalls in class_split_shortfalls.values()
+            for shortfall in split_shortfalls.values()
+        )
+        coverage = {
+            "requirements": coverage_requirements,
+            "verified_unique_images": unique_image_count,
+            "verified_unique_images_by_split": {
+                split: len(images) for split, images in images_by_split.items()
+            },
+            "verified_images_per_class": verified_images_per_class,
+            "verified_images_per_class_by_split": class_image_counts,
+            "unique_image_shortfall": unique_image_shortfall,
+            "minimum_unique_image_shortfall": minimum_unique_image_shortfall,
+            "unique_coverage_ratio": unique_coverage_ratio,
+            "class_image_shortfalls": coverage_shortfalls,
+            "class_split_image_shortfalls": class_split_shortfalls,
+            "class_split_coverage_satisfied": class_split_coverage_satisfied,
+            "satisfied": (
+                unique_image_shortfall == 0 and class_split_coverage_satisfied
+            ),
+        }
+        acceptance = evaluate_detection_coverage_acceptance(coverage)
+        if not acceptance["accepted"]:
+            raise ValueError(
+                "Prepared detection data does not satisfy its mandatory class-by-split "
+                "coverage and minimum unique-image coverage requirements: "
+                f"unique coverage={unique_coverage_ratio:.2%} "
+                f"(minimum {coverage_requirements['minimum_unique_images']} images), "
+                f"class split shortfalls={class_split_shortfalls}."
+            )
+
+        preparation_warnings = []
+        if acceptance["aspirational_unique_target_accepted"]:
+            preparation_warnings.append({
+                "type": "aspirational_unique_image_shortfall",
+                "message": (
+                    "Materialized all mandatory class-by-split coverage from the "
+                    "accepted multi-label image pool below its aspirational size."
+                ),
+                "target_unique_images": target_unique_images,
+                "verified_unique_images": unique_image_count,
+                "unique_coverage_ratio": unique_coverage_ratio,
+                "minimum_unique_coverage_ratio": acceptance[
+                    "minimum_unique_coverage_ratio"
+                ],
+                "planned_unique_images_by_split": coverage_requirements[
+                    "target_unique_images_by_split"
+                ],
+                "adjusted_split_sizes": coverage[
+                    "verified_unique_images_by_split"
+                ],
+            })
 
         def create_split_data(split):
             return {
@@ -333,6 +525,30 @@ class DetectionPipeline:
                 split: len(images) for split, images in images_by_split.items()
             },
             "class_image_counts": class_image_counts,
+            "instance_counts": instance_counts,
+            "object_size_counts": object_size_counts,
+            "annotation_statistics": {
+                "small_object_fraction_at_640": (
+                    sum(area < 32**2 for area in projected_areas_at_640)
+                    / len(projected_areas_at_640)
+                    if projected_areas_at_640 else None
+                ),
+                "median_box_short_side_px_at_640": (
+                    float(sorted(projected_short_sides_at_640)[
+                        len(projected_short_sides_at_640) // 2
+                    ])
+                    if projected_short_sides_at_640 else None
+                ),
+                "fraction_below_8px_short_side_at_640": (
+                    sum(side < 8 for side in projected_short_sides_at_640)
+                    / len(projected_short_sides_at_640)
+                    if projected_short_sides_at_640 else None
+                ),
+            },
+            "coverage": coverage,
+            "acceptance": acceptance,
+            "warnings": preparation_warnings,
+            "invalid_box_count": 0,
             "content_isolation": content_isolation,
             "assignment_fingerprint": manifest["assignment_fingerprint"],
             "manifest_sha256": file_sha256(dataset_manifest_path(job_id)),

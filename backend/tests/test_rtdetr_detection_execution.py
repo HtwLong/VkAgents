@@ -14,6 +14,13 @@ from cvmodellearning.graphrag.hyperparameter_context import (
     validate_detection_graph_grounded_config,
 )
 from cvmodellearning.models.detection_models import rtdetr_trainer, yolo_trainer
+from cvmodellearning.models.detection_models.rtdetr_lora import (
+    LoRALinear,
+    apply_rtdetr_lora,
+    merge_rtdetr_lora_,
+    set_rtdetr_lora_trainability,
+)
+from cvmodellearning.graphrag.model_selection_context import build_model_selection_context
 from cvmodellearning.models.registry import (
     DetectionHpoModelId,
     model_ids,
@@ -27,6 +34,7 @@ from cvmodellearning.schemas.detection_hpo import (
 )
 from cvmodellearning.schemas.hpo_runtime import training_compatible_hpo_config
 from cvmodellearning.schemas.interpretation_schema import PipelineState
+from cvmodellearning.schemas.revision import initial_hpo_override_values
 
 
 RECIPE_ID = "ultralytics_rtdetr_l_coco_pretrained_custom_finetune"
@@ -132,7 +140,7 @@ def test_rtdetr_graphrag_materializes_only_the_executable_recipe():
 
     assert context["selected_model_id"] == "rtdetr_hgnetv2_l"
     assert context["base_recipe"]["id"] == RECIPE_ID
-    assert context["base_configuration"] == {
+    assert context["reference_configuration"] == {
         "training_recipe_id": RECIPE_ID,
         "model_weights": "coco",
         "optimizer_name": "adamw",
@@ -189,6 +197,39 @@ def test_rtdetr_graphrag_materializes_only_the_executable_recipe():
     validate_detection_graph_grounded_config(candidate, context)
 
 
+def test_detection_lora_request_shortlists_only_executable_rtdetr():
+    state_data = _state().model_dump(mode="json")
+    state_data.update({
+        "user_query": "Train an object detector with LoRA rank 4.",
+        "model_requirements": [
+            {
+                "name": None,
+                "training_mode": "lora",
+                "lora_rank": 4,
+                "requirement_strength": "required",
+            }
+        ],
+    })
+    state = PipelineState.model_validate(state_data)
+
+    assert initial_hpo_override_values(state) == {
+        "training_mode": "lora",
+        "model_weights": "default",
+        "lora_rank": 4,
+    }
+    selection = build_model_selection_context(state)
+    assert selection["filters"]["requires_lora"] is True
+    assert {
+        candidate["model"]["id"] for candidate in selection["candidate_models"]
+    } == {"rtdetr_hgnetv2_l"}
+    context = build_hyperparameter_context(
+        state.model_copy(update={
+            "selected_model_info": {"model": {"model_architecture": "rtdetr_hgnetv2_l"}}
+        })
+    )
+    assert context["selected_model_id"] == "rtdetr_hgnetv2_l"
+
+
 @pytest.mark.parametrize(
     ("field", "value", "message"),
     [
@@ -216,6 +257,73 @@ def test_rtdetr_schema_matches_the_installed_varifocal_loss_contract():
     assert criterion.loss_gain["class"] == 1
     assert criterion.loss_gain["bbox"] == 5
     assert criterion.loss_gain["giou"] == 2
+
+
+def test_rtdetr_lora_schema_and_runtime_contract():
+    config = _config(training_mode="lora", lora_rank=4, lora_alpha=8)
+    runtime = config.runtime_config()
+
+    assert runtime["training_mode"] == "lora"
+    assert runtime["lora_rank"] == 4
+    assert runtime["lora_alpha"] == 8
+    assert runtime["lora_target_profile"] == "decoder_attention"
+    assert runtime["train_detection_head"] is True
+
+
+def test_rtdetr_lora_injection_is_zero_initialized_and_adapter_head_only():
+    torch.manual_seed(0)
+    model = RTDETRDetectionModel("rtdetr-l.yaml", nc=3, verbose=False)
+    target_name = "model.28.decoder.layers.0.cross_attn.value_proj"
+    inputs = torch.randn(2, 5, 256)
+    before = model.get_submodule(target_name)(inputs).detach()
+
+    summary = apply_rtdetr_lora(
+        model,
+        {
+            "lora_rank": 4,
+            "lora_alpha": 8,
+            "lora_dropout": 0.0,
+            "lora_target_profile": "decoder_attention",
+        },
+    )
+    wrapped = model.get_submodule(target_name)
+    after = wrapped(inputs).detach()
+
+    assert isinstance(wrapped, LoRALinear)
+    assert len(summary.target_modules) == 12
+    assert torch.equal(before, after)
+    trainable = {name for name, parameter in model.named_parameters() if parameter.requires_grad}
+    assert any("lora_A" in name for name in trainable)
+    assert any("lora_B" in name for name in trainable)
+    assert any("dec_score_head" in name for name in trainable)
+    assert not any(name.startswith("model.0.") for name in trainable)
+
+
+def test_rtdetr_lora_trainability_is_restored_and_merge_preserves_output():
+    model = RTDETRDetectionModel("rtdetr-l.yaml", nc=3, verbose=False)
+    apply_rtdetr_lora(
+        model,
+        {
+            "lora_rank": 2,
+            "lora_alpha": 4,
+            "lora_dropout": 0.0,
+            "lora_target_profile": "decoder_attention",
+        },
+    )
+    target_name = "model.28.decoder.layers.0.cross_attn.output_proj"
+    wrapped = model.get_submodule(target_name)
+    wrapped.lora_B.weight.data.normal_(std=0.01)
+    inputs = torch.randn(2, 5, 256)
+    expected = wrapped(inputs).detach()
+
+    model.requires_grad_(True)
+    set_rtdetr_lora_trainability(model)
+    assert not model.get_parameter("model.0.stem1.conv.weight").requires_grad
+    merge_rtdetr_lora_(model)
+    merged = model.get_submodule(target_name)
+
+    assert isinstance(merged, torch.nn.Linear)
+    assert torch.allclose(expected, merged(inputs), atol=1e-6, rtol=1e-5)
 
 
 def test_rtdetr_trainer_forwards_validated_fields_and_moves_artifacts(tmp_path, monkeypatch):
@@ -250,7 +358,13 @@ def test_rtdetr_trainer_forwards_validated_fields_and_moves_artifacts(tmp_path, 
     monkeypatch.setattr(rtdetr_trainer, "tool_call_args_path", lambda _: artifact_root / "args.json")
 
     result = rtdetr_trainer.train_rtdetr_from_config(
-        _config(num_epochs=1, patience=0, batch_size=1, close_mosaic=0).runtime_config(),
+        _config(
+            num_epochs=1,
+            patience=0,
+            batch_size=1,
+            close_mosaic=0,
+            warmup_epochs=0.0,
+        ).runtime_config(),
         "job",
     )
 
@@ -265,6 +379,60 @@ def test_rtdetr_trainer_forwards_validated_fields_and_moves_artifacts(tmp_path, 
     assert captured["cos_lr"] is False
     assert (artifact_root / "best.pt").exists()
     assert (artifact_root / "results.csv").exists()
+
+
+def test_rtdetr_lora_training_selects_custom_trainer(tmp_path, monkeypatch):
+    data_yaml = tmp_path / "data.yaml"
+    data_yaml.write_text("path: .\ntrain: images/train\nval: images/val\n", encoding="utf-8")
+    run_root = tmp_path / "run"
+    artifact_root = tmp_path / "artifacts"
+    artifact_root.mkdir()
+    captured = {}
+
+    class FakeRTDETR:
+        def __init__(self, _checkpoint):
+            self.trainer = None
+
+        def train(self, **kwargs):
+            captured.update(kwargs)
+            save_dir = run_root / "temp_run"
+            (save_dir / "weights").mkdir(parents=True)
+            (save_dir / "weights" / "best.pt").write_bytes(b"checkpoint")
+            self.trainer = SimpleNamespace(save_dir=save_dir)
+
+    monkeypatch.setattr(rtdetr_trainer, "RTDETR", FakeRTDETR)
+    monkeypatch.setattr(rtdetr_trainer, "_checkpoint_path", lambda _: "rtdetr-l.pt")
+    monkeypatch.setattr(rtdetr_trainer, "select_ultralytics_device_string", lambda: "cpu")
+    monkeypatch.setattr(rtdetr_trainer, "yolo_data_yaml_path", lambda _: data_yaml)
+    monkeypatch.setattr(rtdetr_trainer, "run_dir", lambda _: run_root)
+    monkeypatch.setattr(rtdetr_trainer, "best_yolo_model_path", lambda _: artifact_root / "best.pt")
+    monkeypatch.setattr(rtdetr_trainer, "training_log_path", lambda _: artifact_root / "results.csv")
+    monkeypatch.setattr(rtdetr_trainer, "plots_dir", lambda _: artifact_root)
+    monkeypatch.setattr(rtdetr_trainer, "tool_call_args_path", lambda _: artifact_root / "args.json")
+
+    result = rtdetr_trainer.train_rtdetr_from_config(
+        _config(
+            training_mode="lora",
+            lora_rank=4,
+            lora_alpha=8,
+            num_epochs=1,
+            patience=0,
+            close_mosaic=0,
+            warmup_epochs=0.0,
+        ).runtime_config(),
+        "job",
+    )
+
+    assert result.startswith("✅")
+    assert issubclass(captured["trainer"], rtdetr_trainer.RTDETRTrainer)
+    execution = json.loads((artifact_root / "args.json").read_text(encoding="utf-8"))
+    assert execution["lora"] == {
+        "rank": 4,
+        "alpha": 8,
+        "dropout": 0.05,
+        "target_profile": "decoder_attention",
+        "train_detection_head": True,
+    }
 
 
 def test_rtdetr_evaluation_and_pipeline_inference_use_dedicated_api(tmp_path, monkeypatch):

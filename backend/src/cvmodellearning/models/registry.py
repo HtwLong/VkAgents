@@ -148,6 +148,77 @@ class ModelDefinition:
     lora_supported: bool = False
 
 
+@dataclass(frozen=True)
+class DetectionModelIdentity:
+    """Canonical identity shared by graph, planning, policy, and execution."""
+
+    registry_id: str
+    executable_id: str
+    family: str
+    runtime_family: Literal["yolo", "rtdetr", "torchvision"]
+    display_name: str
+    input_stride: int = 32
+
+
+@dataclass(frozen=True)
+class TrainingMemoryMetadata:
+    """Conservative local inputs for deterministic training-memory estimation."""
+
+    parameter_count_millions: float
+    activation_factor: float
+    family_overhead_gb: float = 0.15
+
+
+CLASSIFICATION_TRAINING_MEMORY: dict[str, TrainingMemoryMetadata] = {
+    "resnet50": TrainingMemoryMetadata(25.6, 1.5),
+    "mobilenet_v2": TrainingMemoryMetadata(3.5, 1.0),
+    "mobilenet_v3_large": TrainingMemoryMetadata(5.5, 1.0),
+    "mobilenet_v3_small": TrainingMemoryMetadata(2.5, 0.9),
+    "efficientnet_b0": TrainingMemoryMetadata(5.3, 1.0),
+    "efficientnet_b1": TrainingMemoryMetadata(7.8, 1.1),
+    "efficientnet_b2": TrainingMemoryMetadata(9.1, 1.2),
+    "efficientnet_b3": TrainingMemoryMetadata(12.2, 1.35),
+    "efficientnet_b4": TrainingMemoryMetadata(19.3, 1.55),
+    "efficientnet_b5": TrainingMemoryMetadata(30.4, 1.8),
+    "efficientnet_b6": TrainingMemoryMetadata(43.0, 2.0),
+    "efficientnet_b7": TrainingMemoryMetadata(66.3, 2.3),
+    "densenet121": TrainingMemoryMetadata(8.0, 1.6),
+    "convnext_tiny": TrainingMemoryMetadata(28.6, 1.7),
+    "clip_vit_b16": TrainingMemoryMetadata(86.0, 2.0),
+    "dinov2_vits14": TrainingMemoryMetadata(22.0, 2.0),
+    "dinov2_vitb14": TrainingMemoryMetadata(86.0, 2.4),
+    "vit_b_16": TrainingMemoryMetadata(86.6, 2.0),
+    "swin_v2_t": TrainingMemoryMetadata(28.4, 2.2),
+    "swin_v2_s": TrainingMemoryMetadata(49.7, 2.5),
+}
+
+_YOLO_PARAMETER_COUNTS = {"n": 3.0, "s": 11.5, "m": 25.5, "l": 43.5, "x": 68.0}
+_YOLO_ACTIVATION_FACTORS = {"n": 1.6, "s": 2.0, "m": 2.6, "l": 3.2, "x": 3.8}
+
+
+def training_memory_metadata(model_reference: str) -> TrainingMemoryMetadata | None:
+    """Resolve deterministic estimator metadata for an executable model reference."""
+
+    normalized = str(model_reference or "").lower().replace("-", "_")
+    if normalized in CLASSIFICATION_TRAINING_MEMORY:
+        return CLASSIFICATION_TRAINING_MEMORY[normalized]
+    if normalized.startswith(("yolov8_", "yolov10_", "yolov11_", "yolov12_")):
+        size = normalized.rsplit("_", 1)[-1]
+        if size in _YOLO_PARAMETER_COUNTS:
+            return TrainingMemoryMetadata(
+                _YOLO_PARAMETER_COUNTS[size],
+                _YOLO_ACTIVATION_FACTORS[size],
+                0.25,
+            )
+    detection = {
+        "retinanet_r50": TrainingMemoryMetadata(34.0, 3.5, 0.4),
+        "faster_rcnn_r50": TrainingMemoryMetadata(41.8, 4.5, 0.6),
+        "ssd300": TrainingMemoryMetadata(35.6, 2.8, 0.3),
+        "rtdetr_hgnetv2_l": TrainingMemoryMetadata(32.0, 5.0, 0.6),
+    }
+    return detection.get(normalized)
+
+
 MODEL_REGISTRY: tuple[ModelDefinition, ...] = (
     ModelDefinition("resnet50", "classification", "resnet", "ResNet-50", "resnet50"),
     ModelDefinition("mobilenet_v2", "classification", "mobilenet", "MobileNet V2", "mobilenet_v2"),
@@ -209,6 +280,7 @@ MODEL_REGISTRY: tuple[ModelDefinition, ...] = (
         "RT-DETR HGNetV2-L",
         "rtdetr_hgnetv2_l",
         aliases=("rtdetr-l", "rt_detr_l", "rt-detr-l", "rtdetr"),
+        lora_supported=True,
     ),
     ModelDefinition("Qwen3-VL-2B-Instruct", "visual question answering", "qwen-vl", "Qwen3-VL 2B Instruct"),
 )
@@ -245,6 +317,11 @@ def family_by_model_id(task: TaskName) -> dict[str, str]:
 
 def family_for_model_reference(task: TaskName, value: str) -> Optional[str]:
     """Resolve the family of a registered model or executable YOLO variant."""
+    if task == "detection":
+        identity = resolve_detection_model_identity(value)
+        if identity is not None:
+            return identity.family
+
     resolved = resolve_model_id(task, value)
     if resolved:
         return family_by_model_id(task)[resolved]
@@ -263,12 +340,89 @@ def family_for_model_reference(task: TaskName, value: str) -> Optional[str]:
     return None
 
 
+def resolve_detection_model_identity(value: str) -> Optional[DetectionModelIdentity]:
+    """Resolve ontology IDs, executable IDs, aliases, and display names.
+
+    YOLO graph records use compact identifiers such as ``yolov10n`` while the
+    executable schema uses ``yolov10_n``. This function is the single boundary
+    that reconciles those representations for downstream policy code.
+    """
+    if not value:
+        return None
+    normalized = canonical_model_id(value)
+    executable_id = next(
+        (
+            model_id for model_id in DETECTION_HPO_MODEL_IDS
+            if canonical_model_id(model_id) == normalized
+        ),
+        None,
+    )
+
+    definition = next(
+        (
+            model for model in enabled_models("detection")
+            if normalized in {
+                canonical_model_id(model.id),
+                canonical_model_id(model.display_name),
+                *(canonical_model_id(alias) for alias in model.aliases),
+                *(
+                    [canonical_model_id(model.trainer_key)]
+                    if model.trainer_key else []
+                ),
+                *(
+                    [canonical_model_id(model.hpo_id)]
+                    if model.hpo_id else []
+                ),
+            }
+        ),
+        None,
+    )
+    if definition is None:
+        definition = next(
+            (
+                model for model in enabled_models("detection")
+                if model.family == "yolo"
+                and normalized.startswith(canonical_model_id(model.id))
+                and normalized[len(canonical_model_id(model.id)):] in {"n", "s", "m", "l", "x"}
+            ),
+            None,
+        )
+    if definition is None:
+        return None
+
+    registered_executable_id = definition.hpo_id or (
+        definition.trainer_key
+        if definition.trainer_key in DETECTION_HPO_MODEL_IDS
+        else None
+    )
+    resolved_executable_id = executable_id or registered_executable_id
+    if not resolved_executable_id:
+        return None
+    runtime_family: Literal["yolo", "rtdetr", "torchvision"]
+    if definition.family == "yolo":
+        runtime_family = "yolo"
+    elif definition.family == "rtdetr":
+        runtime_family = "rtdetr"
+    else:
+        runtime_family = "torchvision"
+    return DetectionModelIdentity(
+        registry_id=definition.id,
+        executable_id=resolved_executable_id,
+        family=definition.family,
+        runtime_family=runtime_family,
+        display_name=definition.display_name,
+    )
+
+
 def resolve_model_id(task: TaskName, value: str) -> Optional[str]:
-    normalized = value.strip().lower()
+    normalized = canonical_model_id(value)
     for model in enabled_models(task):
-        if normalized == model.id.lower():
-            return model.id
-        if normalized in {alias.lower() for alias in model.aliases}:
+        references = {
+            canonical_model_id(model.id),
+            canonical_model_id(model.display_name),
+            *(canonical_model_id(alias) for alias in model.aliases),
+        }
+        if normalized in references:
             return model.id
     return None
 

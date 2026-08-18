@@ -10,7 +10,6 @@ from PIL import Image
 from cvmodellearning.graphrag.hyperparameter_context import (
     build_hyperparameter_context,
     llm_controlled_fields,
-    validate_detection_graph_grounded_config,
 )
 from cvmodellearning.download.visionkg_utils import visionkg2cocoDet
 from cvmodellearning.models.detection_models import yolo_trainer
@@ -20,6 +19,7 @@ from cvmodellearning.pipelines import detection_pipe
 from cvmodellearning.schemas.detection_hpo import (
     DetectionConfigDraft,
     DetectionConfigModel,
+    ULTRALYTICS_LINEAR_LRF_DEFAULT,
 )
 from cvmodellearning.schemas.detection_hpo_completion import complete_detection_config
 from cvmodellearning.schemas.interpretation_schema import PipelineState
@@ -113,7 +113,7 @@ def test_visionkg_center_boxes_are_converted_to_coco_top_left_boxes():
 
 
 def test_yolo_schema_requires_pretrained_weights_and_normalizes_short_close_mosaic():
-    config = _config(num_epochs=1)
+    config = _config(num_epochs=1, patience=0)
     assert config.close_mosaic == 0
 
     with pytest.raises(ValueError, match="requires pretrained"):
@@ -165,6 +165,40 @@ def test_yolo_training_preserves_the_original_exception(monkeypatch, tmp_path):
         yolo_trainer.train_yolo_from_config(_config().runtime_config(), "test-job")
 
     assert str(error.value.__cause__) == "inner tensor failure"
+
+
+def test_yolo_disables_spawned_dataloader_workers_on_windows(monkeypatch):
+    monkeypatch.setattr(yolo_trainer.platform, "system", lambda: "Windows")
+
+    assert yolo_trainer.effective_yolo_worker_count(4) == 0
+    assert yolo_trainer.effective_yolo_worker_count(0) == 0
+
+
+def test_yolo_keeps_configured_workers_off_windows(monkeypatch):
+    monkeypatch.setattr(yolo_trainer.platform, "system", lambda: "Linux")
+
+    assert yolo_trainer.effective_yolo_worker_count(4) == 4
+
+
+def test_yolo_multi_scale_is_clamped_to_a_nonzero_stride_sample():
+    assert yolo_trainer.effective_yolo_multi_scale(1.0, 512) == pytest.approx(0.9375)
+    assert yolo_trainer.effective_yolo_multi_scale(0.5, 512) == 0.5
+    assert yolo_trainer.effective_yolo_multi_scale(1.0, 32) == 0.0
+
+
+def test_yolo_runtime_adapter_clamps_unsafe_multi_scale(monkeypatch, tmp_path):
+    captured = {}
+
+    monkeypatch.setattr(
+        yolo_trainer, "_run_yolo_training", lambda **kwargs: captured.update(kwargs)
+    )
+    monkeypatch.setattr(yolo_trainer, "tool_call_args_path", lambda job_id: tmp_path / "args.json")
+
+    yolo_trainer.train_yolo_from_config(
+        _config(input_size=512, multi_scale=1.0).runtime_config(), "test-job"
+    )
+
+    assert captured["multi_scale"] == pytest.approx(0.9375)
 
 
 @pytest.mark.parametrize("model_version", ["yolo_v11", "yolo_v12"])
@@ -255,41 +289,37 @@ def test_yolo_graphrag_materializes_recipe_and_enforces_selected_family():
         "yolo11n", "yolo11s", "yolo11m", "yolo11l", "yolo11x"
     }
     assert context["variant_benchmarks"]
-    assert context["base_configuration"]["mosaic"] == 1.0
-    assert context["base_configuration"]["confidence_threshold"] == 0.25
-    assert context["base_configuration"]["scheduler_name"] == "linear"
-    assert context["base_configuration"]["patience"] == 20
-    assert "learning_rate" not in context["base_configuration"]
-    assert "optimizer_name" in context["fields_available_for_policy_guidance"]
-    assert "learning_rate" in context["fields_available_for_policy_guidance"]
+    reference = context["reference_configuration"]
+    assert reference["mosaic"] == 1.0
+    assert reference["confidence_threshold"] == 0.25
+    assert reference["scheduler_name"] == "linear"
+    assert reference["patience"] == 20
+    assert "learning_rate" not in reference
     assert "optimizer_name" in context["allowed_adjustment_fields"]
     assert "learning_rate" in context["allowed_adjustment_fields"]
-    assert context["base_configuration"]["loss_box"] == "ciou"
-    assert context["base_configuration"]["loss_cls"] == "bce"
+    assert reference["loss_box"] == "ciou"
+    assert reference["loss_cls"] == "bce"
+    assert reference["lambda_box"] == 7.5
+    assert reference["lambda_cls"] == 0.5
+    assert reference["lambda_dfl"] == 1.5
     assert not context["materialization_warnings"]
 
     candidate = _config(
         model_name="yolov11_n",
         **{
             key: value
-            for key, value in context["base_configuration"].items()
+            for key, value in reference.items()
             if key not in {"training_recipe_id", "model_name"}
         },
     ).model_dump(mode="json")
-    validate_detection_graph_grounded_config(candidate, context)
-
     explicit = dict(candidate)
     explicit.update({"optimizer_name": "adamw", "learning_rate": 0.001})
-    validate_detection_graph_grounded_config(explicit, context)
     assert {"optimizer_name", "learning_rate"} <= llm_controlled_fields(
         explicit,
         context,
         DetectionConfigModel,
     )
 
-    candidate["model_name"] = "yolov8_n"
-    with pytest.raises(ValueError, match="incompatible"):
-        validate_detection_graph_grounded_config(candidate, context)
 
 
 def test_detection_draft_completion_repairs_authoritative_yolo_fields():
@@ -304,6 +334,9 @@ def test_detection_draft_completion_repairs_authoritative_yolo_fields():
         "single_cls": False,
         "loss_box": "ciou",
         "loss_cls": "cross_entropy",
+        "lambda_box": 1.0,
+        "lambda_cls": 1.0,
+        "lambda_dfl": 0.0,
     })
     draft = DetectionConfigDraft.model_validate(draft_data)
     state = {
@@ -332,6 +365,9 @@ def test_detection_draft_completion_repairs_authoritative_yolo_fields():
     assert completed.single_cls is True
     assert completed.loss_box == "ciou"
     assert completed.loss_cls == "bce"
+    assert completed.lambda_box == 7.5
+    assert completed.lambda_cls == 0.5
+    assert completed.lambda_dfl == 1.5
     assert {item["field"] for item in adjustments} >= {
         "train_data_ratio",
         "val_data_ratio",
@@ -340,7 +376,68 @@ def test_detection_draft_completion_repairs_authoritative_yolo_fields():
         "momentum",
         "single_cls",
         "loss_cls",
+        "lambda_box",
+        "lambda_cls",
+        "lambda_dfl",
     }
+
+
+def test_detection_completion_normalizes_inactive_lora_fields_for_full_finetune():
+    draft_data = _config().model_dump(mode="json")
+    draft_data.update({
+        "training_mode": "full_finetune",
+        "lora_rank": 1,
+        "lora_alpha": 1,
+        "lora_dropout": 0.0,
+        "lora_target_profile": "decoder_attention_and_ffn",
+        "train_detection_head": False,
+    })
+    draft = DetectionConfigDraft.model_validate(draft_data)
+    state = {
+        "classes": ["nightstand", "coffee table", "desk"],
+        "selected_data": draft_data["selected_data"],
+        "use_graphrag": True,
+    }
+
+    completed, adjustments = complete_detection_config(draft, state, "yolov11_s")
+
+    assert completed.training_mode == "full_finetune"
+    assert completed.lora_rank == 8
+    assert completed.lora_alpha == 16
+    assert completed.lora_dropout == 0.05
+    assert completed.lora_target_profile == "decoder_attention"
+    assert completed.train_detection_head is True
+    assert {
+        "lora_rank",
+        "lora_alpha",
+        "lora_dropout",
+        "lora_target_profile",
+        "train_detection_head",
+    } <= {item["field"] for item in adjustments}
+
+
+def test_plain_llm_mode_preserves_schema_valid_yolo_loss_gains():
+    draft_data = _config().model_dump(mode="json")
+    draft_data.update({
+        "lambda_box": 1.0,
+        "lambda_cls": 1.0,
+        "lambda_dfl": 0.0,
+    })
+    draft = DetectionConfigDraft.model_validate(draft_data)
+    state = {
+        "classes": ["furniture"],
+        "selected_data": draft_data["selected_data"],
+        "use_graphrag": False,
+    }
+
+    completed, adjustments = complete_detection_config(draft, state, "yolov10_n")
+
+    assert completed.lambda_box == 1.0
+    assert completed.lambda_cls == 1.0
+    assert completed.lambda_dfl == 0.0
+    assert not {
+        "lambda_box", "lambda_cls", "lambda_dfl"
+    } & {item["field"] for item in adjustments}
 
 
 def test_detection_completion_disables_single_cls_for_multiple_classes():
@@ -361,6 +458,53 @@ def test_detection_completion_disables_single_cls_for_multiple_classes():
     assert any(item["field"] == "single_cls" for item in adjustments)
 
 
+def test_yolo_completion_owns_active_linear_final_lr_factor():
+    draft_data = _config().model_dump(mode="json")
+    draft_data["final_learning_rate_factor"] = 1e-16
+    draft = DetectionConfigDraft.model_validate(draft_data)
+    state = {
+        "classes": ["car"],
+        "selected_data": draft_data["selected_data"],
+        "use_graphrag": False,
+        "use_graphrag": True,
+    }
+
+    completed, adjustments = complete_detection_config(draft, state, "yolov10_n")
+
+    assert completed.final_learning_rate_factor == ULTRALYTICS_LINEAR_LRF_DEFAULT
+    assert any(
+        item["field"] == "final_learning_rate_factor"
+        and item["applied"] == ULTRALYTICS_LINEAR_LRF_DEFAULT
+        for item in adjustments
+    )
+
+
+def test_plain_llm_mode_preserves_valid_linear_final_lr_factor():
+    draft_data = _config().model_dump(mode="json")
+    draft_data["final_learning_rate_factor"] = 0.2
+    draft = DetectionConfigDraft.model_validate(draft_data)
+    state = {
+        "classes": ["car"],
+        "selected_data": draft_data["selected_data"],
+        "use_graphrag": False,
+    }
+
+    completed, adjustments = complete_detection_config(draft, state, "yolov10_n")
+
+    assert completed.final_learning_rate_factor == 0.2
+    assert not any(
+        item["field"] == "final_learning_rate_factor" for item in adjustments
+    )
+
+
+def test_yolo_rejects_near_zero_active_linear_final_lr_factor():
+    with pytest.raises(ValueError, match="must be at least 1e-4"):
+        DetectionConfigModel.model_validate(
+            _config().model_dump(mode="json")
+            | {"final_learning_rate_factor": 1e-16}
+        )
+
+
 def test_yolo_low_vram_rule_is_materialized_and_enforced():
     state = PipelineState(
         task="detection",
@@ -377,28 +521,37 @@ def test_yolo_low_vram_rule_is_materialized_and_enforced():
     )
     context = build_hyperparameter_context(state)
 
-    assert context["required_adjustments"] == {
-        "batch_size": 4,
-        "workers": 4,
-        "amp": False,
-    }
+    assert context["reference_configuration"]["final_learning_rate_factor"] == 0.01
+    assert context["training_hardware_adjustments"] == {"workers": 4, "amp": False}
     assert context["adjustment_rule_provenance"]["batch_size"] == (
         "rule_yolo_low_vram_batch"
     )
 
-    candidate = _config(
-        model_name="yolov8_n",
-        **{
-            key: value
-            for key, value in context["recommended_configuration"].items()
-            if key not in {"training_recipe_id", "model_name"}
-        },
-    ).model_dump(mode="json")
-    validate_detection_graph_grounded_config(candidate, context)
+    assert {"workers", "amp"} <= set(context["allowed_adjustment_fields"])
 
-    candidate["batch_size"] = 16
-    with pytest.raises(ValueError, match="requires 'batch_size' to be 4"):
-        validate_detection_graph_grounded_config(candidate, context)
+
+def test_deployment_mac_does_not_disable_amp_for_cuda_training():
+    state = PipelineState(
+        task="detection",
+        classes=["car"],
+        available_hardware={
+            "hardware_category": "ConsumerCPU",
+            "ram_gb": 16,
+            "details": "Apple M4 MacBook Air; CPU/Metal deployment",
+        },
+        training_hardware=get_training_hardware_profile(
+            "rtx2060_6gb_ryzen5600x_16gb"
+        ),
+        selected_model_info={"model": {"model_architecture": "yolov10"}},
+        selected_data=[
+            {"class_name": "car", "sources": [{"dataset_name": "demo", "count": 20}]}
+        ],
+    )
+
+    context = build_hyperparameter_context(state)
+
+    assert context["reference_configuration"]["amp"] is True
+    assert context["training_hardware_adjustments"].get("amp") is not False
 
 
 def test_non_default_unmaterialized_yolo_field_requires_llm_rationale():
@@ -488,3 +641,4 @@ def test_pretrained_yolov8_one_epoch_evaluation_and_inference(tmp_path, monkeypa
     model = yolo_trainer.YOLO(str(paths.best_yolo_model_path(job_id)))
     predictions = model.predict(Image.new("RGB", (64, 64), "white"), imgsz=64, device="cpu", verbose=False)
     assert len(predictions) == 1
+

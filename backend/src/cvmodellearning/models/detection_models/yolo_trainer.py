@@ -1,4 +1,5 @@
 from pathlib import Path
+import platform
 import torch
 from ultralytics import YOLO
 from typing import List, Literal, Optional, Dict, Any, Union, Mapping
@@ -7,6 +8,7 @@ import json
 import shutil
 from cvmodellearning.download.image_cache import link_or_copy
 from cvmodellearning.jobs.run_control import PipelineCancelled, cancellation_requested, raise_if_cancelled
+from cvmodellearning.evaluation.detection_result import collect_ultralytics_metrics
 from cvmodellearning.training.hardware import detect_training_backend
 
 # --- Import all path functions from your paths.py ---
@@ -59,10 +61,49 @@ MODEL_BASE_MAP = {
 }
 
 MPS_CPU_FALLBACK_VERSIONS = {"yolo_v11", "yolo_v12"}
+YOLO_MAX_STRIDE = 32
 
 type YoloVersionLiteral = Literal['yolo_v8', 'yolo_v10', 'yolo_v11', 'yolo_v12']
 type YoloSizeLiteral = Literal['n', 's', 'm', 'l', 'x']
 type OptimizerLiteral = Literal['auto', 'SGD', 'AdamW', 'RMSProp']
+
+
+def effective_yolo_worker_count(configured_workers: int) -> int:
+    """Avoid memory-heavy PyTorch dataloader subprocesses on Windows.
+
+    Windows uses the spawn multiprocessing method, so every Ultralytics worker
+    starts a fresh interpreter and imports PyTorch/CUDA. Ultralytics may also
+    rebuild the loader when close_mosaic takes effect. On memory-constrained
+    workstations that combination can exhaust the Windows commit limit and
+    fail while loading a CUDA DLL (WinError 1455).
+    """
+    if configured_workers < 0:
+        raise ValueError("workers must be greater than or equal to zero.")
+    if platform.system() == "Windows" and configured_workers:
+        print(
+            f"Windows detected: reducing dataloader workers from {configured_workers} "
+            "to 0 to prevent PyTorch worker-spawn commit-memory failures."
+        )
+        return 0
+    return configured_workers
+
+
+def effective_yolo_multi_scale(configured_multi_scale: float, image_size: int) -> float:
+    """Keep Ultralytics multi-scale sampling from producing a zero-sized image."""
+    if configured_multi_scale <= 0.0:
+        return 0.0
+    if image_size <= YOLO_MAX_STRIDE:
+        return 0.0
+
+    # Ultralytics floors its randomly sampled side length to a stride multiple.
+    # A lower bound below one stride can therefore become zero in interpolate().
+    maximum_safe = 1.0 - (YOLO_MAX_STRIDE / image_size)
+    if configured_multi_scale > maximum_safe:
+        print(
+            f"Warning: clamping YOLO multi_scale from {configured_multi_scale} to "
+            f"{maximum_safe} so the sampled image size stays at least {YOLO_MAX_STRIDE}px."
+        )
+    return min(configured_multi_scale, maximum_safe)
 
 def ensure_model_exists(model_name: str) -> str:
     """
@@ -137,6 +178,7 @@ def _run_yolo_training(
     amp: bool,
     seed: int,
     freeze: Optional[int] = None, 
+    benchmark_max_batches: Optional[int] = None,
 ):
     
     ULTRALYTICS_PROJECT_ROOT = str(run_dir(job_id)) 
@@ -172,6 +214,16 @@ def _run_yolo_training(
             if cancellation_requested(job_id):
                 trainer.stop = True
         model.add_callback('on_train_epoch_end', on_epoch_end)
+        if benchmark_max_batches is not None:
+            completed_batches = 0
+
+            def stop_after_smoke_batches(trainer):
+                nonlocal completed_batches
+                completed_batches += 1
+                if completed_batches >= benchmark_max_batches:
+                    trainer.stop = True
+
+            model.add_callback('on_train_batch_end', stop_after_smoke_batches)
         
         model.train(
             data=data_yaml_path,
@@ -473,12 +525,16 @@ def train_yolo_from_config(config: Mapping[str, Any], job_id: str) -> str:
         else float(flat.get("momentum", 0.9))
     )
 
+    image_size = int(flat.get("input_size", 640))
     training_args = dict(
         model_version=model_version,
         model_size=model_size,
-        epochs=int(flat["num_epochs"]),
+        epochs=min(
+            int(flat["num_epochs"]),
+            int(flat.get("_benchmark_max_epochs", flat["num_epochs"])),
+        ),
         batch=int(flat.get("batch_size", 16)),
-        imgsz=int(flat.get("input_size", 640)),
+        imgsz=image_size,
         optimizer=optimizer_map[optimizer_name],  # type: ignore[arg-type]
         lr0=float(flat.get("learning_rate", 0.01)),
         momentum=momentum,
@@ -504,11 +560,14 @@ def train_yolo_from_config(config: Mapping[str, Any], job_id: str) -> str:
         close_mosaic=int(flat.get("close_mosaic", 10)),
         single_cls=bool(flat.get("single_cls", False)),
         rect=bool(flat.get("rect", False)),
-        multi_scale=float(flat.get("multi_scale", 0.0)),
+        multi_scale=effective_yolo_multi_scale(
+            float(flat.get("multi_scale", 0.0)), image_size
+        ),
         freeze=flat.get("freeze"),
-        workers=int(flat.get("workers", 8)),
+        workers=effective_yolo_worker_count(int(flat.get("workers", 8))),
         amp=bool(flat.get("amp", True)),
         seed=int(flat.get("seed", 0)),
+        benchmark_max_batches=flat.get("_benchmark_max_batches"),
     )
     audit_file_path = tool_call_args_path(job_id)
     audit_file_path.write_text(
@@ -526,13 +585,15 @@ def evaluate_yolo_model(
     batch_size: int,
     image_size: int,
     job_id: str,
-) -> Dict[str, Union[float, str]]:
+    model_path: str | Path | None = None,
+    evaluation_name: str = "test_evaluation",
+) -> Dict[str, Any]:
     """
     Loads the best trained YOLO model and runs evaluation.
     """
     print(f"--- Starting Final Evaluation for Job ID: {job_id} ---")
     
-    model_path = best_yolo_model_path(job_id)
+    model_path = Path(model_path) if model_path is not None else best_yolo_model_path(job_id)
     data_yaml_path = yolo_data_yaml_path(job_id)
 
     if not Path(model_path).exists():
@@ -546,15 +607,23 @@ def evaluate_yolo_model(
     
     try:
         model = YOLO(model_path)
-
+        data_config = yaml.safe_load(data_yaml_path.read_text(encoding="utf-8")) or {}
+        configured_names = data_config.get("names", {})
+        if isinstance(configured_names, dict):
+            classes = [str(configured_names[key]) for key in sorted(configured_names, key=int)]
+        else:
+            classes = [str(name) for name in configured_names]
+        if classes and getattr(model, "model", None) is not None:
+            model.model.names = {index: name for index, name in enumerate(classes)}
         metrics = model.val(
             data=str(data_yaml_path),
             split='test',  
             batch=batch_size,
             imgsz=image_size,
             project=str(run_dir(job_id)),
-            name="test_evaluation",
+            name=evaluation_name,
             exist_ok=True,
+            workers=effective_yolo_worker_count(8),
         )
         
         mAP50_95 = metrics.box.map
@@ -569,6 +638,7 @@ def evaluate_yolo_model(
             "recall": metrics.box.mr,
             "results_dir": str(Path(metrics.save_dir).resolve()) 
         }
+        results.update(collect_ultralytics_metrics(metrics, job_id, classes, evaluation_name))
         
         print("\n--- ✅ Evaluation Complete ---")
         print(f"mAP@.50:.95 (Overall): {mAP50_95:.4f}")

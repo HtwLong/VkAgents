@@ -11,7 +11,12 @@ from cvmodellearning.models.classification_artifacts import (
     ensure_merged_lora_model,
 )
 from cvmodellearning.models.classification_lora import LORA_CHECKPOINT_FORMAT
-from cvmodellearning.paths import run_dir
+from cvmodellearning.models.detection_models.rtdetr_artifacts import (
+    ensure_merged_rtdetr_lora_model,
+    ensure_rtdetr_lora_adapter_bundle,
+)
+from cvmodellearning.paths import hpo_config_path, run_dir
+from cvmodellearning.schemas.hpo_runtime import training_compatible_hpo_config
 
 router = APIRouter(
     prefix="/artifacts",
@@ -63,6 +68,18 @@ def _torchvision_checkpoint(job_id: str) -> tuple[Path, dict] | None:
     return path, torch.load(path, map_location="cpu", mmap=True)
 
 
+def _detection_lora_config(job_id: str) -> dict | None:
+    path = hpo_config_path(job_id)
+    if not path.exists():
+        return None
+    import json
+    document = json.loads(path.read_text(encoding="utf-8"))
+    config = training_compatible_hpo_config(document.get("hyperparameter_candidate") or document)
+    if config.get("model_name") == "rtdetr_hgnetv2_l" and config.get("training_mode") == "lora":
+        return config
+    return None
+
+
 @router.get("/{job_id}/manifest")
 def artifact_manifest(job_id: str):
     """Describe downloadable artifacts without making the frontend infer their type."""
@@ -71,16 +88,35 @@ def artifact_manifest(job_id: str):
 
     try:
         _safe_artifact(job_id, "artifacts/best_model.pt")
-        artifacts.append(_descriptor(
-            job_id,
-            "model",
-            "full_model",
-            "Trained model",
-            "best_model.pt",
-            "model",
-            standalone=True,
-            description="Standalone trained model.",
-        ))
+        detection_lora = _detection_lora_config(job_id)
+        if detection_lora is not None:
+            training_mode = "lora"
+            bundle = ensure_rtdetr_lora_adapter_bundle(job_id)
+            artifacts.extend([
+                _descriptor(
+                    job_id, "lora_adapter", "lora_adapter_bundle", "LoRA adapter bundle",
+                    bundle.name, "lora-adapter", standalone=False,
+                    required_base_model="rtdetr-l.pt",
+                    description="RT-DETR LoRA matrices and trained detection heads; requires rtdetr-l.pt.",
+                ),
+                _descriptor(
+                    job_id, "merged_model", "merged_model", "Merged standalone model",
+                    "best_merged_model.pt", "merged-model", standalone=True,
+                    generated_on_download=True,
+                    description="Portable RT-DETR model with LoRA folded into ordinary Linear weights.",
+                ),
+            ])
+        else:
+            artifacts.append(_descriptor(
+                job_id,
+                "model",
+                "full_model",
+                "Trained model",
+                "best_model.pt",
+                "model",
+                standalone=True,
+                description="Standalone trained model.",
+            ))
     except HTTPException as exc:
         if exc.status_code != 404:
             raise
@@ -180,6 +216,9 @@ def artifact_model(job_id: str):
     # 1. Try finding YOLO model (.pt)
     try:
         p = _safe_artifact(job_id, "artifacts/best_model.pt")
+        if _detection_lora_config(job_id) is not None:
+            p = ensure_merged_rtdetr_lora_model(job_id)
+            return FileResponse(p, media_type="application/octet-stream", filename=p.name)
         return FileResponse(p, media_type="application/octet-stream", filename="best_model.pt")
     except HTTPException as exc:
         if exc.status_code != 404:
@@ -209,8 +248,12 @@ def artifact_model(job_id: str):
 @router.get("/{job_id}/lora-adapter", response_class=FileResponse)
 def artifact_lora_adapter(job_id: str):
     try:
-        _safe_artifact(job_id, "artifacts/best_model.pth")
-        bundle = ensure_lora_adapter_bundle(job_id)
+        if _detection_lora_config(job_id) is not None:
+            _safe_artifact(job_id, "artifacts/best_model.pt")
+            bundle = ensure_rtdetr_lora_adapter_bundle(job_id)
+        else:
+            _safe_artifact(job_id, "artifacts/best_model.pth")
+            bundle = ensure_lora_adapter_bundle(job_id)
     except FileNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except ValueError as exc:
@@ -221,8 +264,12 @@ def artifact_lora_adapter(job_id: str):
 @router.get("/{job_id}/merged-model", response_class=FileResponse)
 def artifact_merged_model(job_id: str):
     try:
-        _safe_artifact(job_id, "artifacts/best_model.pth")
-        merged = ensure_merged_lora_model(job_id)
+        if _detection_lora_config(job_id) is not None:
+            _safe_artifact(job_id, "artifacts/best_model.pt")
+            merged = ensure_merged_rtdetr_lora_model(job_id)
+        else:
+            _safe_artifact(job_id, "artifacts/best_model.pth")
+            merged = ensure_merged_lora_model(job_id)
     except FileNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except ValueError as exc:
@@ -247,6 +294,15 @@ async def artifact_summary(job_id: str):
 async def artifact_data_provenance(job_id: str):
     p = _safe_artifact(job_id, "artifacts/data_provenance.json")
     return FileResponse(p, media_type="application/json", filename="data_provenance.json")
+
+
+@router.get("/{job_id}/evaluation/{evaluation_name}/{filename}", response_class=FileResponse)
+def artifact_evaluation_visualization(job_id: str, evaluation_name: str, filename: str):
+    """Serve a generated evaluation image while keeping access inside the run."""
+    if Path(filename).suffix.lower() not in {".png", ".jpg", ".jpeg", ".webp"}:
+        raise HTTPException(status_code=400, detail="Unsupported visualization type")
+    p = _safe_artifact(job_id, f"artifacts/evaluation/{evaluation_name}/{filename}")
+    return FileResponse(p, filename=p.name, headers={"Cache-Control": "no-store"})
 
 @router.get("/{job_id}/planning/interpretation", response_class=FileResponse)
 async def artifact_planning_interpretation(job_id: str):

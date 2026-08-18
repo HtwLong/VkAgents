@@ -38,6 +38,7 @@ from cvmodellearning.paths import (
 )
 from cvmodellearning.schemas.hpo_runtime import training_compatible_hpo_config
 from cvmodellearning.jobs.run_control import raise_if_cancelled
+from cvmodellearning.evaluation.detection_result import dataset_statistics
 
 
 TVModel = Literal[
@@ -338,17 +339,42 @@ def evaluate_coco_metrics(
                         })
 
     if not results:
-        return {"coco/bbox_mAP": 0.0, "coco/bbox_mAP_50": 0.0, "coco/bbox_mAP_75": 0.0}
+        return {"coco/bbox_mAP": 0.0, "coco/bbox_mAP_50": 0.0, "coco/bbox_mAP_75": 0.0,
+                "per_class": [], "size_metrics": {}}
 
     coco_eval = COCOeval(coco_gt, coco_gt.loadRes(results), "bbox")
     coco_eval.evaluate()
     coco_eval.accumulate()
     coco_eval.summarize()
-    return {
+    summary: Dict[str, Any] = {
         "coco/bbox_mAP": np.float64(coco_eval.stats[0]).item(),
         "coco/bbox_mAP_50": np.float64(coco_eval.stats[1]).item(),
         "coco/bbox_mAP_75": np.float64(coco_eval.stats[2]).item(),
+        "size_metrics": {
+            "ap_small": float(coco_eval.stats[3]),
+            "ap_medium": float(coco_eval.stats[4]),
+            "ap_large": float(coco_eval.stats[5]),
+            "ar_small": float(coco_eval.stats[9]),
+            "ar_medium": float(coco_eval.stats[10]),
+            "ar_large": float(coco_eval.stats[11]),
+        },
     }
+    category_to_label = {category: label for label, category in label_to_category.items()}
+    categories = {int(row["id"]): str(row["name"]) for row in coco_gt.dataset.get("categories", [])}
+    per_class = []
+    for category_id in coco_eval.params.catIds:
+        precision = coco_eval.eval["precision"][:, :, coco_eval.params.catIds.index(category_id), 0, -1]
+        valid = precision[precision > -1]
+        ap = float(valid.mean()) if valid.size else 0.0
+        ap50_values = precision[0]
+        ap50_valid = ap50_values[ap50_values > -1]
+        per_class.append({
+            "class_name": categories.get(category_id, str(category_to_label.get(category_id, category_id))),
+            "ap": ap,
+            "ap50": float(ap50_valid.mean()) if ap50_valid.size else 0.0,
+        })
+    summary["per_class"] = per_class
+    return summary
 
 
 def _choose_device() -> torch.device:
@@ -445,10 +471,15 @@ def flexible_torchvision_training(config: Mapping[str, Any], job_id: str) -> Non
     log_path = training_log_path(job_id)
 
     with log_path.open("w", encoding="utf-8") as log_file:
-        for epoch in range(int(config["num_epochs"])):
+        configured_epochs = int(config["num_epochs"])
+        max_epochs = int(config.get("_benchmark_max_epochs", configured_epochs))
+        run_epochs = min(configured_epochs, max_epochs)
+        max_batches = config.get("_benchmark_max_batches")
+        for epoch in range(run_epochs):
             raise_if_cancelled(job_id)
             model.train()
             total_loss = 0.0
+            completed_batches = 0
             for images, targets in train_loader:
                 raise_if_cancelled(job_id)
                 images = [image.to(device) for image in images]
@@ -460,14 +491,17 @@ def flexible_torchvision_training(config: Mapping[str, Any], job_id: str) -> Non
                 scaler.step(optimizer)
                 scaler.update()
                 total_loss += float(losses.detach())
+                completed_batches += 1
+                if max_batches is not None and completed_batches >= int(max_batches):
+                    break
             if scheduler is not None:
                 scheduler.step()
 
             metrics = evaluate_coco_metrics(model, val_loader, coco_gt, device, label_to_category)
             current_metric = metrics[monitor_metric]
-            average_loss = total_loss / len(train_loader)
+            average_loss = total_loss / completed_batches
             message = (
-                f"Epoch {epoch + 1}/{config['num_epochs']} | Loss: {average_loss:.4f} | "
+                f"Epoch {epoch + 1}/{run_epochs} | Loss: {average_loss:.4f} | "
                 f"{monitor_metric}: {current_metric:.4f} | Time: {time.time() - start_time:.2f}s"
             )
             print(message)
@@ -475,7 +509,7 @@ def flexible_torchvision_training(config: Mapping[str, Any], job_id: str) -> Non
             (run_dir(job_id) / "progress.json").write_text(json.dumps({
                 "status": "running",
                 "current_epoch": epoch + 1,
-                "total_epochs": int(config["num_epochs"]),
+                "total_epochs": run_epochs,
                 "train_loss": average_loss,
                 "val_mAP": metrics["coco/bbox_mAP"],
                 "val_mAP50": metrics["coco/bbox_mAP_50"],
@@ -590,6 +624,16 @@ def evaluate_torchvision_model(
     metrics = evaluate_coco_metrics(
         model, test_loader, test_dataset.coco, device, test_dataset.label_to_category
     )
+    classes = [
+        name for _, name in sorted(
+            ((int(row["id"]), str(row["name"])) for row in test_dataset.coco.dataset.get("categories", []))
+        )
+    ]
+    statistics = dataset_statistics(job_id, classes)
+    metrics["dataset_statistics"] = statistics
+    support = {row["class_name"]: row["instances"] for row in statistics.get("per_class", [])}
+    for row in metrics.get("per_class", []):
+        row["support"] = support.get(row["class_name"], 0)
     metrics_json_path(job_id).write_text(json.dumps(metrics, indent=2), encoding="utf-8")
     return metrics
 

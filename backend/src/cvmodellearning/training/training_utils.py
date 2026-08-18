@@ -217,6 +217,7 @@ def train_one_epoch(
     frozen_backbone=None,
     trainable_head=None,
     cancel_check: Callable[[], None] | None = None,
+    max_batches: int | None = None,
 ):
     model.train()
     if frozen_backbone is not None:
@@ -277,6 +278,8 @@ def train_one_epoch(
         preds = outputs.argmax(dim=1)
         running_correct += (preds == hard_targets).sum().item()
         total += images.size(0)
+        if max_batches is not None and batch_index + 1 >= max_batches:
+            break
 
     epoch_loss = running_loss / total if total > 0 else 0.0
     epoch_acc = running_correct / total if total > 0 else 0.0

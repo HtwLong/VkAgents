@@ -6,7 +6,7 @@ from typing import Any, Dict, Union
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException, UploadFile, File
 from pydantic import BaseModel, ValidationError
-from PIL import Image
+from PIL import Image, ImageOps
 
 # Import shared dependencies
 from cvmodellearning.schemas.classification_hpo import ClassificationConfigModel
@@ -15,15 +15,18 @@ from cvmodellearning.schemas.detection_hpo import (
     expand_detection_config_for_validation,
 )
 from cvmodellearning.schemas.hpo_runtime import training_compatible_hpo_config
+from cvmodellearning.training.resource_guard import validate_training_resource_config
 from cvmodellearning.graphrag.hyperparameter_context import validate_executable_recipe_config
 from cvmodellearning.pipelines.classification_pipe import ClassificationPipeline
 from cvmodellearning.pipelines.detection_pipe import DetectionPipeline  
+from cvmodellearning.download.assignment_manifest import DatasetContentConflict
 from cvmodellearning.models.model_manager import MODEL_CACHE_MANAGER
 from cvmodellearning.jobs.job_manager import JOB_MANAGER
 from cvmodellearning.jobs.run_control import (
     PipelineCancelled,
     clear_cancellation,
     finish_or_stop,
+    mark_failed,
     mark_stopped,
     raise_if_cancelled,
     write_run_state,
@@ -117,6 +120,7 @@ def _validate_config(
         validated_model = ConfigModel.model_validate(normalized_params)
         validated_full = validated_model.model_dump()
         validate_executable_recipe_config(validated_full)
+        validate_training_resource_config(validated_full)
         validated = training_compatible_hpo_config(validated_model.runtime_config())
         saved_path = hpo_config_path(job_id) if job_id else None
         if require_saved_config and (saved_path is None or not saved_path.exists()):
@@ -149,6 +153,7 @@ def _validate_config(
                 saved_model = ConfigModel.model_validate(saved_normalized)
                 saved_full = saved_model.model_dump()
                 validate_executable_recipe_config(saved_full)
+                validate_training_resource_config(saved_full)
                 saved_validated = training_compatible_hpo_config(saved_model.runtime_config())
             except (ValidationError, ValueError) as exc:
                 raise HTTPException(
@@ -203,6 +208,82 @@ class LoadModelRequest(BaseModel):
     job_id: str
 
 
+def _build_execution_readiness_report(
+    pipeline: PipelineType,
+    config: Dict[str, Any],
+    job_id: str,
+) -> dict[str, Any]:
+    """Run the final deterministic dataset/config gate used before training."""
+
+    preparation = pipeline._require_prepared_data(config, job_id)
+    counts = preparation.get("counts") or {}
+    errors: list[dict[str, Any]] = []
+    for split in ("train", "validation", "test"):
+        if not isinstance(counts.get(split), int) or counts[split] <= 0:
+            errors.append({
+                "code": "EMPTY_OR_INVALID_SPLIT",
+                "split": split,
+                "message": "Prepared train, validation, and test splits must be non-empty.",
+            })
+    isolation = preparation.get("content_isolation") or {}
+    if isolation.get("cross_split_duplicates", 0) != 0:
+        errors.append({
+            "code": "CROSS_SPLIT_DUPLICATES",
+            "message": "Identical image content occurs across prepared splits.",
+        })
+    if preparation.get("invalid_box_count", 0) != 0:
+        errors.append({
+            "code": "INVALID_DETECTION_BOXES",
+            "message": "Prepared detection annotations contain invalid boxes.",
+        })
+    memory_estimate = validate_training_resource_config(config)
+    warnings = []
+    if memory_estimate.assessment in {"borderline", "unverified"}:
+        warnings.append({
+            "code": (
+                "TRAINING_MEMORY_BORDERLINE"
+                if memory_estimate.assessment == "borderline"
+                else "TRAINING_MEMORY_UNVERIFIED"
+            ),
+            "severity": "warning",
+            "message": memory_estimate.reason or (
+                "The conservative analytical memory range overlaps the configured budget."
+            ),
+            "estimate": memory_estimate.as_dict(),
+        })
+    report = {
+        "ready": not errors,
+        "errors": errors,
+        "warnings": warnings,
+        "checks": {
+            "saved_config_valid": True,
+            "prepared_dataset_matches_plan": True,
+            "splits_non_empty": not any(item["code"] == "EMPTY_OR_INVALID_SPLIT" for item in errors),
+            "content_isolation_valid": not any(item["code"] == "CROSS_SPLIT_DUPLICATES" for item in errors),
+            "annotations_valid": not any(item["code"] == "INVALID_DETECTION_BOXES" for item in errors),
+            "resource_preflight_valid": True,
+            "training_memory_assessment": memory_estimate.assessment,
+        },
+        "training_memory_estimate": memory_estimate.as_dict(),
+        "materialized_dataset": {
+            key: preparation.get(key)
+            for key in (
+                "counts", "class_counts", "class_image_counts", "instance_counts",
+                "object_size_counts", "content_isolation", "invalid_box_count",
+                "assignment_fingerprint", "manifest_sha256",
+            )
+            if key in preparation
+        },
+    }
+    output = run_dir(job_id) / "execution_readiness.json"
+    temporary = output.with_suffix(".json.tmp")
+    temporary.write_text(json.dumps(report, indent=2), encoding="utf-8")
+    temporary.replace(output)
+    if errors:
+        raise ValueError(f"Execution readiness validation failed: {errors}")
+    return report
+
+
 
 # -----------------------------------------------------------------------------
 # Background Task
@@ -232,6 +313,8 @@ async def _bg_train(job_id: str, params: Dict[str, Any]):
         except (FileNotFoundError, ValueError, json.JSONDecodeError):
             await asyncio.to_thread(pipeline.download_data_step, cfg, job_id)
             await asyncio.to_thread(pipeline.prepare_data_step, cfg, job_id)
+
+        _build_execution_readiness_report(pipeline, cfg, job_id)
         
         
         if isinstance(pipeline, ClassificationPipeline):
@@ -273,6 +356,7 @@ async def _bg_train(job_id: str, params: Dict[str, Any]):
             )
         except OSError:
             pass
+        mark_failed(job_id, "train-model", str(e))
         JOB_MANAGER.update_job_status(job_id, "error", error=error_detail)
 
 # -----------------------------------------------------------------------------
@@ -367,6 +451,18 @@ async def step_prepare(req: StepRequest):
         out = await asyncio.to_thread(execute_prepare)
     except PipelineCancelled:
         return {"status": "stopped", "job_id": req.job_id}
+    except DatasetContentConflict as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "dataset_content_conflict",
+                "message": str(exc),
+                "conflicts": exc.conflicts[:20],
+                "recommended_action": (
+                    "Run the download step again so duplicate images can be replaced."
+                ),
+            },
+        ) from exc
     return {"status": "ok", "job_id": req.job_id, "output": out}
 
 @router.post("/evaluate")
@@ -405,7 +501,8 @@ async def evaluation_report(job_id: str):
     if not path.exists():
         raise HTTPException(status_code=404, detail="Evaluation report not found; run /evaluate first")
     try:
-        return json.loads(path.read_text(encoding="utf-8"))
+        from cvmodellearning.evaluation.result_report import normalize_report
+        return normalize_report(json.loads(path.read_text(encoding="utf-8")))
     except json.JSONDecodeError as exc:
         raise HTTPException(status_code=500, detail="Evaluation report is invalid") from exc
 
@@ -519,7 +616,10 @@ async def infer_image(
         raise HTTPException(status_code=400, detail=f"Model for job {job_id} not loaded. Call /load-model first.")
     try:
         img_bytes = await file.read()
-        image = Image.open(BytesIO(img_bytes)).convert("RGB")
+        # Browsers display images according to their EXIF orientation. Normalize
+        # the pixels before inference so model coordinates use that same visual
+        # orientation (and the corresponding width and height).
+        image = ImageOps.exif_transpose(Image.open(BytesIO(img_bytes))).convert("RGB")
         result = pipeline.infer_step(job_id, image)
         if result.get("status") == "inference_failed":
             raise HTTPException(status_code=500, detail=result.get("error", "Inference failed."))
