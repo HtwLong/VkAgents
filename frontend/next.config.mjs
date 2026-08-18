@@ -3,7 +3,7 @@ const nextConfig = {
   output: "standalone",
 
   experimental: {
-    proxyTimeout: 1600_000,
+    proxyTimeout: 16000_000,
   },
 
   typescript: {
