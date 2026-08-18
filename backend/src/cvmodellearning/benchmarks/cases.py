@@ -32,7 +32,7 @@ CASES = (
     ),
     BenchmarkCase(
         "traffic-lights-signs-slow",
-        "I need an object detection model to identify traffic lights and traffic signs in dense urban street scenes. The objects may be small and far away in the image. The model will run locally on a server with a RTX2060 GPU with 6GB of memory. It should aim for a mAP@0.5:0.95 of around 0.35 or higher. Inference time is not important. Memory usage during inference should preferably remain below 6 GB.",
+        "I need an object detection model to identify traffic lights and traffic signs in dense urban street scenes. The objects may be small and far away in the image. The model will run inference locally on a server with a RTX2060 GPU with 6GB of memory. It should aim for a mAP@0.5:0.95 of around 0.35 or higher. Inference time is not important. Memory usage during inference should preferably remain below 6 GB.",
         "detection",
         frozenset({"traffic light", "traffic sign"}),
     ),
