@@ -1,0 +1,36 @@
+name: vkagents
+
+services:
+  backend:
+    build:
+      context: ./backend
+    image: vkagents-backend:latest
+    restart: unless-stopped
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY:?Set OPENAI_API_KEY in the root .env file}
+      PLANNING_LLM_MODEL: ${PLANNING_LLM_MODEL:-gpt-5-nano}
+      ASSESSMENT_LLM_MODEL: ${ASSESSMENT_LLM_MODEL:-gpt-5-nano}
+      NVIDIA_VISIBLE_DEVICES: ${NVIDIA_VISIBLE_DEVICES:-all}
+      VISIONKG_IMAGE_CACHE_DIR: /app/dataset_cache/visionkg
+    gpus: all
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    volumes:
+      - backend-runs:/app/runs
+      - backend-dataset-cache:/app/dataset_cache
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        BACKEND_INTERNAL_URL: http://backend:8000
+    image: vkagents-frontend:latest
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+
+volumes:
+  backend-runs:
+  backend-dataset-cache:

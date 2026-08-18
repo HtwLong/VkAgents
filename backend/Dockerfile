@@ -24,6 +24,9 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 ENV PATH="/app/.venv/bin:$PATH"
 
-# Ensure imports work and specify your entry point
 ENV PYTHONPATH="/app"
-CMD ["python", "src/run.py"]
+
+EXPOSE 8000
+
+# Run without the development auto-reloader in the container.
+CMD ["uvicorn", "api:app", "--app-dir", "src", "--host", "0.0.0.0", "--port", "8000"]
