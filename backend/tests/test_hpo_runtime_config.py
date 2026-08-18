@@ -5,7 +5,10 @@ from cvmodellearning.agents.hyperparameter_agents import (
     selected_detection_model_id,
 )
 from cvmodellearning.schemas.classification_hpo import ClassificationConfigModel
-from cvmodellearning.schemas.detection_hpo import DetectionConfigModel
+from cvmodellearning.schemas.detection_hpo import (
+    DetectionConfigModel,
+    normalize_detection_draft_inactive_fields,
+)
 from cvmodellearning.schemas.hpo_runtime import training_compatible_hpo_config
 from cvmodellearning.schemas.vqa_hpo import VQAConfigModel
 
@@ -123,13 +126,45 @@ def detection_config(**overrides):
     return DetectionConfigModel(**data)
 
 
-@pytest.mark.parametrize(
-    ("use_graphrag", "use_policy_registry"),
-    [(True, True), (True, False), (False, True), (False, False)],
-)
+def test_torchvision_draft_normalization_clears_yolo_only_augmentations():
+    normalized = normalize_detection_draft_inactive_fields({
+        "model_name": "faster_rcnn_r50",
+        "mosaic": 0.5,
+        "mixup": 0.2,
+        "cutmix": 0.1,
+        "copy_paste": 0.1,
+        "degrees": 5.0,
+        "translate": 0.1,
+        "scale": 0.5,
+        "fliplr": 0.5,
+        "hsv_h": 0.1,
+        "hsv_s": 0.2,
+        "hsv_v": 0.3,
+        "close_mosaic": 5,
+        "horizontal_flip_probability": 0.25,
+    })
+
+    for field in (
+        "mosaic", "mixup", "cutmix", "copy_paste", "degrees", "translate",
+        "scale", "fliplr", "hsv_h", "hsv_s", "hsv_v", "close_mosaic",
+    ):
+        assert normalized[field] == 0
+    assert normalized["horizontal_flip_probability"] == 0.25
+
+
+def test_classification_rejects_ineffective_early_stopping():
+    with pytest.raises(ValueError, match="patience must be lower"):
+        classification_config(num_epochs=10, patience=10)
+
+
+def test_detection_rejects_explicit_close_mosaic_outside_training():
+    with pytest.raises(ValueError, match="close_mosaic must be 0 or lower"):
+        detection_config(num_epochs=10, close_mosaic=10)
+
+
+@pytest.mark.parametrize("use_graphrag", (True, False))
 def test_classification_authoritative_fields_are_consistent_in_all_modes(
     use_graphrag,
-    use_policy_registry,
 ):
     recipe_id = "torchvision_resnet50_imagenet_pretrained_custom_finetune"
     proposal = classification_config(
@@ -145,7 +180,6 @@ def test_classification_authoritative_fields_are_consistent_in_all_modes(
             "model": [{"model_architecture": "resnet50"}],
         },
         "use_graphrag": use_graphrag,
-        "use_policy_registry": use_policy_registry,
         "training_hardware": {
             "max_batch_size": 4,
             "workers": 3,
@@ -162,13 +196,9 @@ def test_classification_authoritative_fields_are_consistent_in_all_modes(
     assert normalized.training_recipe_id == (recipe_id if use_graphrag else "")
 
 
-@pytest.mark.parametrize(
-    ("use_graphrag", "use_policy_registry"),
-    [(True, True), (True, False), (False, True), (False, False)],
-)
+@pytest.mark.parametrize("use_graphrag", (True, False))
 def test_detection_authoritative_fields_are_consistent_in_all_modes(
     use_graphrag,
-    use_policy_registry,
 ):
     recipe_id = "ultralytics_yolo_detection_finetune_balanced"
     proposal = detection_config(
@@ -186,7 +216,6 @@ def test_detection_authoritative_fields_are_consistent_in_all_modes(
             "model": [{"model_architecture": "yolov8_n"}],
         },
         "use_graphrag": use_graphrag,
-        "use_policy_registry": use_policy_registry,
         "training_hardware": {
             "max_batch_size": 4,
             "workers": 3,

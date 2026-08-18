@@ -415,6 +415,24 @@ def add_model_inference_memory_estimate_edges(G: nx.MultiDiGraph, dfs: DataFrame
         )
 
 
+def add_model_training_hardware_requirement_edges(G: nx.MultiDiGraph, dfs: DataFrames) -> None:
+    """Link models to configuration-scoped, evidence-backed training requirements."""
+    requirements = dfs.get("model_training_hardware_requirements", pd.DataFrame())
+    if requirements.empty or not _has_columns(requirements, ["id", "model_id"]):
+        return
+
+    for _, requirement in requirements.iterrows():
+        _add_edge_if_nodes_exist(
+            G,
+            _clean(requirement.get("model_id")),
+            _clean(requirement.get("id")),
+            "has_training_hardware_requirement",
+            evidence_id=_first_evidence_id(requirement),
+            confidence=_clean(requirement.get("confidence")),
+            notes="Generated from model_training_hardware_requirements.model_id.",
+        )
+
+
 def add_dataset_edges(G: nx.MultiDiGraph, dfs: DataFrames) -> None:
     """
     Generate edges from datasets.csv.
@@ -612,6 +630,7 @@ def add_generated_edges(G: nx.MultiDiGraph, dfs: DataFrames) -> nx.MultiDiGraph:
     add_training_recipe_parameter_edges(G, dfs)
     add_model_benchmark_result_edges(G, dfs)
     add_model_inference_memory_estimate_edges(G, dfs)
+    add_model_training_hardware_requirement_edges(G, dfs)
     add_evaluation_metric_edges(G, dfs)
     add_adjustment_rule_edges(G, dfs)
     add_dataset_requirement_edges(G, dfs)

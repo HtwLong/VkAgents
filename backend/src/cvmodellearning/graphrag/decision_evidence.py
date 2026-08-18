@@ -182,6 +182,30 @@ def build_model_selection_decision_evidence(
                     },
                 },
             ))
+        training_requirement = candidate.get("model_training_hardware_requirement")
+        if training_requirement:
+            status = training_requirement.get("recommendation_status") or "derived"
+            facts.append(_fact(
+                training_requirement,
+                "training_hardware_requirement",
+                f"Recommended training GPU capacity is "
+                f"{training_requirement.get('recommended_vram_gb')} GB for "
+                f"{training_requirement.get('training_scope')}; lowest observed successful "
+                f"hardware is {training_requirement.get('lowest_observed_success_vram_gb') or 'not reported'} GB.",
+                support_type="direct" if status == "evidence_backed_observed_success" else "derived",
+                evidence_relationship="supports_input",
+                derivation={
+                    "method": status,
+                    "inputs": {
+                        key: training_requirement.get(key)
+                        for key in (
+                            "input_size", "batch_size", "precision",
+                            "lowest_observed_success_vram_gb", "observed_peak_vram_gb",
+                        )
+                        if training_requirement.get(key) not in (None, "")
+                    },
+                },
+            ))
         for benchmark in candidate.get("model_benchmark_results") or []:
             facts.append(_fact(
                 benchmark,
@@ -203,7 +227,7 @@ def build_model_selection_decision_evidence(
         "decision_type": "model_selection",
         "decision": selected_model_info,
         "rationale": rationale,
-        "selection_policy": context.get("deterministic_recommendation"),
+        "selection_policy": None,
         "retrieved_facts": facts,
         "evidence_sources": sources,
         "grounded": bool(facts),
@@ -321,19 +345,6 @@ def build_hyperparameter_decision_evidence(
     evidence = {eid for fact in facts for eid in fact["evidence_ids"]}
     sources = _source_registry(context.get("evidence_sources") or [], evidence)
     provenance = field_provenance or {}
-    policy_context = context.get("hyperparameter_policy_context") or {}
-    policy_fields: dict[str, list[str]] = {}
-    for field_name, details in provenance.items():
-        for policy_id in details.get("applied_policy_ids") or []:
-            policy_fields.setdefault(str(policy_id), []).append(str(field_name))
-    used_policies = [
-        {
-            **policy,
-            "influenced_fields": sorted(policy_fields[policy["id"]]),
-        }
-        for policy in policy_context.get("applicable_policies") or []
-        if policy.get("id") in policy_fields
-    ]
     return {
         "decision_type": "hyperparameter_selection",
         "decision": config,
@@ -341,10 +352,6 @@ def build_hyperparameter_decision_evidence(
         "retrieved_facts": facts,
         "evidence_sources": sources,
         "field_provenance": provenance,
-        "policy_guidance": {
-            "used_policies": used_policies,
-            "profile": policy_context.get("profile") or {},
-        },
         "grounded": bool(facts),
         "evidence_backed": bool(sources),
         "grounding": _grounding_summary(facts),

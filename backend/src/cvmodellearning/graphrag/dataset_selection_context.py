@@ -6,6 +6,9 @@ from typing import Any, Iterable
 
 import networkx as nx
 
+from cvmodellearning.datasets.registry import resolve_dataset_info
+from cvmodellearning.policies.data_selection_policy import matched_domain_tags
+
 from cvmodellearning.graphrag.build_graph import build_graph
 from cvmodellearning.paths import PROJECT_ROOT
 from cvmodellearning.schemas.interpretation_schema import ClassDataSelection, PipelineState
@@ -114,9 +117,15 @@ def build_dataset_selection_context(
     candidates = []
     for dataset_id in eligible_ids:
         dataset = dict(graph.nodes[dataset_id]) if dataset_id in graph else {}
+        local_info = resolve_dataset_info(dataset_id)
+        domain_matches = (
+            matched_domain_tags(local_info.domains, state.application_domain)
+            if local_info is not None
+            else frozenset()
+        )
         candidates.append({
             "dataset_id": dataset_id,
-            "dataset_name": dataset.get("dataset_name", dataset_id),
+            "display_name": dataset.get("dataset_name", dataset_id),
             "description": dataset.get("description", ""),
             "notes": dataset.get("notes", ""),
             "domains": _dataset_domains(
@@ -134,6 +143,17 @@ def build_dataset_selection_context(
                 for item in str(dataset.get("evidence_ids", "")).split("|")
                 if item
             ],
+            "lineage": {
+                "canonical_family": local_info.canonical_family,
+                "derived_from": local_info.derived_from,
+                "synthetic": local_info.synthetic,
+                "paired_sample_ids_available": local_info.paired_sample_ids_available,
+            } if local_info is not None else None,
+            "domain_alignment": {
+                "matched_tags": sorted(domain_matches),
+                "aligned": bool(domain_matches),
+                "role": "primary" if domain_matches else "generalization",
+            },
         })
     evidence_ids = {
         evidence_id
@@ -159,7 +179,8 @@ def build_dataset_selection_context(
         ],
         "instruction": (
             "Use this evidence only to rank and mix locally allowed candidates. "
-            "Class-specific eligibility remains authoritative outside GraphRAG."
+            "Class-specific eligibility and deterministic domain-mix policy remain "
+            "authoritative outside GraphRAG."
         ),
     }
 

@@ -1,6 +1,6 @@
 import math
 from typing import Any, ClassVar, List, Literal, Mapping, Optional, Self
-from pydantic import BaseModel, Field, ConfigDict, model_validator
+from pydantic import AliasChoices, BaseModel, Field, ConfigDict, model_validator
 from cvmodellearning.models.registry import DetectionHpoModelId
 from cvmodellearning.schemas.hpo_runtime import build_runtime_hpo_config
 from cvmodellearning.schemas.dataset_assignment import (
@@ -8,6 +8,30 @@ from cvmodellearning.schemas.dataset_assignment import (
     normalize_dataset_assignments,
 )
 from cvmodellearning.training.resource_guard import MAX_IMAGE_SIDE
+
+ULTRALYTICS_LINEAR_LRF_DEFAULT = 0.01
+MIN_ACTIVE_LINEAR_LRF = 1e-4
+
+
+class DetectionDataPlanConstraints(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    minimum_unique_pool_images: int = Field(
+        0,
+        ge=0,
+        validation_alias=AliasChoices(
+            "minimum_unique_pool_images", "minimum_unique_images"
+        ),
+    )
+    preferred_unique_pool_images: int = Field(
+        0,
+        ge=0,
+        validation_alias=AliasChoices(
+            "preferred_unique_pool_images", "preferred_unique_images"
+        ),
+    )
+    preferred_target_is_strict: bool = False
+    group_isolation_keys: list[str] = Field(default_factory=list)
 
 DETECTION_OPTIMIZER_PARAM_FIELDS = {
     "auto": (),
@@ -17,7 +41,7 @@ DETECTION_OPTIMIZER_PARAM_FIELDS = {
 }
 
 COMMON_DETECTION_RUNTIME_FIELDS = {
-    "task_type", "classes", "selected_data", "train_data_ratio", "val_data_ratio",
+    "task_type", "classes", "selected_data", "data_plan_constraints", "train_data_ratio", "val_data_ratio",
     "test_data_ratio", "num_epochs", "patience", "batch_size", "input_size",
     "track_metric", "model_name", "model_weights", "training_recipe_id", "optimizer",
     "workers", "seed", "amp", "confidence_threshold", "max_detections",
@@ -35,6 +59,8 @@ RTDETR_RUNTIME_FIELDS = {
     "scheduler_name", "final_learning_rate_factor", "warmup_epochs", "warmup_momentum",
     "mosaic", "mixup", "cutmix", "degrees", "translate", "scale", "fliplr",
     "hsv_h", "hsv_s", "hsv_v", "close_mosaic", "single_cls",
+    "training_mode", "lora_rank", "lora_alpha", "lora_dropout",
+    "lora_target_profile", "train_detection_head",
 }
 
 TORCHVISION_RUNTIME_FIELDS = {
@@ -52,6 +78,77 @@ def detection_runtime_family(model_name: str) -> Literal["yolo", "rtdetr", "torc
     if model_name in {"retinanet_r50", "faster_rcnn_r50", "ssd300"}:
         return "torchvision"
     raise ValueError(f"Unsupported detection model: {model_name}")
+
+
+def normalize_detection_draft_inactive_fields(data: Mapping[str, Any]) -> dict[str, Any]:
+    """Normalize shared-schema fields that the selected backend cannot consume."""
+    normalized = dict(data)
+    model_name = str(normalized.get("model_name", ""))
+    try:
+        family = detection_runtime_family(model_name)
+    except ValueError:
+        return normalized
+
+    def replace(values: Mapping[str, Any]) -> None:
+        normalized.update(values)
+
+    if family == "yolo":
+        inactive_values = {
+            "aspect_ratio_range": None,
+            "lr_milestones": [],
+            "lambda_giou": 0.0,
+            "max_size": 1333,
+            "trainable_backbone_layers": 0,
+            "horizontal_flip_probability": 0.0,
+            "augmentation_policy": "basic",
+            "topk_candidates": 400,
+            "positive_fraction": 0.25,
+            "matching_iou_threshold": 0.5,
+        }
+        if normalized.get("scheduler_name", "linear") != "multistep":
+            inactive_values["scheduler_gamma"] = 0.1
+        replace(inactive_values)
+    elif family == "rtdetr":
+        replace({
+            "lr_milestones": [],
+            "scheduler_gamma": 1.0,
+            "trainable_backbone_layers": 0,
+            "horizontal_flip_probability": 0.0,
+            "augmentation_policy": "basic",
+            "topk_candidates": 400,
+            "positive_fraction": 0.25,
+            "matching_iou_threshold": 0.5,
+        })
+    else:
+        replace({
+            "final_learning_rate_factor": 0.01,
+            "warmup_momentum": 0.8,
+            "lambda_giou": 0.0,
+            "single_cls": False,
+            "rect": False,
+            "multi_scale": 0.0,
+            "freeze": None,
+            # These fields belong to the Ultralytics executors. They are
+            # inactive for TorchVision and must not make an otherwise valid
+            # Faster R-CNN, RetinaNet, or SSD proposal fail validation.
+            "mosaic": 0.0,
+            "mixup": 0.0,
+            "cutmix": 0.0,
+            "copy_paste": 0.0,
+            "degrees": 0.0,
+            "translate": 0.0,
+            "scale": 0.0,
+            "fliplr": 0.0,
+            "hsv_h": 0.0,
+            "hsv_s": 0.0,
+            "hsv_v": 0.0,
+            "close_mosaic": 0,
+        })
+
+    optimizer_name = str(normalized.get("optimizer_name", "adamw"))
+    if optimizer_name != "adamw":
+        normalized["beta1"] = 0.9
+    return normalized
 
 
 def active_detection_config_fields(config: Mapping[str, Any]) -> set[str]:
@@ -132,7 +229,6 @@ class LLMFieldRationale(BaseModel):
     model_config = ConfigDict(extra="forbid")
     field: str = Field(..., min_length=1)
     reason: str = Field(..., min_length=1)
-    applied_policy_ids: List[str] = Field(default_factory=list)
 
 
 class DetectionConfigDraft(BaseModel):
@@ -163,7 +259,13 @@ class DetectionConfigDraft(BaseModel):
     @classmethod
     def _normalize_legacy_selected_data(cls, value):
         if isinstance(value, dict) and "selected_data" in value:
-            value = dict(value)
+            # Drafts share one LLM output schema across detector backends, so
+            # inactive backend fields are normalized there. Final executable
+            # configurations remain strict and must expose explicit conflicts.
+            if not cls.enforce_executable_contract:
+                value = normalize_detection_draft_inactive_fields(value)
+            else:
+                value = dict(value)
             value["selected_data"] = [
                 item.model_dump(mode="json")
                 for item in normalize_dataset_assignments(value["selected_data"] or [])
@@ -238,7 +340,32 @@ class DetectionConfigDraft(BaseModel):
     scheduler_name: Literal["none", "linear", "multistep"] = "linear"
     lr_milestones: List[int] = Field(default_factory=lambda: [16, 22])
     scheduler_gamma: float = Field(0.1, gt=0, le=1)
-    final_learning_rate_factor: float = Field(0.01, gt=0, le=1)
+    final_learning_rate_factor: float = Field(
+        ULTRALYTICS_LINEAR_LRF_DEFAULT,
+        gt=0,
+        le=1,
+        description=(
+            "Final/base learning-rate ratio for active Ultralytics linear schedules; "
+            "this is not an inactive sentinel."
+        ),
+    )
+    data_plan_constraints: DetectionDataPlanConstraints = Field(
+        default_factory=DetectionDataPlanConstraints,
+        description=(
+            "Pipeline-owned unique-image and split intent compiled from the LLM data strategy."
+        ),
+    )
+    training_mode: Literal["full_finetune", "lora"] = Field(
+        "full_finetune",
+        description="Use full detector fine-tuning or RT-DETR parameter-efficient LoRA tuning.",
+    )
+    lora_rank: int = Field(8, ge=1, le=64)
+    lora_alpha: int = Field(16, ge=1, le=256)
+    lora_dropout: float = Field(0.05, ge=0.0, lt=1.0)
+    lora_target_profile: Literal[
+        "decoder_attention", "decoder_attention_and_ffn"
+    ] = "decoder_attention"
+    train_detection_head: bool = True
     warmup_epochs: float = Field(3.0, ge=0)
     warmup_momentum: float = Field(0.8, ge=0, lt=1)
     amp: bool = Field(True, description="Use Ultralytics automatic mixed precision when supported.")
@@ -306,6 +433,24 @@ class DetectionConfigDraft(BaseModel):
     )
     llm_field_rationales: List[LLMFieldRationale] = Field(default_factory=list)
 
+    @model_validator(mode="before")
+    @classmethod
+    def _normalize_inactive_scheduler_fields(cls, data):
+        """Keep shared-schema scheduler placeholders valid when unused.
+
+        Detection executors use ``scheduler_gamma`` only for MultiStepLR. LLMs
+        commonly emit zero as an inactive sentinel for linear scheduling, but
+        the shared schema intentionally requires a positive value. Normalize
+        that irrelevant placeholder before field validation while preserving
+        strict validation for an active multistep scheduler.
+        """
+        if isinstance(data, dict) and data.get("scheduler_name", "linear") != "multistep":
+            gamma = data.get("scheduler_gamma", 0.1)
+            if not isinstance(gamma, (int, float)) or isinstance(gamma, bool) or gamma <= 0:
+                data = dict(data)
+                data["scheduler_gamma"] = 0.1
+        return data
+
     @model_validator(mode="after")
     def _validate_combinations(self) -> Self:
         if not self.enforce_executable_contract:
@@ -332,6 +477,11 @@ class DetectionConfigDraft(BaseModel):
                 raise ValueError("YOLO checkpoint selection uses validation mAP fitness.")
             if self.scheduler_name != "linear":
                 raise ValueError("The YOLO executor uses Ultralytics' linear learning-rate schedule.")
+            if self.final_learning_rate_factor < MIN_ACTIVE_LINEAR_LRF:
+                raise ValueError(
+                    "YOLO final_learning_rate_factor must be at least 1e-4 for its active "
+                    "linear learning-rate schedule."
+                )
             if self.optimizer_name == "auto" and (
                 self.learning_rate != 0.01 or self.momentum != 0.9
             ):
@@ -343,8 +493,11 @@ class DetectionConfigDraft(BaseModel):
                 raise ValueError("YOLO loss implementations are fixed to CIoU-based box loss and BCE classification.")
             if self.copy_paste != 0.0:
                 raise ValueError("copy_paste requires segmentation masks and must be 0 for box-only YOLO detection.")
-            if self.close_mosaic >= self.num_epochs:
-                self.close_mosaic = 0
+            if self.close_mosaic >= self.num_epochs and self.close_mosaic != 0:
+                if "close_mosaic" not in self.model_fields_set:
+                    self.close_mosaic = 0
+                else:
+                    raise ValueError("close_mosaic must be 0 or lower than num_epochs.")
 
         if is_retinanet:
             if self.task_type != "detection":
@@ -480,6 +633,11 @@ class DetectionConfigDraft(BaseModel):
                 raise ValueError("RT-DETR-L requires its executable Ultralytics fine-tuning recipe.")
             if self.optimizer_name != "adamw" or self.scheduler_name != "linear":
                 raise ValueError("The executable RT-DETR-L recipe uses AdamW with a linear LR schedule.")
+            if self.final_learning_rate_factor < MIN_ACTIVE_LINEAR_LRF:
+                raise ValueError(
+                    "RT-DETR final_learning_rate_factor must be at least 1e-4 for its active "
+                    "linear learning-rate schedule."
+                )
             if self.loss_box != "l1_giou" or self.loss_cls != "varifocal":
                 raise ValueError("Ultralytics RT-DETR uses L1 plus GIoU box loss and Varifocal classification loss.")
             if (self.lambda_box, self.lambda_giou, self.lambda_cls) != (5.0, 2.0, 1.0):
@@ -508,7 +666,9 @@ class DetectionConfigDraft(BaseModel):
             if self.amp:
                 raise ValueError("AMP is disabled because Ultralytics documents possible RT-DETR matching failures.")
             if self.freeze not in {None, 0}:
-                raise ValueError("The registered RT-DETR-L recipe fine-tunes the full pretrained model.")
+                raise ValueError("RT-DETR LoRA/full fine-tuning controls freezing internally; freeze must be 0 or null.")
+            if self.training_mode == "lora" and not self.train_detection_head:
+                raise ValueError("RT-DETR LoRA must train the custom-class detection heads.")
             # Normalize fields belonging to other detector backends. Keeping
             # them inert makes the shared output schema honest without adding
             # a separate RT-DETR schema.
@@ -520,14 +680,36 @@ class DetectionConfigDraft(BaseModel):
             self.topk_candidates = 400
             self.positive_fraction = 0.25
             self.matching_iou_threshold = 0.5
-            if self.close_mosaic >= self.num_epochs:
-                self.close_mosaic = 0
+            if self.close_mosaic >= self.num_epochs and self.close_mosaic != 0:
+                if "close_mosaic" not in self.model_fields_set:
+                    self.close_mosaic = 0
+                else:
+                    raise ValueError("close_mosaic must be 0 or lower than num_epochs.")
+
+        if not is_rtdetr and self.training_mode == "lora":
+            raise ValueError("Detection LoRA is currently executable only for RT-DETR-L.")
+        if self.training_mode != "lora" and (
+            self.lora_rank != 8
+            or self.lora_alpha != 16
+            or self.lora_dropout != 0.05
+            or self.lora_target_profile != "decoder_attention"
+            or not self.train_detection_head
+        ):
+            raise ValueError("LoRA fields must retain inactive defaults outside LoRA training.")
 
         if self.scheduler_name == "multistep":
             if not self.lr_milestones or any(step < 1 for step in self.lr_milestones):
                 raise ValueError("lr_milestones must contain positive epoch numbers.")
             if self.lr_milestones != sorted(set(self.lr_milestones)):
                 raise ValueError("lr_milestones must be sorted and contain no duplicates.")
+
+        if self.patience and self.patience >= self.num_epochs:
+            raise ValueError("patience must be lower than num_epochs when early stopping is enabled.")
+        if self.warmup_epochs >= self.num_epochs and self.warmup_epochs != 0:
+            if "warmup_epochs" not in self.model_fields_set:
+                self.warmup_epochs = 0
+            else:
+                raise ValueError("warmup_epochs must be 0 or lower than num_epochs.")
 
         if self.batch_size == 0 or self.batch_size < -1:
             raise ValueError("batch_size must be -1 for auto batch sizing or a positive integer.")

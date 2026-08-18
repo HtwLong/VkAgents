@@ -8,7 +8,6 @@ from fastapi import HTTPException
 
 from cvmodellearning.agents.hyperparameter_agents import (
     changed_configuration_fields,
-    changed_grounded_fields,
 )
 from cvmodellearning.graphrag.hyperparameter_context import (
     build_field_provenance,
@@ -74,7 +73,7 @@ def _valid_config_from_retrieved_recipe(context) -> ClassificationConfigModel:
         val_data_ratio=0.1,
         test_data_ratio=0.1,
         rationale=f"Grounded in recipe {context['base_recipe']['id']}",
-        **context["recommended_configuration"],
+        **context["reference_configuration"],
     )
 
 
@@ -119,19 +118,6 @@ def test_repair_diff_reports_only_changed_configuration_fields():
     assert changed_configuration_fields(original, accidental_rewrite) == {"batch_size", "learning_rate"}
 
 
-def test_only_matched_rule_fields_may_change_the_graph_baseline():
-    proposal = _valid_config_from_retrieved_recipe(build_hyperparameter_context(_state()))
-    baseline = {
-        "model_name": "resnet50",
-        "learning_rate": 0.001,
-        "batch_size": 8,
-    }
-
-    assert changed_grounded_fields(proposal, baseline, {"batch_size"}) == set()
-    changed_lr = proposal.model_copy(update={"learning_rate": 0.01})
-    assert changed_grounded_fields(changed_lr, baseline, {"batch_size"}) == {"learning_rate"}
-
-
 def test_choose_hyperparameters_passes_materialized_baseline_and_saves_valid_recipe(monkeypatch):
     import routers.planning as planning
 
@@ -141,7 +127,7 @@ def test_choose_hyperparameters_passes_materialized_baseline_and_saves_valid_rec
 
     async def fake_generate(json_data, job_id):
         received = json.loads(json_data)
-        baseline = received["hyperparameter_graph_context"]["base_configuration"]
+        baseline = received["hyperparameter_graph_context"]["reference_configuration"]
         assert baseline["training_recipe_id"] == candidate.training_recipe_id
         assert baseline["learning_rate"] == candidate.learning_rate
         return candidate, HpoDecision(accept=True, reason="valid", findings=[])
@@ -254,62 +240,6 @@ def test_state_request_enables_graphrag_by_default():
     request = planning.StateRequest(context={}, job_id="default-enabled")
 
     assert request.use_graphrag is True
-    assert request.use_policy_registry is True
-
-
-def test_choose_hyperparameters_can_use_policy_registry_without_graphrag(monkeypatch):
-    import routers.planning as planning
-
-    state = _state()
-    candidate = _valid_config_from_retrieved_recipe(
-        build_hyperparameter_context(state)
-    ).model_copy(update={
-        "llm_field_rationales": [
-            LLMFieldRationale(
-                field="patience",
-                reason="Chosen from the dataset size and training schedule.",
-                applied_policy_ids=["hpo.common.schedule_data_size.v1"],
-            )
-        ]
-    })
-    received = {}
-
-    async def fake_generate(json_data, job_id):
-        received.update(json.loads(json_data))
-        return candidate, HpoDecision(accept=True, reason="valid", findings=[])
-
-    monkeypatch.setattr(planning, "generate_and_evaluate_hpo", fake_generate)
-    monkeypatch.setattr(
-        planning,
-        "build_hyperparameter_context",
-        lambda *_args: pytest.fail("GraphRAG context should not be built"),
-    )
-    monkeypatch.setattr(planning, "save_checkpoint", lambda *_args: None)
-    monkeypatch.setattr(planning, "save_hpo_result", lambda *_args: None)
-
-    result = asyncio.run(
-        planning.choose_hyperparameters(
-            planning.StateRequest(
-                context=state.model_dump(),
-                job_id="policy-only",
-                use_graphrag=False,
-                use_policy_registry=True,
-            )
-        )
-    )
-
-    assert received["use_graphrag"] is False
-    assert received["use_policy_registry"] is True
-    assert received["hyperparameter_graph_context"] is None
-    assert received["hyperparameter_policy_context"]["applicable_policies"]
-    assert result["context"]["hyperparameter_policy_context"]["policy_ids"]
-    assert result["decision_evidence"]["field_provenance"]["patience"][
-        "applied_policy_ids"
-    ] == ["hpo.common.schedule_data_size.v1"]
-    assert [
-        policy["id"]
-        for policy in result["decision_evidence"]["policy_guidance"]["used_policies"]
-    ] == ["hpo.common.schedule_data_size.v1"]
 
 
 def test_select_model_can_run_without_graphrag(monkeypatch):
@@ -348,10 +278,10 @@ def test_vit_uses_executable_custom_recipe_and_exposes_llm_completion_fields():
     assert context["base_recipe"]["id"] == (
         "torchvision_vit_b16_imagenet_pretrained_custom_finetune"
     )
-    assert context["base_configuration"]["image_size"] == 224
-    assert context["base_configuration"]["optimizer_name"] == "adamw"
-    assert context["base_configuration"]["scheduler_name"] == "cosine"
-    assert context["base_configuration"]["gradient_accumulation_steps"] == 1
+    assert context["reference_configuration"]["image_size"] == 224
+    assert context["reference_configuration"]["optimizer_name"] == "adamw"
+    assert context["reference_configuration"]["scheduler_name"] == "cosine"
+    assert context["reference_configuration"]["gradient_accumulation_steps"] == 1
     assert context["fields_requiring_llm_completion"] == ["patience", "track_metric"]
     assert context["critical_materialization_errors"] == []
     assert "swag_vit_b16_imagenet1k_e2e_finetune" in (
@@ -383,7 +313,7 @@ def test_vit_recipe_supports_all_pretrained_finetuning_modes(
         patience=5,
         track_metric="val_acc",
         rationale="Executable ViT pretrained fine-tuning mode.",
-        **context["recommended_configuration"],
+        **context["reference_configuration"],
     )
     config = {
         **candidate.model_dump(mode="json"),
@@ -445,11 +375,15 @@ def test_choose_hyperparameters_saves_vit_llm_completion_with_provenance(monkeyp
         "patience": 5,
         "track_metric": "val_acc",
         "rationale": "Completed the recipe using conservative validation controls.",
-        **context["recommended_configuration"],
-        "llm_field_rationales": [
-            {"field": "patience", "reason": "Five epochs permits stable early stopping."},
-            {"field": "track_metric", "reason": "Validation accuracy matches the requested metric."},
-        ],
+        **context["reference_configuration"],
+            "llm_field_rationales": [
+                {"field": "patience", "reason": "Five epochs permits stable early stopping."},
+                {"field": "track_metric", "reason": "Validation accuracy matches the requested metric."},
+                {"field": "batch_size", "reason": "Fits the training hardware budget."},
+                {"field": "precision", "reason": "Matches accelerator support."},
+                {"field": "head_learning_rate_multiplier", "reason": "Uses a conservative head rate."},
+                {"field": "use_model_ema", "reason": "Disabled for this compact run."},
+            ],
     })
 
     async def fake_generate(*_args, **_kwargs):
@@ -493,7 +427,7 @@ def test_field_provenance_distinguishes_recipe_defaults_completion_and_repair():
         "patience": 5,
         "track_metric": "val_acc",
         "rationale": "Grounded ViT configuration with bounded LLM completion.",
-        **context["recommended_configuration"],
+        **context["reference_configuration"],
         "learning_rate": 5e-5,
         "llm_field_rationales": [
             {"field": "track_metric", "reason": "Accuracy is the requested primary metric."},
@@ -524,7 +458,7 @@ def test_field_provenance_distinguishes_recipe_defaults_completion_and_repair():
     assert provenance["classes"]["support_type"] == "user_constraint"
 
 
-def test_choose_hyperparameters_rejects_unapproved_change_to_recipe_baseline(monkeypatch):
+def test_choose_hyperparameters_allows_llm_change_to_reference_recipe(monkeypatch):
     import routers.planning as planning
 
     state = _state()
@@ -540,16 +474,14 @@ def test_choose_hyperparameters_rejects_unapproved_change_to_recipe_baseline(mon
     monkeypatch.setattr(planning, "save_checkpoint", lambda *_args: saved.append("checkpoint"))
     monkeypatch.setattr(planning, "save_hpo_result", lambda *_args: saved.append("hpo"))
 
-    with pytest.raises(HTTPException) as error:
-        asyncio.run(
-            planning.choose_hyperparameters(
-                planning.StateRequest(context=state.model_dump(), job_id="graph-baseline-change")
-            )
+    result = asyncio.run(
+        planning.choose_hyperparameters(
+            planning.StateRequest(context=state.model_dump(), job_id="graph-reference-change")
         )
+    )
 
-    assert error.value.status_code == 422
-    assert "optimizer_name" in error.value.detail["reason"]
-    assert saved == []
+    assert result["context"]["hpo_config"]["optimizer"]["name"] == "rmsprop"
+    assert saved == ["checkpoint", "hpo"]
 
 
 def test_choose_hyperparameters_allows_only_evaluator_authorized_baseline_repair(monkeypatch):
@@ -706,8 +638,8 @@ def test_densenet121_retrieves_adapted_full_finetuning_recipe():
     assert context["recipe_details"][0]["classifier_head_field"] == "model.classifier"
     assert context["base_recipe"]["freeze_default"] == "False"
     assert context["recipe_details"][0]["feature_extraction_supported"] == "true"
-    assert context["base_configuration"]["scheduler_step_size"] == 7
-    assert context["base_configuration"]["scheduler_gamma"] == 0.1
+    assert context["reference_configuration"]["scheduler_step_size"] == 7
+    assert context["reference_configuration"]["scheduler_gamma"] == 0.1
 
     graph = get_hyperparameter_graph()
     assert not any(
@@ -781,12 +713,12 @@ def test_swin_v2_tiny_and_small_do_not_retrieve_base_only_recipe():
         assert context["base_recipe"]["training_mode"] == "FineTunePretrained"
         expected_lr = 0.00005 if model_id == "swin_v2_t" else 0.00003
         expected_batch_size = 8 if model_id == "swin_v2_t" else 4
-        assert context["base_configuration"]["model_name"] == model_id
-        assert context["base_configuration"]["learning_rate"] == expected_lr
-        assert context["base_configuration"]["batch_size"] == expected_batch_size
-        assert context["base_configuration"]["image_size"] == 256
-        assert context["base_configuration"]["training_mode"] == "fine_tune_pretrained"
-        assert context["base_configuration"]["model_weights"] == "default"
+        assert context["reference_configuration"]["model_name"] == model_id
+        assert context["reference_configuration"]["learning_rate"] == expected_lr
+        assert context["reference_configuration"]["batch_size"] == expected_batch_size
+        assert context["reference_configuration"]["image_size"] == 256
+        assert context["reference_configuration"]["training_mode"] == "fine_tune_pretrained"
+        assert context["reference_configuration"]["model_weights"] == "default"
         assert context["allowed_adjustment_fields"] == [
             "batch_size",
             "freeze_backbone_epochs",
@@ -800,8 +732,10 @@ def test_swin_v2_tiny_and_small_do_not_retrieve_base_only_recipe():
             "use_activation_checkpointing",
             "use_model_ema",
         ]
-        assert context["required_adjustments"]["training_mode"] == "lora"
-        assert context["required_adjustments"]["freeze_backbone_epochs"] == 0
+        assert any(
+            rule["executable_adjustments"].get("training_mode") == "lora"
+            for rule in context["matched_adjustment_rules"]
+        )
         low_vram_rule = next(
             rule
             for rule in context["matched_adjustment_rules"]
@@ -847,16 +781,11 @@ def test_swin_low_vram_rule_has_an_exact_threshold_and_required_values():
         }
     )
     low_vram = build_hyperparameter_context(low_vram_state)
-    validate_graph_grounded_config(
-        low_vram["recommended_configuration"],
-        low_vram,
+    low_vram_rule = next(
+        rule for rule in low_vram["matched_adjustment_rules"]
+        if rule["id"] == "rule_swin_v2_low_vram_checkpoint_accumulation"
     )
-
-    with pytest.raises(ValueError, match="requires 'batch_size' to be 1"):
-        validate_graph_grounded_config(
-            {**low_vram["recommended_configuration"], "batch_size": 2},
-            low_vram,
-        )
+    assert low_vram_rule["executable_adjustments"]["batch_size"] == 1
 
     roomy_state = low_vram_state.model_copy(
         update={
@@ -867,7 +796,8 @@ def test_swin_low_vram_rule_has_an_exact_threshold_and_required_values():
     assert {rule["id"] for rule in roomy["matched_adjustment_rules"]} == {
         "rule_swin_v2_small_dataset_staged_finetune"
     }
-    assert roomy["required_adjustments"] == {
+    roomy_rule = roomy["matched_adjustment_rules"][0]
+    assert roomy_rule["executable_adjustments"] == {
         "training_mode": "staged_fine_tune",
         "freeze_backbone_epochs": 3,
     }
@@ -893,7 +823,79 @@ def test_swin_low_vram_rule_requires_gpu_hardware():
     rule_ids = {rule["id"] for rule in context["matched_adjustment_rules"]}
 
     assert "rule_swin_v2_low_vram_checkpoint_accumulation" not in rule_ids
-    assert "use_activation_checkpointing" not in context["required_adjustments"]
+
+
+def test_low_vram_yolo_context_disables_multi_scale_training():
+    state = PipelineState(
+        task="detection",
+        application_domain="dense urban street scenes",
+        classes=["traffic light", "traffic sign"],
+        selected_data=[{
+            "class_name": class_name,
+            "sources": [{
+                "dataset_name": "bdd_100k_det_train",
+                "allocations": [{
+                    "split": "train",
+                    "count": 4000,
+                    "assignment_type": "official_split",
+                }],
+            }],
+        } for class_name in ("traffic light", "traffic sign")],
+        training_hardware=get_training_hardware_profile(
+            "rtx2060_6gb_ryzen5600x_16gb"
+        ),
+        selected_model_info={
+            "model": [{"model_architecture": "yolov10_n"}],
+        },
+    )
+
+    context = build_hyperparameter_context(state)
+
+    assert context["training_hardware_adjustments"]["multi_scale"] == 0.0
+    assert (
+        context["training_hardware_adjustment_provenance"]["multi_scale"]
+        == "rtx2060_6gb_ryzen5600x_16gb"
+    )
+
+
+def test_low_vram_small_object_yolo_context_uses_bounded_high_resolution_profile():
+    state = PipelineState(
+        task="detection",
+        user_query="Detect small and far away traffic lights",
+        classes=["traffic light"],
+        robustness_requirements={"object_scale": ["small"]},
+        selected_data=[{
+            "class_name": "traffic light",
+            "sources": [{
+                "dataset_name": "bdd_100k_det_train",
+                "allocations": [{
+                    "split": "train", "count": 100,
+                    "assignment_type": "official_split",
+                }],
+            }],
+        }],
+        training_hardware=get_training_hardware_profile(
+            "rtx2060_6gb_ryzen5600x_16gb"
+        ),
+        selected_model_info={"model": [{"model_architecture": "yolov11_s"}]},
+    )
+
+    context = build_hyperparameter_context(state)
+    adjustments = context["training_hardware_adjustments"]
+
+    assert adjustments | {
+        "input_size": 768,
+        "batch_size": 2,
+        "translate": 0.05,
+        "scale": 0.25,
+        "fliplr": 0.5,
+        "multi_scale": 0.0,
+    } == adjustments
+    assert context["hardware_safe_resolution_candidates"]
+    assert all(
+        item["requires_measured_runtime_preflight"]
+        for item in context["hardware_safe_resolution_candidates"]
+    )
 
 
 @pytest.mark.parametrize(
@@ -928,22 +930,13 @@ def test_swin_dataset_size_rules_materialize_executable_training_modes(
 
     context = build_hyperparameter_context(state)
 
-    assert context["recommended_configuration"]["training_mode"] == expected_mode
-    assert context["recommended_configuration"]["freeze_backbone_epochs"] == expected_freeze
-    validate_graph_grounded_config(context["recommended_configuration"], context)
-    executable = ClassificationConfigModel.model_validate(
-        {
-            **context["recommended_configuration"],
-            "classes": ["cat", "dog"],
-            "selected_data": selected_data,
-            "train_data_ratio": 0.8,
-            "val_data_ratio": 0.1,
-            "test_data_ratio": 0.1,
-            "track_metric": "val_acc",
-            "rationale": "Deterministically materialized from the Swin V2 graph recipe and rules.",
-        }
-    )
-    assert executable.training_mode == expected_mode
+    adjustments = {
+        field: value for rule in context["matched_adjustment_rules"]
+        for field, value in rule["executable_adjustments"].items()
+    }
+    effective = {**context["reference_configuration"], **adjustments}
+    assert effective["training_mode"] == expected_mode
+    assert effective["freeze_backbone_epochs"] == expected_freeze
 
 
 def test_swin_head_only_rule_suppresses_incompatible_checkpointing_rule():
@@ -969,18 +962,23 @@ def test_swin_head_only_rule_suppresses_incompatible_checkpointing_rule():
 
     assert "rule_swin_v2_very_small_dataset_head_only" in rule_ids
     assert "rule_swin_v2_low_vram_checkpoint_accumulation" not in rule_ids
-    assert context["recommended_configuration"]["training_mode"] == "head_only"
-    assert context["recommended_configuration"].get("use_activation_checkpointing", False) is False
-    validate_graph_grounded_config(context["recommended_configuration"], context)
+    assert any(
+        rule["executable_adjustments"].get("training_mode") == "head_only"
+        for rule in context["matched_adjustment_rules"]
+    )
+    validate_graph_grounded_config(context["reference_configuration"], context)
 
 
-def test_model_selection_context_contains_only_ranked_executable_models():
+def test_model_selection_context_contains_neutral_executable_shortlist():
     context = build_model_selection_context(PipelineState(task="classification"), top_k=20)
     candidates = context["candidate_models"]
     candidate_ids = [candidate["model"]["id"] for candidate in candidates]
 
     assert set(candidate_ids) == set(model_ids("classification"))
-    assert [candidate["rank"] for candidate in candidates] == list(range(1, len(candidates) + 1))
+    assert candidate_ids == sorted(candidate_ids)
+    assert all("rank" not in candidate for candidate in candidates)
+    assert all(candidate["shortlist_roles"] for candidate in candidates)
+    assert all(candidate["criterion_assessments"] for candidate in candidates)
     assert "mobilenet_v3_small" in candidate_ids
     assert "clip_vit_b16" in candidate_ids
 
@@ -1088,3 +1086,4 @@ def test_added_classification_csv_rows_have_valid_shape_and_references():
         "torchvision_convnext_tiny_imagenet_v1_training"
     )
     assert benchmarks["bench_convnext_tiny_imagenet_top1"]["hardware_profile_id"] == ""
+

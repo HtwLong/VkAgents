@@ -6,6 +6,7 @@ from cvmodellearning.schemas.dataset_assignment import planned_split_ratios
 from cvmodellearning.schemas.detection_hpo import (
     DetectionConfigDraft,
     DetectionConfigModel,
+    ULTRALYTICS_LINEAR_LRF_DEFAULT,
     detection_runtime_family,
 )
 
@@ -44,6 +45,21 @@ def complete_detection_config(
     if not bool(state.get("use_graphrag", True)):
         apply("training_recipe_id", "", "Recipe provenance is empty when GraphRAG is disabled.")
 
+    if config.get("training_mode", "full_finetune") != "lora":
+        inactive_lora_values = {
+            "lora_rank": 8,
+            "lora_alpha": 16,
+            "lora_dropout": 0.05,
+            "lora_target_profile": "decoder_attention",
+            "train_detection_head": True,
+        }
+        for field, value in inactive_lora_values.items():
+            apply(
+                field,
+                value,
+                "LoRA controls retain schema defaults outside LoRA training.",
+            )
+
     runtime_family = detection_runtime_family(model_name)
     if runtime_family in {"yolo", "rtdetr"}:
         apply(
@@ -60,6 +76,13 @@ def complete_detection_config(
             "track_metric": "val_mAP",
             "scheduler_name": "linear",
         }
+        if bool(state.get("use_graphrag", True)):
+            fixed_values.update({
+                "lambda_box": 7.5,
+                "lambda_cls": 0.5,
+                "lambda_dfl": 1.5,
+                "final_learning_rate_factor": ULTRALYTICS_LINEAR_LRF_DEFAULT,
+            })
         if config.get("optimizer_name") == "auto":
             fixed_values.update({"learning_rate": 0.01, "momentum": 0.9})
         for field, value in fixed_values.items():

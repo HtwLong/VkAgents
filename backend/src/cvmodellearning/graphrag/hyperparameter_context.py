@@ -9,16 +9,16 @@ import networkx as nx
 from pydantic import TypeAdapter
 
 from cvmodellearning.graphrag.build_graph import build_graph
-from cvmodellearning.models.registry import LORA_CLASSIFICATION_MODEL_IDS
+from cvmodellearning.models.registry import (
+    LORA_CLASSIFICATION_MODEL_IDS,
+    resolve_detection_model_identity,
+)
 from cvmodellearning.paths import PROJECT_ROOT
 from cvmodellearning.schemas.interpretation_schema import PipelineState
 from cvmodellearning.graphrag.dataset_selection_context import (
     aggregate_selected_dataset_properties,
 )
-from cvmodellearning.policies.hyperparameter_policy_registry import (
-    build_hyperparameter_policy_context,
-    policy_fields,
-)
+from cvmodellearning.training.resource_guard import rank_training_shape_candidates
 
 
 USE_HYPERPARAMETER_GRAPHRAG = os.getenv("USE_HYPERPARAMETER_GRAPHRAG", "true").lower() not in {
@@ -462,6 +462,9 @@ def _materialize_detection_recipe_config(context: dict[str, Any]) -> dict[str, A
         fixed_values = {
             "loss_box": "ciou",
             "loss_cls": "bce",
+            "lambda_box": 7.5,
+            "lambda_cls": 0.5,
+            "lambda_dfl": 1.5,
             "copy_paste": 0.0,
             "track_metric": "val_mAP",
             "scheduler_name": "linear",
@@ -783,15 +786,12 @@ def llm_controlled_fields(
 ) -> set[str]:
     """Return non-grounded fields that need a field-specific LLM rationale."""
     controlled = set(context.get("fields_requiring_llm_completion") or [])
-    base_configuration = context.get("base_configuration") or {}
-    required_adjustments = context.get("required_adjustments") or {}
-    grounded_fields = set(context.get("base_configuration") or {}) | set(
-        required_adjustments
-    )
+    reference_configuration = context.get("reference_configuration") or {}
+    grounded_fields = set(reference_configuration)
     # An allowed departure from a grounded baseline is still an LLM decision
     # and must carry field-specific rationale/provenance.
-    for field_name in context.get("allowed_adjustment_fields") or []:
-        expected = required_adjustments.get(field_name, base_configuration.get(field_name))
+    for field_name in set(context.get("allowed_adjustment_fields") or []):
+        expected = reference_configuration.get(field_name)
         if field_name in config and config.get(field_name) != expected:
             controlled.add(field_name)
     for field_name, value in config.items():
@@ -837,11 +837,6 @@ def build_field_provenance(
         for item in config.get("llm_field_rationales", [])
         if isinstance(item, dict) and item.get("field")
     }
-    llm_policy_ids = {
-        str(item.get("field")): list(item.get("applied_policy_ids") or [])
-        for item in config.get("llm_field_rationales", [])
-        if isinstance(item, dict) and item.get("field")
-    }
     general_rationale = str(config.get("rationale", "LLM-selected value."))
     provenance: dict[str, dict[str, Any]] = {}
     records = [
@@ -884,7 +879,6 @@ def build_field_provenance(
                 "source": "llm_adjustment",
                 "source_id": "evaluator_authorized_repair",
                 "reason": llm_reasons.get(field_name, general_rationale),
-                "applied_policy_ids": llm_policy_ids.get(field_name, []),
             })
         elif field_name in hardware_sources:
             provenance[field_name] = enrich({
@@ -939,7 +933,6 @@ def build_field_provenance(
                 "source": "llm_completion",
                 "source_id": "missing_recipe_field",
                 "reason": llm_reasons.get(field_name, general_rationale),
-                "applied_policy_ids": llm_policy_ids.get(field_name, []),
             })
         else:
             schema_field = schema_model.model_fields.get(field_name)
@@ -955,7 +948,6 @@ def build_field_provenance(
                     "source": "llm_completion",
                     "source_id": "unmaterialized_configuration_field",
                     "reason": llm_reasons.get(field_name, general_rationale),
-                    "applied_policy_ids": llm_policy_ids.get(field_name, []),
                 })
     return provenance
 
@@ -1014,7 +1006,7 @@ def _total_selected_images(state: PipelineState) -> int | None:
 def _materialize_matched_rule(
     rule: dict[str, Any],
     state: PipelineState,
-    base_configuration: dict[str, Any],
+    reference_configuration: dict[str, Any],
     active_dataset_properties: set[str] | None = None,
 ) -> dict[str, Any] | None:
     """Materialize explicit scalar rules whose conditions are provable from state."""
@@ -1073,7 +1065,7 @@ def _materialize_matched_rule(
     for field_name, raw_value in _ASSIGNMENT.findall(str(rule.get("adjustment_value", ""))):
         value = raw_value.strip()
         if value == "$num_epochs":
-            value = base_configuration.get("num_epochs")
+            value = reference_configuration.get("num_epochs")
         if value is None:
             return None
         try:
@@ -1130,6 +1122,40 @@ def _training_hardware_adjustments(
         adjustments["batch_size"] = hardware.max_batch_size
     if state.task == "detection":
         adjustments["workers"] = hardware.workers
+        identity = resolve_detection_model_identity(
+            str(configuration.get("model_name") or _selected_model_id(state) or "")
+        )
+        if (
+            identity is not None
+            and identity.runtime_family == "yolo"
+            and 0 < hardware.training_memory_budget_gb <= 6.0
+        ):
+            robustness = state.robustness_requirements
+            requested_scales = {
+                str(value).strip().lower()
+                for value in (
+                    robustness.get("object_scale", [])
+                    if isinstance(robustness, dict)
+                    else robustness.object_scale
+                )
+            }
+            small_objects_requested = "small" in requested_scales or any(
+                phrase in str(state.user_query or "").lower()
+                for phrase in ("small object", "small and far", "far away", "distant object")
+            )
+            input_size = configuration.get("input_size")
+            if isinstance(input_size, (int, float)) and input_size > 768:
+                adjustments["input_size"] = 768
+            elif small_objects_requested and isinstance(input_size, (int, float)) and input_size < 768:
+                # A bounded high-resolution profile for 6 GiB cards. The paired
+                # batch reduction is validated again by the resource guard.
+                adjustments["input_size"] = 768
+            if small_objects_requested:
+                adjustments["batch_size"] = min(2, hardware.max_batch_size)
+                adjustments["translate"] = 0.05
+                adjustments["scale"] = 0.25
+                adjustments["fliplr"] = 0.5
+            adjustments["multi_scale"] = 0.0
     if configuration.get("amp") is True and not hardware.supports_amp:
         adjustments["amp"] = False
     if configuration.get("precision") == "mixed" and not hardware.supports_amp:
@@ -1241,110 +1267,37 @@ def validate_executable_recipe_config(config: dict[str, Any]) -> None:
 def validate_graph_grounded_config(
     config: dict[str, Any],
     context: dict[str, Any],
-    *,
-    additional_allowed_fields: set[str] | None = None,
-    enforce_baseline: bool = True,
+    **_ignored: Any,
 ) -> None:
-    """Validate recipe provenance plus the deterministic baseline and matched rules."""
+    """Validate executable recipe provenance without making its reference values immutable."""
     validate_executable_recipe_config(config)
-    allowed_fields = set(context.get("allowed_adjustment_fields") or [])
-    allowed_fields.update(additional_allowed_fields or set())
-    if enforce_baseline:
-        for field, expected in (context.get("base_configuration") or {}).items():
-            if field not in allowed_fields and config.get(field) != expected:
-                raise ValueError(
-                    f"Graph-grounded field '{field}' must remain {expected!r}; no matched rule or reviewer finding allows changing it."
-                )
-    for field, expected in (context.get("required_adjustments") or {}).items():
-        if config.get(field) != expected:
-            raise ValueError(
-                f"Matched adjustment rule requires '{field}' to be {expected!r}."
-            )
 
 
 def validate_detection_graph_grounded_config(
     config: dict[str, Any],
     context: dict[str, Any],
-    *,
-    additional_allowed_fields: set[str] | None = None,
+    **_ignored: Any,
 ) -> None:
-    """Validate detection recipe provenance and its deterministic baseline."""
+    """Validate detector recipe provenance and selected-family compatibility."""
+    validate_executable_recipe_config(config)
     recipe = context.get("base_recipe") or {}
     recipe_id = str(recipe.get("id", ""))
     if not recipe_id or recipe_id in NON_EXECUTABLE_RECIPE_IDS:
         raise ValueError("No executable fine-tuning recipe was retrieved for the selected detector.")
     if config.get("training_recipe_id") != recipe_id:
         raise ValueError(f"Detection configuration must use training_recipe_id='{recipe_id}'.")
-
-    selected = re.sub(r"[^a-z0-9]", "", str(context.get("selected_registry_id", "")).lower())
-    candidate = re.sub(r"[^a-z0-9]", "", str(config.get("model_name", "")).lower())
-    family_aliases = {
-        "yolov8": "yolov8",
-        "yolov10": "yolov10",
-        "yolov11": "yolov11",
-        "yolo11": "yolov11",
-        "yolov12": "yolov12",
-        "yolo12": "yolov12",
-        "retinanetr50fpn1xcoco": "retinanet",
-        "retinanetresnet50fpn": "retinanet",
-        "retinanetr50": "retinanet",
-        "fasterrcnnr50fpn1xcoco": "fasterrcnn",
-        "fasterrcnnresnet50fpn": "fasterrcnn",
-        "fasterrcnnr50": "fasterrcnn",
-        "ssd300coco": "ssd300",
-        "ssd300vgg16": "ssd300",
-        "ssd300": "ssd300",
-        "rtdetrhgnetv2l": "rtdetr",
-        "rtdetrl": "rtdetr",
-    }
-    selected_family = family_aliases.get(selected) or next(
-        (canonical for alias, canonical in family_aliases.items() if selected.startswith(alias)),
-        None,
-    )
-    candidate_family = family_aliases.get(candidate) or next(
-        (canonical for alias, canonical in family_aliases.items() if candidate.startswith(alias)),
-        None,
-    )
-    if selected_family and candidate_family != selected_family:
+    selected = str(context.get("selected_registry_id") or "")
+    candidate = str(config.get("model_name") or "")
+    selected_identity = resolve_detection_model_identity(selected)
+    candidate_identity = resolve_detection_model_identity(candidate)
+    if (
+        selected_identity is not None
+        and candidate_identity is not None
+        and selected_identity.family != candidate_identity.family
+    ):
         raise ValueError(
-            f"Selected model family '{context.get('selected_registry_id')}' is incompatible with "
-            f"HPO model_name='{config.get('model_name')}'."
+            f"Selected model family '{selected}' is incompatible with HPO model_name='{candidate}'."
         )
-
-    allowed = (
-        {"model_name"}
-        | set(context.get("allowed_adjustment_fields") or [])
-        | set(additional_allowed_fields or set())
-    )
-    for field, expected in (context.get("base_configuration") or {}).items():
-        if field not in allowed and config.get(field) != expected:
-            raise ValueError(
-                f"Graph-grounded detection field '{field}' must remain {expected!r}."
-            )
-
-    for field, expected in (context.get("required_adjustments") or {}).items():
-        if config.get(field) != expected:
-            raise ValueError(
-                f"Matched detection adjustment rule requires '{field}' to be {expected!r}."
-            )
-
-    bounds = (
-        ("learning_rate", "learning_rate_min", "learning_rate_max"),
-        ("batch_size", "batch_size_min", "batch_size_max"),
-        ("num_epochs", "epochs_min", "epochs_max"),
-        ("weight_decay", "weight_decay_min", "weight_decay_max"),
-        ("input_size", "image_size_min", "image_size_max"),
-    )
-    for field, minimum_field, maximum_field in bounds:
-        value = config.get(field)
-        if value is None or (field == "batch_size" and value == -1):
-            continue
-        minimum = recipe.get(minimum_field)
-        maximum = recipe.get(maximum_field)
-        if minimum not in {"", None} and float(value) < float(minimum):
-            raise ValueError(f"Detection recipe requires {field} >= {minimum}.")
-        if maximum not in {"", None} and float(value) > float(maximum):
-            raise ValueError(f"Detection recipe requires {field} <= {maximum}.")
 
 
 @lru_cache(maxsize=1)
@@ -1525,28 +1478,32 @@ def build_hyperparameter_context(state: PipelineState) -> dict[str, Any]:
             else "No executable pretrained custom-data fine-tuning recipe is available for this model."
         ),
         "instructions_for_generator": (
-            "Copy every base_configuration field exactly unless it is listed in allowed_adjustment_fields. "
-            "Only apply a rule when it appears in matched_adjustment_rules. Keep values within recipe min/max "
-            "bounds and cite recipe/rule IDs in rationale. Use schema defaults for fields that are neither "
-            "materialized nor adjusted."
+            "Treat reference_configuration as an evidence-backed starting point. Preserve or adapt its "
+            "schema-configurable values for the selected model, data, task, and hardware, explaining each "
+            "choice. Only apply a rule when it appears in matched_adjustment_rules. Runtime constraints "
+            "and schema validation remain authoritative."
         ),
     }
-    context["base_configuration"] = materialize_base_recipe_config(context)
-    policy_context = build_hyperparameter_policy_context(state)
-    context["hyperparameter_policy_context"] = policy_context
-    policy_guidance_fields = policy_fields(policy_context) - set(context["base_configuration"])
+    if state.task == "detection":
+        identity = resolve_detection_model_identity(_selected_model_id(state) or model_id)
+        if identity is not None:
+            context["model_execution_constraints"] = {
+                "runtime_family": identity.runtime_family,
+                "input_stride": identity.input_stride,
+                "supported_input_size": {"minimum": 32, "maximum": 1280},
+                "baseline_input_size": 640 if identity.runtime_family == "yolo" else None,
+            }
+    context["reference_configuration"] = materialize_base_recipe_config(context)
     # Ultralytics AutoOptimizer is a grounded default, not an immutable runtime
     # requirement. Permit the optimizer agent to choose an explicit supported
     # optimizer when it can justify the departure; learning_rate then becomes
     # an active, jointly selected field.
-    optimizer_policy_adjustments: set[str] = set()
+    optimizer_adjustments: set[str] = set()
     if (
         state.task == "detection"
-        and context["base_configuration"].get("optimizer_name") == "auto"
+        and context["reference_configuration"].get("optimizer_name") == "auto"
     ):
-        optimizer_policy_adjustments = {"optimizer_name", "learning_rate"}
-        policy_guidance_fields.update(optimizer_policy_adjustments)
-    context["fields_available_for_policy_guidance"] = sorted(policy_guidance_fields)
+        optimizer_adjustments = {"optimizer_name", "learning_rate"}
     selected_dataset_characteristics = aggregate_selected_dataset_properties(
         state,
         graph,
@@ -1565,7 +1522,7 @@ def build_hyperparameter_context(state: PipelineState) -> dict[str, Any]:
             field_name
             for field_name, schema_field in ClassificationConfigModel.model_fields.items()
             if schema_field.is_required()
-            and field_name not in context["base_configuration"]
+            and field_name not in context["reference_configuration"]
             and field_name not in _PIPELINE_CONTEXT_FIELDS
             and field_name not in _EXPLANATION_FIELDS
         )
@@ -1579,31 +1536,72 @@ def build_hyperparameter_context(state: PipelineState) -> dict[str, Any]:
                 matched := _materialize_matched_rule(
                     rule,
                     state,
-                    context["base_configuration"],
+                    context["reference_configuration"],
                     active_dataset_properties,
                 )
             ) is not None
         ])
+    suppressed_rules = []
+    if state.task == "detection":
+        robustness = state.robustness_requirements
+        requested_scales = {
+            str(value).strip().lower()
+            for value in (
+                robustness.get("object_scale", [])
+                if isinstance(robustness, dict)
+                else robustness.object_scale
+            )
+        }
+        if "small" in requested_scales:
+            retained_rules = []
+            for rule in matched_rules:
+                if (
+                    rule.get("condition_type") == "DatasetProperty"
+                    and rule.get("condition_value") == "ObjectScaleVariation"
+                    and set((rule.get("executable_adjustments") or {}))
+                    & {"scale", "multi_scale"}
+                ):
+                    suppressed_rules.append({
+                        "id": rule.get("id"),
+                        "reason": (
+                            "Generic object-scale variation downscaling is superseded by "
+                            "the explicit small-object requirement."
+                        ),
+                    })
+                    continue
+                retained_rules.append(rule)
+            matched_rules = retained_rules
+            context["small_object_training_policy"] = {
+                "input_size": 768,
+                "batch_size": 2,
+                "translate": 0.05,
+                "scale": 0.25,
+                "fliplr": 0.5,
+                "multi_scale": 0.0,
+                "reason": (
+                    "Preserve more pixels for small objects on limited VRAM while using "
+                    "bounded geometric variation and avoiding unprobed multiscale peaks."
+                ),
+                "requires_runtime_memory_validation": True,
+            }
     context["matched_adjustment_rules"] = matched_rules
+    context["suppressed_adjustment_rules"] = suppressed_rules
     context["allowed_adjustment_fields"] = sorted({
         field
         for rule in matched_rules
         for field in rule["executable_adjustments"]
-    } | optimizer_policy_adjustments)
-    required_adjustments = {
-        field: value
-        for rule in matched_rules
+    } | optimizer_adjustments)
+    rule_adjustments = {
+        field: value for rule in matched_rules
         for field, value in rule["executable_adjustments"].items()
     }
     hardware_adjustments = _training_hardware_adjustments(
         state,
-        {**context["base_configuration"], **required_adjustments},
+        {**context["reference_configuration"], **rule_adjustments},
     )
-    required_adjustments.update(hardware_adjustments)
     context["allowed_adjustment_fields"] = sorted(
         set(context["allowed_adjustment_fields"]) | set(hardware_adjustments)
     )
-    context["required_adjustments"] = required_adjustments
     context["adjustment_rule_provenance"] = {
         field: rule["id"]
         for rule in matched_rules
@@ -1617,10 +1615,17 @@ def build_hyperparameter_context(state: PipelineState) -> dict[str, Any]:
         if state.training_hardware
         else {}
     )
-    context["recommended_configuration"] = {
-        **context["base_configuration"],
-        **required_adjustments,
-    }
+    context["training_hardware_adjustments"] = hardware_adjustments
+    if state.task == "detection":
+        context["hardware_safe_resolution_candidates"] = rank_training_shape_candidates(
+            {
+                **context["reference_configuration"],
+                **rule_adjustments,
+                **hardware_adjustments,
+                "model_name": _selected_model_id(state) or model_id,
+            },
+            image_sizes=(640, 768),
+        )
     return context
 
 
@@ -1635,21 +1640,9 @@ def format_hyperparameter_context(context: dict[str, Any]) -> str:
         f"- training_recipe_id: {recipe.get('id')}",
         "Base defaults/ranges:",
     ]
-    lines.append(f"Deterministic base_configuration: {context.get('base_configuration', {})}")
-    lines.append(
-        f"Configuration after deterministic matched rules: {context.get('recommended_configuration', {})}"
-    )
+    lines.append(f"Reference configuration: {context.get('reference_configuration', {})}")
     lines.append(
         f"Fields requiring bounded LLM completion: {context.get('fields_requiring_llm_completion', [])}"
-    )
-    lines.append(
-        "Ungrounded fields available for policy-guided selection: "
-        f"{context.get('fields_available_for_policy_guidance', [])}"
-    )
-    policy_context = context.get("hyperparameter_policy_context") or {}
-    lines.append(f"Derived training problem profile: {policy_context.get('profile', {})}")
-    lines.append(
-        f"Applicable advisory HPO policies: {policy_context.get('applicable_policies', [])}"
     )
     field_map = (
         DETECTION_RECIPE_FIELD_TO_EXECUTABLE_FIELD

@@ -7,7 +7,7 @@ from typing import Any, Dict, Iterable, List, Optional, Sequence
 import networkx as nx
 
 from cvmodellearning.graphrag.build_graph import build_graph
-from cvmodellearning.models.registry import is_executable_model_reference
+from cvmodellearning.models.registry import enabled_models, is_executable_model_reference
 from cvmodellearning.paths import PROJECT_ROOT
 from cvmodellearning.schemas.interpretation_schema import PipelineState
 
@@ -61,6 +61,8 @@ METRIC_ALIASES = {
     "map": {"map50_95", "ap50"},
     "map50_95": {"map50_95"},
     "map50-95": {"map50_95"},
+    "map@0.5:0.95": {"map50_95"},
+    "map@.5:.95": {"map50_95"},
     "ap50": {"ap50"},
     "latency": {"latency_ms"},
     "latency_ms": {"latency_ms"},
@@ -110,6 +112,13 @@ MEMORY_FIELDS = [
     "confidence",
     "notes",
     "evidence_ids",
+]
+
+TRAINING_HARDWARE_FIELDS = [
+    "model_id", "framework", "training_scope", "input_size", "batch_size",
+    "precision", "optimizer", "lowest_observed_success_vram_gb",
+    "observed_peak_vram_gb", "recommended_vram_gb", "recommendation_status",
+    "fit_policy", "confidence", "notes", "evidence_ids",
 ]
 
 BENCHMARK_FIELDS = [
@@ -198,18 +207,32 @@ def build_model_selection_context(state: PipelineState, top_k: int = 7) -> Dict[
         ]
         matching_models.append(candidate)
 
-    matching_models.sort(key=lambda candidate: _candidate_rank_key(candidate, filters))
-    recommendation, fallback = _balanced_recommendation(matching_models, filters)
-    if recommendation is not None and recommendation is not matching_models[0]:
-        matching_models.remove(recommendation)
-        matching_models.insert(0, recommendation)
-    selected_models = matching_models[:top_k]
-    for rank, candidate in enumerate(selected_models, start=1):
-        candidate["rank"] = rank
-        candidate["cpu_latency"] = _cpu_latency_assessment(candidate, filters)
-        candidate.pop("_all_model_benchmark_results", None)
+    selected_models = _diverse_shortlist(matching_models, filters, top_k)
+    from cvmodellearning.schemas.revision import explicit_required_model_id
 
-    recommendation = selected_models[0] if selected_models else None
+    required_model_id = explicit_required_model_id(state)
+    if required_model_id:
+        required_candidate = next(
+            (
+                candidate for candidate in matching_models
+                if str((candidate.get("model") or {}).get("id")) == required_model_id
+            ),
+            None,
+        )
+        if required_candidate is not None:
+            required_candidate.setdefault("shortlist_roles", [])
+            if "explicit_user_requirement" not in required_candidate["shortlist_roles"]:
+                required_candidate["shortlist_roles"].append("explicit_user_requirement")
+            if all(
+                str((candidate.get("model") or {}).get("id")) != required_model_id
+                for candidate in selected_models
+            ):
+                selected_models = [*selected_models[:max(0, top_k - 1)], required_candidate]
+                selected_models.sort(key=lambda item: str((item.get("model") or {}).get("id", "")))
+    for candidate in selected_models:
+        candidate["cpu_latency"] = _cpu_latency_assessment(candidate, filters)
+        candidate["criterion_assessments"] = _criterion_assessments(candidate, filters)
+        candidate.pop("_all_model_benchmark_results", None)
     constraint_warnings = sorted({
         warning
         for candidate in selected_models
@@ -220,11 +243,13 @@ def build_model_selection_context(state: PipelineState, top_k: int = 7) -> Dict[
         "source": "NetworkX knowledge graph from backend/ontology_data",
         "retrieval_strategy": (
             "Sequential graph filtering over models.csv nodes, then traversal to related "
-            "model_inference_memory_estimates, model_benchmark_results, evaluation_metrics, "
+            "model_inference_memory_estimates, model_training_hardware_requirements, "
+            "model_benchmark_results, evaluation_metrics, "
             "hardware_profiles, datasets, and evidence_sources."
         ),
         "task_filter": task_id,
         "filters": filters,
+        "required_model_id": required_model_id,
         "training_hardware": (
             state.training_hardware.model_dump(mode="json")
             if state.training_hardware
@@ -233,46 +258,183 @@ def build_model_selection_context(state: PipelineState, top_k: int = 7) -> Dict[
         "rejected_counts": rejected_counts,
         "constraint_warnings": constraint_warnings,
         "candidate_models": selected_models,
-        "deterministic_recommendation": (
-            {
-                "model_id": recommendation["model"]["id"],
-                "model_name": recommendation["model"].get("model_name"),
-                "policy": "balanced_capacity_with_resource_headroom",
-                "reason": (
-                    "Best supported capacity within hard filters, with unverified CPU-only "
-                    "latency expansion limited to one model-size tier."
-                ),
-                "cpu_latency": recommendation.get("cpu_latency"),
-                "unverified_constraints": (
-                    ["max_cpu_latency_ms"]
-                    if (recommendation.get("cpu_latency") or {}).get("status") == "unverified"
-                    else []
-                ),
-                "deployment_validation_required": (
-                    (recommendation.get("cpu_latency") or {}).get("status") == "unverified"
-                ),
-                "fallback_model": (
-                    {
-                        "model_id": fallback["model"]["id"],
-                        "model_name": fallback["model"].get("model_name"),
-                        "reason": "Lower-compute feasible fallback for target-hardware latency validation.",
-                    }
-                    if fallback is not None and fallback is not recommendation
-                    else None
-                ),
-            }
-            if recommendation
-            else None
-        ),
         "instructions_for_selector": (
             "Use these graph-retrieved candidates as grounded model-selection context. "
-            "The candidates already satisfy all available filters listed above. "
-            "Compare model facts, inference memory estimates, benchmark values, metrics, "
+            "The candidates already satisfy all available hard filters listed above. Their "
+            "presentation order is alphabetical and carries no preference or rank. "
+            "The shortlist does not select a winner. "
+            "Compare model facts, training-hardware requirements, inference memory estimates, benchmark values, metrics, "
             "limitations, and evidence before choosing the final model. Treat inference-memory "
-            "estimates as deployment facts, not proof that full fine-tuning fits the same hardware; "
-            "when training hardware is unknown, prefer a lower-resolution variant unless an explicit "
+            "estimates as deployment facts only, not proof that full fine-tuning fits the same hardware. "
+            "Never use inference VRAM to justify training feasibility, "
+            "training headroom, batch size, augmentation, tiling, or multi-scale training; use the separate "
+            "model_training_hardware_requirement for training claims. When small objects are requested, compare "
+            "at least three candidates when available, cover at least two distinct architecture types, and include "
+            "a feasible TwoStageRegionProposalDetector candidate. A third architecture type is preferred but not "
+            "required. Do not claim small-object superiority without comparable "
+            "AP-small or domain-specific evidence. "
+            "A training requirement marked derived is planning guidance, not a measured minimum. "
+            "When training hardware is unknown, prefer a lower-resolution variant unless an explicit "
             "accuracy requirement justifies the additional compute. Do not invent graph facts."
         ),
+    }
+
+
+def _diverse_shortlist(
+    candidates: list[Dict[str, Any]],
+    filters: Dict[str, Any],
+    top_k: int,
+) -> list[Dict[str, Any]]:
+    """Select complementary candidates internally, then present them in neutral order."""
+    if top_k <= 0 or not candidates:
+        return []
+    chosen: dict[str, Dict[str, Any]] = {}
+
+    def add(candidate: Dict[str, Any] | None, role: str) -> None:
+        if candidate is None:
+            return
+        model_id = str((candidate.get("model") or {}).get("id", ""))
+        if not model_id:
+            return
+        item = chosen.setdefault(model_id, candidate)
+        roles = item.setdefault("shortlist_roles", [])
+        if role not in roles:
+            roles.append(role)
+
+    if filters.get("task") == "object_detection":
+        # First preserve materially different detector designs. Treating every
+        # YOLO generation as a separate family previously consumed the entire
+        # shortlist before two-stage and transformer detectors could be compared.
+        grouped: dict[str, list[Dict[str, Any]]] = {}
+        for candidate in candidates:
+            group = _architecture_group(candidate)
+            grouped.setdefault(group, []).append(candidate)
+        for group in _architecture_group_order(grouped):
+            representative = min(grouped[group], key=lambda item: _tradeoff_key(item, filters))
+            add(representative, "architecture_diversity")
+            if len(chosen) >= top_k:
+                break
+        add(min(candidates, key=lambda item: _tradeoff_key(item, filters)), "balanced_tradeoff")
+        add(min(candidates, key=_resource_key), "resource_efficient")
+        add(min(candidates, key=lambda item: _accuracy_rank_key(item, filters)), "accuracy_oriented")
+        if _latency_requested(filters):
+            add(min(candidates, key=_latency_key), "latency_oriented")
+    else:
+        add(min(candidates, key=lambda item: _tradeoff_key(item, filters)), "balanced_tradeoff")
+        add(min(candidates, key=_resource_key), "resource_efficient")
+        add(max(candidates, key=_categorical_accuracy_key), "accuracy_oriented")
+        if _latency_requested(filters):
+            add(min(candidates, key=_latency_key), "latency_oriented")
+        seen_families: set[str] = set()
+        for candidate in sorted(candidates, key=lambda item: _tradeoff_key(item, filters)):
+            family = str((candidate.get("model") or {}).get("model_family", ""))
+            if family and family not in seen_families:
+                add(candidate, "architecture_diversity")
+                seen_families.add(family)
+            if len(chosen) >= top_k:
+                break
+
+    for candidate in sorted(candidates, key=lambda item: _tradeoff_key(item, filters)):
+        add(candidate, "additional_feasible_option")
+        if len(chosen) >= top_k:
+            break
+
+    selected = list(chosen.values())[:top_k]
+    for candidate in selected:
+        candidate["shortlist_roles"] = sorted(candidate.get("shortlist_roles") or [])
+    return sorted(selected, key=lambda item: str((item.get("model") or {}).get("id", "")))
+
+
+def _architecture_group(candidate: Dict[str, Any]) -> str:
+    family = _normalize_token((candidate.get("model") or {}).get("model_family"))
+    if family.startswith("yolo"):
+        return "yolo_one_stage"
+    if "faster_rcnn" in family:
+        return "two_stage_proposal"
+    if "rtdetr" in family or "detr" in family:
+        return "detr_transformer"
+    if "retinanet" in family:
+        return "anchor_focal_fpn"
+    if family.startswith("ssd"):
+        return "ssd"
+    return family or "unknown"
+
+
+def _architecture_group_order(grouped: Dict[str, list[Dict[str, Any]]]) -> list[str]:
+    priority = [
+        "yolo_one_stage",
+        "two_stage_proposal",
+        "detr_transformer",
+        "anchor_focal_fpn",
+        "ssd",
+    ]
+    return [group for group in priority if group in grouped] + sorted(set(grouped) - set(priority))
+
+
+def _latency_requested(filters: Dict[str, Any]) -> bool:
+    return any(filters.get(field) is not None for field in (
+        "latency_category_at_most",
+        "latency_preference",
+        "max_cpu_latency_ms",
+        "max_cpu_latency_ms_preference",
+    ))
+
+
+def _resource_key(candidate: Dict[str, Any]) -> tuple:
+    model = candidate.get("model") or {}
+    memory = candidate.get("model_inference_memory_estimate") or {}
+    size = _category_index(model.get("model_size_category"), MODEL_SIZE_ORDER)
+    return (
+        size if size is not None else 999,
+        _float_or_none(memory.get("total_estimated_vram_gb")) or float("inf"),
+        _float_or_none(memory.get("params_m")) or float("inf"),
+        str(model.get("id", "")),
+    )
+
+
+def _accuracy_rank_key(candidate: Dict[str, Any], filters: Dict[str, Any]) -> tuple:
+    model = candidate.get("model") or {}
+    benchmark_goal = filters.get("benchmark_target") or filters.get("benchmark_preference") or {}
+    benchmark = _best_comparable_benchmark(
+        candidate.get("_all_model_benchmark_results") or candidate.get("model_benchmark_results") or [],
+        benchmark_goal.get("primary_metric"),
+    )
+    return (
+        0 if benchmark is not None else 1,
+        -benchmark if benchmark is not None else 0.0,
+        -float(_category_index(model.get("accuracy_category"), ACCURACY_ORDER) or -1),
+        str(model.get("id", "")),
+    )
+
+
+def _categorical_accuracy_key(candidate: Dict[str, Any]) -> tuple:
+    """Legacy non-detection accuracy specialist ordering."""
+    model = candidate.get("model") or {}
+    return (
+        _category_index(model.get("accuracy_category"), ACCURACY_ORDER) or -1,
+        -(_float_or_none((candidate.get("model_inference_memory_estimate") or {}).get("params_m")) or float("inf")),
+        str(model.get("id", "")),
+    )
+def _latency_key(candidate: Dict[str, Any]) -> tuple:
+    model = candidate.get("model") or {}
+    values = _cpu_latency_values(candidate)
+    latency = _category_index(model.get("latency_category"), LATENCY_ORDER)
+    return (
+        min(values) if values else float("inf"),
+        latency if latency is not None else 999,
+        str(model.get("id", "")),
+    )
+
+
+def _criterion_assessments(candidate: Dict[str, Any], filters: Dict[str, Any]) -> Dict[str, Any]:
+    model = candidate.get("model") or {}
+    memory = candidate.get("model_inference_memory_estimate") or {}
+    return {
+        "accuracy": {"category": model.get("accuracy_category"), "status": "known" if model.get("accuracy_category") else "unknown"},
+        "latency": {"category": model.get("latency_category"), "status": "known" if model.get("latency_category") else "unknown"},
+        "inference_memory": {"estimated_vram_gb": memory.get("total_estimated_vram_gb"), "status": "known" if memory.get("total_estimated_vram_gb") is not None else "unknown"},
+        "hard_constraints": {"status": "feasible", "matched_filters": candidate.get("matched_filters", [])},
+        "small_object_suitability": {"status": "unverified" if filters.get("object_size_risk") else "not_requested"},
     }
 
 
@@ -307,72 +469,36 @@ def _cpu_latency_assessment(candidate: Dict[str, Any], filters: Dict[str, Any]) 
     }
 
 
-def _balanced_recommendation(
-    candidates: list[Dict[str, Any]],
-    filters: Dict[str, Any],
-) -> tuple[Optional[Dict[str, Any]], Optional[Dict[str, Any]]]:
-    """Allow one same-family size step when a hard CPU limit lacks measurements."""
-    if not candidates:
-        return None, None
-    baseline = candidates[0]
-    if filters.get("max_cpu_latency_ms") is None or _cpu_latency_values(baseline):
-        return baseline, None
-
-    base_model = baseline.get("model") or {}
-    base_size = _category_index(base_model.get("model_size_category"), MODEL_SIZE_ORDER)
-    base_accuracy = _category_index(base_model.get("accuracy_category"), ACCURACY_ORDER)
-    latency_preference = filters.get("latency_preference")
-    if base_size is None:
-        return baseline, None
-
-    for candidate in candidates[1:]:
-        model = candidate.get("model") or {}
-        size = _category_index(model.get("model_size_category"), MODEL_SIZE_ORDER)
-        accuracy = _category_index(model.get("accuracy_category"), ACCURACY_ORDER)
-        if model.get("model_family") != base_model.get("model_family"):
-            continue
-        if size != base_size + 1:
-            continue
-        if latency_preference and not _latency_at_most(
-            model.get("latency_category"), latency_preference
-        ):
-            continue
-        if accuracy is None or base_accuracy is None or accuracy <= base_accuracy:
-            continue
-        return candidate, baseline
-    return baseline, None
-
-
-def _candidate_rank_key(candidate: Dict[str, Any], filters: Dict[str, Any]) -> tuple:
-    """Choose the smallest feasible model that best meets the requested performance."""
+def _tradeoff_key(candidate: Dict[str, Any], filters: Dict[str, Any]) -> tuple:
+    """Rank feasible models by requested quality, then by soft constraints."""
     model = candidate.get("model") or {}
     memory = candidate.get("model_inference_memory_estimate") or {}
     accuracy_index = _category_index(model.get("accuracy_category"), ACCURACY_ORDER)
     latency_index = _category_index(model.get("latency_category"), LATENCY_ORDER)
     minimum_vram = _float_or_none(memory.get("practical_min_vram_gb"))
     preference_penalty = _soft_preference_penalty(candidate, filters)
+    size_index = _category_index(model.get("model_size_category"), MODEL_SIZE_ORDER)
     benchmark_goal = filters.get("benchmark_target") or filters.get("benchmark_preference")
     if benchmark_goal:
-        size_index = _category_index(model.get("model_size_category"), MODEL_SIZE_ORDER)
         total_memory = _float_or_none(memory.get("total_estimated_vram_gb"))
         params_m = _float_or_none(memory.get("params_m"))
         flops_b = _float_or_none(memory.get("flops_b"))
-        meets_numeric_target = bool(_benchmarks_that_satisfy_target(
+        benchmark = _best_comparable_benchmark(
             candidate.get("_all_model_benchmark_results") or candidate.get("model_benchmark_results") or [],
             benchmark_goal.get("primary_metric"),
-            benchmark_goal.get("target_value"),
-        ))
+        )
         return (
+            0 if benchmark is not None else 1,
+            -benchmark if benchmark is not None else 0.0,
             preference_penalty,
-            0 if meets_numeric_target else 1,
+            -float(accuracy_index if accuracy_index is not None else -1),
+            float(total_memory if total_memory is not None else float("inf")),
             float(size_index if size_index is not None else len(MODEL_SIZE_ORDER)),
             float(params_m if params_m is not None else float("inf")),
-            float(total_memory if total_memory is not None else float("inf")),
             float(flops_b if flops_b is not None else float("inf")),
-            -float(accuracy_index if accuracy_index is not None else -1),
             str(model.get("id", "")),
         )
-    if filters.get("memory_category") or any(
+    if filters.get("memory_category") or filters.get("memory_category_preference") or any(
         filters.get(field) is not None
         for field in ("max_runtime_memory_mb", "max_model_size_mb", "max_parameters_m")
     ):
@@ -388,17 +514,17 @@ def _candidate_rank_key(candidate: Dict[str, Any], filters: Dict[str, Any]) -> t
         return (
             preference_penalty,
             0 if meets_preference else 1,
+            -float(accuracy_index if accuracy_index is not None else -1),
+            float(total_memory if total_memory is not None else float("inf")),
             float(size_index if size_index is not None else len(MODEL_SIZE_ORDER)),
             float(params_m if params_m is not None else float("inf")),
-            float(total_memory if total_memory is not None else float("inf")),
             float(flops_b if flops_b is not None else float("inf")),
-            -float(accuracy_index if accuracy_index is not None else -1),
             str(model.get("id", "")),
         )
     return (
         preference_penalty,
         -float(accuracy_index if accuracy_index is not None else -1),
-        float(latency_index if latency_index is not None else len(LATENCY_ORDER)),
+        float(latency_index if _latency_requested(filters) and latency_index is not None else 0),
         float(minimum_vram if minimum_vram is not None else float("inf")),
         str(model.get("id", "")),
     )
@@ -410,12 +536,26 @@ def _soft_preference_penalty(candidate: Dict[str, Any], filters: Dict[str, Any])
     memory = candidate.get("model_inference_memory_estimate") or {}
     penalty = 0
 
+    # A numeric runtime-memory preference is more specific than the coarse
+    # category proxy. Do not penalize a model for its parameter count/size when
+    # its estimated runtime footprint satisfies the user's stated limit.
+    memory_category = filters.get("memory_category_preference")
+    runtime_limit = _float_or_none(filters.get("max_runtime_memory_mb_preference"))
+    runtime_gb = _float_or_none(memory.get("total_estimated_vram_gb"))
+    if memory_category and runtime_limit is None:
+        allowed_sizes = MEMORY_ALLOWED_SIZES.get(memory_category, set(MODEL_SIZE_ORDER))
+        category_limit = MEMORY_PARAMETER_LIMITS_M.get(memory_category)
+        params_m = _float_or_none(memory.get("params_m"))
+        if (
+            model.get("model_size_category") not in allowed_sizes
+            or (category_limit is not None and params_m is not None and params_m > category_limit)
+        ):
+            penalty += 1
+
     latency_preference = filters.get("latency_preference")
     if latency_preference and not _latency_at_most(model.get("latency_category"), latency_preference):
         penalty += 1
 
-    runtime_limit = _float_or_none(filters.get("max_runtime_memory_mb_preference"))
-    runtime_gb = _float_or_none(memory.get("total_estimated_vram_gb"))
     if runtime_limit is not None and runtime_gb is not None and runtime_gb * 1024 > runtime_limit:
         penalty += 1
 
@@ -472,17 +612,21 @@ def format_model_selection_context(context: Dict[str, Any]) -> str:
         f"Retrieval: {context.get('retrieval_strategy')}",
         f"Task filter: {context.get('task_filter') or 'none'}",
         f"Active filters: {_format_mapping(context.get('filters') or {})}",
-        f"Training hardware (soft feasibility): {_format_mapping(context.get('training_hardware') or {})}",
-        "Use: these are the highest-ranked executable graph candidates that satisfy every available filter.",
+        f"Training hardware (feasibility filter): {_format_mapping(context.get('training_hardware') or {})}",
+        "Use: these are complementary executable candidates that satisfy every available hard filter.",
+        "Order: alphabetical by model ID; position is not a recommendation.",
         "",
     ]
 
-    for index, candidate in enumerate(candidates, start=1):
+    for candidate in candidates:
         model = candidate["model"]
         memory = candidate.get("model_inference_memory_estimate") or {}
+        training_requirement = candidate.get("model_training_hardware_requirement") or {}
         lines.extend(
             [
-                f"{index}. {model.get('model_name')} ({model.get('id')})",
+                f"- {model.get('model_name')} ({model.get('id')})",
+                f"   Shortlist roles: {', '.join(candidate.get('shortlist_roles') or ['feasible_option'])}",
+                f"   Criterion assessments: {_format_mapping(candidate.get('criterion_assessments') or {})}",
                 (
                     "   Model facts: "
                     f"task={model.get('task')}, family={model.get('model_family')}, "
@@ -511,6 +655,23 @@ def format_model_selection_context(context: Dict[str, Any]) -> str:
             )
             if memory.get("notes"):
                 lines.append(f"   Memory notes: {memory.get('notes')}")
+        if training_requirement:
+            lines.append(
+                "   Training hardware requirement: "
+                f"scope={training_requirement.get('training_scope')}, "
+                f"input_size={training_requirement.get('input_size')}, "
+                f"batch_size={training_requirement.get('batch_size')}, "
+                f"precision={training_requirement.get('precision')}, "
+                f"lowest_observed_success_vram_gb="
+                f"{training_requirement.get('lowest_observed_success_vram_gb') or 'not found'}, "
+                f"observed_peak_vram_gb="
+                f"{training_requirement.get('observed_peak_vram_gb') or 'not reported'}, "
+                f"recommended_vram_gb={training_requirement.get('recommended_vram_gb')}, "
+                f"status={training_requirement.get('recommendation_status')}, "
+                f"confidence={training_requirement.get('confidence')}"
+            )
+            if training_requirement.get("notes"):
+                lines.append(f"   Training hardware notes: {training_requirement.get('notes')}")
 
         if candidate.get("model_benchmark_results"):
             lines.append("   Benchmark results:")
@@ -582,6 +743,22 @@ def _active_filters(state: PipelineState, task_id: Optional[str]) -> Dict[str, A
     filters: Dict[str, Any] = {}
     if task_id:
         filters["task"] = task_id
+    from cvmodellearning.schemas.revision import initial_hpo_override_values
+    if initial_hpo_override_values(state).get("training_mode") == "lora":
+        filters["requires_lora"] = True
+    if task_id == "object_detection":
+        robustness = state.robustness_requirements
+        requested_scales = {
+            str(value).strip().lower()
+            for value in (
+                robustness.get("object_scale", [])
+                if isinstance(robustness, dict)
+                else robustness.object_scale
+            )
+        }
+        if "small" in requested_scales:
+            filters["object_size_risk"] = "medium"
+            filters["small_object_benchmark_status"] = "unverified_without_ap_small"
 
     performance = state.performance_requirements
     if performance:
@@ -603,6 +780,13 @@ def _active_filters(state: PipelineState, task_id: Optional[str]) -> Dict[str, A
         if hardware.hardware_category:
             filters["hardware_category"] = hardware.hardware_category
 
+    if state.training_hardware:
+        filters["training_available_vram_gb"] = (
+            state.training_hardware.vram_gb
+            if state.training_hardware.vram_gb is not None
+            else state.training_hardware.training_memory_budget_gb
+        )
+
     constraints = state.deployment_constraints
     if constraints:
         hard_limits = set(constraints.hard_limits)
@@ -615,7 +799,7 @@ def _active_filters(state: PipelineState, task_id: Optional[str]) -> Dict[str, A
         ):
             value = getattr(constraints, field)
             if value is not None:
-                if field == "memory_category" or field in hard_limits:
+                if field in hard_limits:
                     filters[field] = value
                 else:
                     filters[f"{field}_preference"] = value
@@ -629,7 +813,22 @@ def _candidate_from_graph(
     task_id: Optional[str],
 ) -> Dict[str, Any]:
     model = _project_attrs(graph.nodes[model_id], MODEL_FIELDS, include_id=model_id)
+    registry_model = next(
+        (
+            item for item in enabled_models(
+                "detection" if task_id == "object_detection"
+                else "classification" if task_id == "image_classification"
+                else "visual question answering"
+            )
+            if item.id == model_id
+        ),
+        None,
+    )
+    if registry_model is not None:
+        # Executable capability is authoritative over potentially stale ontology metadata.
+        model["lora_supported"] = registry_model.lora_supported
     memory = _first_related_node(graph, model_id, "has_inference_memory_estimate")
+    training_hardware = _first_related_node(graph, model_id, "has_training_hardware_requirement")
 
     benchmarks = _related_nodes(graph, model_id, "has_benchmark_result")
     if task_id:
@@ -637,13 +836,16 @@ def _candidate_from_graph(
     benchmark_payloads = _ordered_benchmarks([_benchmark_payload(graph, benchmark) for benchmark in benchmarks])
 
     metrics = _evaluation_metrics_for_task(graph, task_id, benchmark_payloads)
-    evidence = _evidence_sources(graph, [model, memory, *benchmarks, *metrics])
+    evidence = _evidence_sources(graph, [model, memory, training_hardware, *benchmarks, *metrics])
 
     return {
         "model": model,
         "model_inference_memory_estimate": _project_attrs(
             memory, MEMORY_FIELDS, include_id=memory.get("id")
         ) if memory else None,
+        "model_training_hardware_requirement": _project_attrs(
+            training_hardware, TRAINING_HARDWARE_FIELDS, include_id=training_hardware.get("id")
+        ) if training_hardware else None,
         "_all_model_benchmark_results": benchmark_payloads,
         "model_benchmark_results": benchmark_payloads[:10],
         "evaluation_metrics": [_project_attrs(metric, METRIC_FIELDS, include_id=metric.get("id")) for metric in metrics],
@@ -654,6 +856,7 @@ def _candidate_from_graph(
 def _passes_filters(candidate: Dict[str, Any], filters: Dict[str, Any]) -> tuple[bool, List[str], Optional[str]]:
     model = candidate.get("model") or {}
     memory = candidate.get("model_inference_memory_estimate") or {}
+    training_requirement = candidate.get("model_training_hardware_requirement") or {}
     applied = []
 
     task = filters.get("task")
@@ -661,6 +864,11 @@ def _passes_filters(candidate: Dict[str, Any], filters: Dict[str, Any]) -> tuple
         if _clean(model.get("task")) != task:
             return False, applied, "task"
         applied.append(f"task is {task}")
+
+    if filters.get("requires_lora"):
+        if model.get("lora_supported") is not True:
+            return False, applied, "lora_supported"
+        applied.append("model has executable LoRA support")
 
     latency = filters.get("latency_category_at_most")
     if latency:
@@ -736,12 +944,30 @@ def _passes_filters(candidate: Dict[str, Any], filters: Dict[str, Any]) -> tuple
             return False, applied, "practical_min_vram_gb"
         applied.append(f"practical_min_vram_gb {min_vram} <= available_vram_gb {available_vram}")
 
+    training_budget = _float_or_none(filters.get("training_available_vram_gb"))
+    recommended_training_vram = _float_or_none(training_requirement.get("recommended_vram_gb"))
+    if training_budget is not None:
+        if recommended_training_vram is None:
+            applied.append("unverified: no evidence-backed training VRAM recommendation is available")
+        elif recommended_training_vram > training_budget:
+            return False, applied, "recommended_training_vram_gb"
+        else:
+            applied.append(
+                f"recommended training VRAM {recommended_training_vram}GB <= "
+                f"training GPU capacity {training_budget}GB"
+            )
+
     hardware_category = filters.get("hardware_category")
     if hardware_category:
         recommended = memory.get("recommended_hardware_category")
         if not _hardware_category_fits(hardware_category, recommended):
-            return False, applied, "recommended_hardware_category"
-        applied.append(f"hardware_category {_format_hardware_filter(hardware_category)} meets recommended {recommended}")
+            applied.append(
+                f"unverified: available hardware category {_format_hardware_filter(hardware_category)} "
+                f"does not meet the recommended {recommended}; this is advisory because the "
+                "recommendation may be latency-oriented"
+            )
+        else:
+            applied.append(f"hardware_category {_format_hardware_filter(hardware_category)} meets recommended {recommended}")
 
     benchmark_target = filters.get("benchmark_target")
     if benchmark_target:
@@ -826,6 +1052,27 @@ def _benchmarks_that_satisfy_target(
             matching.append(benchmark)
 
     return matching
+
+
+def _best_comparable_benchmark(
+    benchmarks: Sequence[Dict[str, Any]],
+    primary_metric: Optional[str],
+) -> Optional[float]:
+    """Return the best value for the requested metric instead of target pass/fail."""
+    metric_ids = _metric_ids_for_requirement(primary_metric)
+    values: list[tuple[float, str]] = []
+    for benchmark in benchmarks:
+        if _clean(benchmark.get("metric_id")) not in metric_ids:
+            continue
+        value = _float_or_none(benchmark.get("metric_value"))
+        if value is None:
+            continue
+        direction = _clean((benchmark.get("metric") or {}).get("optimization_direction")).lower()
+        values.append((value, direction))
+    if not values:
+        return None
+    # Convert minimizing metrics to a utility so larger always means better.
+    return max(-value if direction == "minimize" else value for value, direction in values)
 
 
 def _metric_ids_for_requirement(primary_metric: Optional[str]) -> set[str]:

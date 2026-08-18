@@ -33,10 +33,6 @@ class LLMFieldRationale(BaseModel):
 
     field: str = Field(..., min_length=1, description="Top-level configuration field being explained.")
     reason: str = Field(..., min_length=1, description="Why this value fits the model, data, and hardware.")
-    applied_policy_ids: List[str] = Field(
-        default_factory=list,
-        description="Applicable policy-registry IDs that guided this field decision.",
-    )
 
 
 class ClassificationConfigFields(BaseModel):
@@ -364,6 +360,8 @@ class ClassificationConfigModel(ClassificationConfigFields):
 
         if self.warmup_epochs > self.num_epochs:
             raise ValueError("warmup_epochs cannot exceed num_epochs.")
+        if self.patience and self.patience >= self.num_epochs:
+            raise ValueError("patience must be lower than num_epochs when early stopping is enabled.")
         if self.scheduler_name == "cosine" and self.min_learning_rate >= self.learning_rate:
             raise ValueError("min_learning_rate must be lower than learning_rate for cosine scheduling.")
         if self.scheduler_name == "cosine" and self.warmup_epochs >= self.num_epochs:

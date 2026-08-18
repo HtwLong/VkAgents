@@ -2,6 +2,9 @@ import pytest
 from pydantic import ValidationError
 
 from cvmodellearning.agents.hyperparameter_agents import (
+    HPO_REVIEW_HISTORY_LIMIT,
+    append_rejected_review_record,
+    build_evaluator_messages,
     build_validation_error_summary,
     demote_external_deployment_findings,
     discard_inactive_schema_findings,
@@ -9,6 +12,7 @@ from cvmodellearning.agents.hyperparameter_agents import (
     evaluator_active_configuration,
     format_pydantic_validation_errors,
     normalize_hpo_decision,
+    rejected_review_record,
 )
 from cvmodellearning.graphrag.hyperparameter_context import (
     _normalize_inactive_classification_fields,
@@ -16,6 +20,78 @@ from cvmodellearning.graphrag.hyperparameter_context import (
 from cvmodellearning.schemas.classification_hpo import ClassificationConfigModel
 from cvmodellearning.schemas.detection_hpo import DetectionConfigModel
 from cvmodellearning.schemas.decision_schema import HpoDecision, HpoFinding
+
+
+def test_reviewer_history_is_bounded_to_latest_three_rejections():
+    history = []
+    for round_idx in range(1, 6):
+        append_rejected_review_record(history, {"round": round_idx})
+    assert HPO_REVIEW_HISTORY_LIMIT == 3
+    assert [item["round"] for item in history] == [3, 4, 5]
+
+
+def test_rejected_review_record_tracks_config_findings_and_changes():
+    decision = HpoDecision(
+        accept=False,
+        reason="Learning rate is unsafe.",
+        findings=[
+            HpoFinding(field="learning_rate", severity="safety_warning",
+                       reason="Too high for stable fine-tuning.", recommended_value="0.001"),
+            HpoFinding(field="batch_size", severity="preference",
+                       reason="A larger batch may be faster."),
+        ],
+    )
+    record = rejected_review_record(
+        round_idx=2,
+        candidate={"learning_rate": 0.005, "batch_size": 8},
+        decision=decision,
+        previous_candidate={"learning_rate": 0.01, "batch_size": 8},
+    )
+    assert len(record["candidate_fingerprint"]) == 16
+    assert record["active_configuration"]["learning_rate"] == 0.005
+    assert record["changes_from_previous_rejected_candidate"] == {
+        "learning_rate": {"from": 0.01, "to": 0.005}
+    }
+    assert [finding["field"] for finding in record["blocking_findings"]] == ["learning_rate"]
+
+
+def test_evaluator_messages_include_prior_rejections_and_current_candidate():
+    messages = build_evaluator_messages(
+        system_prompt="review safely",
+        evaluator_context_json='{"task": "classification"}',
+        runtime_guidance="runtime facts",
+        candidate={"learning_rate": 0.001},
+        rejected_review_history=[{
+            "round": 1,
+            "candidate_fingerprint": "abc",
+            "active_configuration": {"learning_rate": 0.01},
+            "blocking_findings": [{"field": "learning_rate"}],
+        }],
+    )
+    assert messages[0] == {"role": "system", "content": "review safely"}
+    review_request = messages[1]["content"]
+    assert "Previous Rejected Review Rounds" in review_request
+    assert '"candidate_fingerprint": "abc"' in review_request
+    assert '"learning_rate": 0.001' in review_request
+    assert "explicitly explain any reversal" in review_request
+
+
+def test_review_fingerprint_ignores_rationale_only_changes():
+    decision = HpoDecision(accept=False, reason="Unsafe.", findings=[])
+    first = rejected_review_record(
+        round_idx=1,
+        candidate={"batch_size": 32, "rationale": "Initial rationale."},
+        decision=decision,
+        previous_candidate=None,
+    )
+    second = rejected_review_record(
+        round_idx=2,
+        candidate={"batch_size": 32, "rationale": "Reworded rationale."},
+        decision=decision,
+        previous_candidate={"batch_size": 32, "rationale": "Initial rationale."},
+    )
+    assert first["candidate_fingerprint"] == second["candidate_fingerprint"]
+    assert second["changes_from_previous_rejected_candidate"] == {}
 
 
 def test_validation_diagnostics_include_field_input_and_error_type():
