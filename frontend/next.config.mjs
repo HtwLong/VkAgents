@@ -1,6 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: "standalone",
+
+  experimental: {
+    proxyTimeout: 600_000,
+  },
+
   typescript: {
     ignoreBuildErrors: true,
   },
@@ -8,7 +13,8 @@ const nextConfig = {
     unoptimized: true,
   },
   async rewrites() {
-    const apiBase = process.env.BACKEND_INTERNAL_URL ?? "http://127.0.0.1:8000"
+    const apiBase =
+      process.env.BACKEND_INTERNAL_URL ?? "http://127.0.0.1:8000"
 
     return [
       {
