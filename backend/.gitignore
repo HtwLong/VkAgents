@@ -8,6 +8,9 @@ wheels/
 .DS_Store
 __pycache__/
 *.py[cod]
+.pytest_cache/
+.pytest-*/
+.test-tmp/
 
 # These are downloaded model weights
 *.pt
