@@ -4,7 +4,13 @@ import { useState } from "react"
 import { Activity, Check, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import type { PipelineStage, StepStatus } from "@/lib/pipeline"
+import type {
+  PipelineStage,
+  RevisionPlan,
+  RevisionScope,
+  RevisionVerification,
+  StepStatus,
+} from "@/lib/pipeline"
 import type { RunStatus } from "@/hooks/use-pipeline"
 import { PipelineStep } from "@/components/pipeline-step"
 import { DecisionEvidencePanel, type DecisionEvidence } from "@/components/decision-evidence"
@@ -23,10 +29,19 @@ export function PipelineView({
   chosenParameters,
   context,
   decisionEvidence,
-  changeRequest,
-  onChangeRequest,
+  requiredChanges,
+  preferences,
+  revisionScope,
+  revisionPlan,
+  revisionVerification,
+  onRequiredChanges,
+  onPreferences,
+  onRevisionScope,
+  onInterpret,
+  onApplyRevision,
+  onCancelRevision,
+  onRevisionStrength,
   onConfirm,
-  onReject,
 }: {
   pipeline: PipelineStage[]
   status: RunStatus
@@ -38,10 +53,19 @@ export function PipelineView({
   chosenParameters: unknown
   context: unknown
   decisionEvidence: Record<string, DecisionEvidence>
-  changeRequest: string
-  onChangeRequest: (value: string) => void
+  requiredChanges: string
+  preferences: string
+  revisionScope: RevisionScope
+  revisionPlan: RevisionPlan | null
+  revisionVerification: RevisionVerification | null
+  onRequiredChanges: (value: string) => void
+  onPreferences: (value: string) => void
+  onRevisionScope: (value: RevisionScope) => void
+  onInterpret: () => void
+  onApplyRevision: () => void
+  onCancelRevision: () => void
+  onRevisionStrength: (changeId: string, strength: "required" | "preferred") => void
   onConfirm: () => void
-  onReject: () => void
 }) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set())
 
@@ -169,29 +193,102 @@ export function PipelineView({
                         {status === "waiting" && (
                           <>
                             <label className="flex flex-col gap-1.5 text-xs font-medium text-foreground">
-                              Change request
+                              Change scope
+                              <select
+                                value={revisionScope}
+                                onChange={(event) => onRevisionScope(event.target.value as RevisionScope)}
+                                className="rounded-md border border-border bg-background px-3 py-2 text-sm font-normal"
+                              >
+                                <option value="automatic">Automatic</option>
+                                <option value="task-interpretation">Requirements</option>
+                                <option value="model-selection">Model</option>
+                                <option value="dataset-selection">Dataset</option>
+                                <option value="choose-hyperparameters">Hyperparameters</option>
+                              </select>
+                            </label>
+                            <label className="flex flex-col gap-1.5 text-xs font-medium text-foreground">
+                              Required changes
                               <textarea
-                                value={changeRequest}
-                                onChange={(event) => onChangeRequest(event.target.value)}
-                                placeholder="Describe what should change in the proposed hyperparameters."
+                                value={requiredChanges}
+                                onChange={(event) => onRequiredChanges(event.target.value)}
+                                placeholder="Must be applied exactly, for example: use YOLO11m and set batch size to 16."
                                 rows={3}
                                 className="resize-y rounded-md border border-border bg-background px-3 py-2 text-sm font-normal focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                               />
                             </label>
+                            <label className="flex flex-col gap-1.5 text-xs font-medium text-foreground">
+                              Preferences (optional)
+                              <textarea
+                                value={preferences}
+                                onChange={(event) => onPreferences(event.target.value)}
+                                placeholder="Applied when compatible, for example: prefer cosine scheduling."
+                                rows={2}
+                                className="resize-y rounded-md border border-border bg-background px-3 py-2 text-sm font-normal focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                              />
+                            </label>
+
+                            {revisionPlan && (
+                              <div className="flex flex-col gap-2 rounded-md border border-primary/30 bg-primary/5 p-3 text-xs">
+                                <span className="font-medium">{revisionPlan.summary}</span>
+                                <span className="text-muted-foreground">
+                                  Rerun from: {revisionPlan.restart_from}
+                                </span>
+                                <ul className="list-disc space-y-1 pl-5">
+                                  {revisionPlan.changes.map((change) => (
+                                    <li key={change.id} className="flex flex-wrap items-center gap-2">
+                                      <select
+                                        aria-label={`Priority for ${change.summary}`}
+                                        value={change.strength}
+                                        onChange={(event) => onRevisionStrength(
+                                          change.id,
+                                          event.target.value as "required" | "preferred",
+                                        )}
+                                        className="rounded border border-border bg-background px-1.5 py-1 capitalize"
+                                      >
+                                        <option value="required">Required</option>
+                                        <option value="preferred">Preferred</option>
+                                      </select>
+                                      <span>{change.summary} <span className="text-muted-foreground">({change.target_step})</span></span>
+                                    </li>
+                                  ))}
+                                </ul>
+                                <div className="flex gap-2">
+                                  <Button size="sm" onClick={onApplyRevision}>Apply revision</Button>
+                                  <Button size="sm" variant="outline" onClick={onCancelRevision}>Cancel</Button>
+                                </div>
+                              </div>
+                            )}
+
+                            {revisionVerification && (
+                              <div className={`rounded-md border p-3 text-xs ${revisionVerification.satisfied ? "border-emerald-500/40 bg-emerald-500/10" : "border-destructive/40 bg-destructive/10"}`}>
+                                <span className="font-medium">
+                                  {revisionVerification.satisfied
+                                    ? "All required changes were verified."
+                                    : "Some required changes were not satisfied."}
+                                </span>
+                                <ul className="mt-2 list-disc space-y-1 pl-5">
+                                  {revisionVerification.checks.map((check) => (
+                                    <li key={check.change_id}>
+                                      {check.satisfied ? "Applied" : "Not applied"}: {check.summary}
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
 
                             <div className="flex flex-col gap-2 sm:flex-row">
-                              <Button onClick={onConfirm}>
+                              <Button onClick={onConfirm} disabled={revisionVerification?.satisfied === false}>
                                 <Check className="size-4" aria-hidden />
                                 Confirm
                               </Button>
                               <Button
                                 variant="outline"
-                                onClick={onReject}
-                                disabled={!changeRequest.trim()}
+                                onClick={onInterpret}
+                                disabled={!!revisionPlan || (!requiredChanges.trim() && !preferences.trim())}
                                 className="bg-transparent"
                               >
                                 <X className="size-4" aria-hidden />
-                                Reject and request changes
+                                Interpret changes
                               </Button>
                             </div>
                           </>

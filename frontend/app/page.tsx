@@ -1,16 +1,18 @@
 "use client"
 
 import { useState } from "react"
-import { AlertCircle, Boxes, DatabaseZap, FolderOpen, Plus, Play, ShieldCheck, Square } from "lucide-react"
+import { AlertCircle, Boxes, DatabaseZap, FolderOpen, Plus, Play, Square } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { PromptInput } from "@/components/prompt-input"
 import { ExamplePrompts } from "@/components/example-prompts"
 import { PipelineView } from "@/components/pipeline-view"
 import { PipelineOutputs } from "@/components/pipeline-outputs"
 import { InferenceSection } from "@/components/inference-section"
-import { FeedbackBar } from "@/components/feedback-bar"
+import { PostTrainingAssessmentSection } from "@/components/post-training-assessment"
 import { EvaluationResults } from "@/components/evaluation-results"
+import { PlanningPerformance } from "@/components/planning-performance"
 import { usePipeline } from "@/hooks/use-pipeline"
+import type { RevisionScope } from "@/lib/pipeline"
 
 type InferenceTask = "classification" | "detection" | "vqa"
 
@@ -24,9 +26,10 @@ function inferredTask(context: unknown): InferenceTask | null {
 
 export default function Page() {
   const [prompt, setPrompt] = useState("")
-  const [changeRequest, setChangeRequest] = useState("")
+  const [requiredChanges, setRequiredChanges] = useState("")
+  const [preferences, setPreferences] = useState("")
+  const [revisionScope, setRevisionScope] = useState<RevisionScope>("automatic")
   const [useGraphRag, setUseGraphRag] = useState(true)
-  const [usePolicyRegistry, setUsePolicyRegistry] = useState(true)
   const [runToLoad, setRunToLoad] = useState("")
 
   const {
@@ -42,12 +45,24 @@ export default function Page() {
     decisionEvidence,
     artifacts,
     evaluationReport,
+    planningLLMUsage,
+    postTrainingAssessment,
+    assessmentEligibility,
     start,
     loadRun,
     reset,
     stop,
-    submitChangeRequest,
+    revisionPlan,
+    revisionVerification,
+    planRevision,
+    applyRevision,
+    cancelRevision,
+    updateRevisionStrength,
+    confirmPlan,
     continueRun,
+    requestAssessment,
+    redoRecommendation,
+    approveAssessment,
     getStepStatus,
     getRevealed,
     getStepDuration,
@@ -62,23 +77,23 @@ export default function Page() {
 
   const startPipeline = () => {
     if (!prompt.trim()) return
-    setChangeRequest("")
-    start(prompt.trim(), useGraphRag, usePolicyRegistry)
-  }
-
-  const sendChangeRequest = () => {
-    submitChangeRequest(changeRequest)
-    setChangeRequest("")
+    setRequiredChanges("")
+    setPreferences("")
+    start(prompt.trim(), useGraphRag)
   }
 
   const startNewPipeline = () => {
     reset()
     setRunToLoad("")
-    setChangeRequest("")
+    setRequiredChanges("")
+    setPreferences("")
   }
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-6 px-4 py-8 sm:px-6 lg:py-12">
+    <main
+      suppressHydrationWarning
+      className="mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-6 px-4 py-8 sm:px-6 lg:py-12"
+    >
       <header className="surface-card flex flex-col gap-3 rounded-2xl border border-white/80 bg-white/82 p-6 sm:p-8">
         <div className="flex items-center gap-2.5">
           <span className="flex size-9 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 text-primary shadow-sm">
@@ -140,37 +155,6 @@ export default function Page() {
             <span
               className={`absolute top-0.5 size-5 rounded-full bg-white shadow-sm transition-transform ${
                 useGraphRag ? "translate-x-5" : "translate-x-0.5"
-              }`}
-            />
-          </span>
-        </button>
-
-        <button
-          type="button"
-          role="switch"
-          aria-checked={usePolicyRegistry}
-          disabled={!canEditPrompt}
-          onClick={() => setUsePolicyRegistry((enabled) => !enabled)}
-          className="flex items-center justify-between gap-4 rounded-lg border border-border bg-card px-3 py-2.5 text-left transition-colors hover:border-primary/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          <span className="flex items-center gap-3">
-            <ShieldCheck className="size-4 text-primary" aria-hidden />
-            <span>
-              <span className="block text-sm font-medium">Use Policy Registry</span>
-              <span className="ui-caption block">
-                Let advisory policies guide LLM-selected hyperparameter fields.
-              </span>
-            </span>
-          </span>
-          <span
-            aria-hidden
-            className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${
-              usePolicyRegistry ? "bg-primary" : "bg-muted-foreground/30"
-            }`}
-          >
-            <span
-              className={`absolute top-0.5 size-5 rounded-full bg-white shadow-sm transition-transform ${
-                usePolicyRegistry ? "translate-x-5" : "translate-x-0.5"
               }`}
             />
           </span>
@@ -293,11 +277,22 @@ export default function Page() {
         chosenParameters={chosenParameters}
         context={context}
         decisionEvidence={decisionEvidence}
-        changeRequest={changeRequest}
-        onChangeRequest={setChangeRequest}
-        onConfirm={() => submitChangeRequest("")}
-        onReject={sendChangeRequest}
+        requiredChanges={requiredChanges}
+        preferences={preferences}
+        revisionScope={revisionScope}
+        revisionPlan={revisionPlan}
+        revisionVerification={revisionVerification}
+        onRequiredChanges={setRequiredChanges}
+        onPreferences={setPreferences}
+        onRevisionScope={setRevisionScope}
+        onInterpret={() => planRevision(requiredChanges, preferences, revisionScope)}
+        onApplyRevision={applyRevision}
+        onCancelRevision={cancelRevision}
+        onRevisionStrength={updateRevisionStrength}
+        onConfirm={confirmPlan}
       />
+
+      <PlanningPerformance usage={planningLLMUsage} getStepDuration={getStepDuration} />
 
       <EvaluationResults report={evaluationReport} />
 
@@ -307,10 +302,14 @@ export default function Page() {
       {/* Inference */}
       <InferenceSection task={task} jobId={jobId} enabled={done} />
 
-      {/* Feedback */}
-      {!isLoadedRun && (
-        <FeedbackBar onRetry={startPipeline} disabled={running || waiting || !prompt.trim()} />
-      )}
+      <PostTrainingAssessmentSection
+        assessment={postTrainingAssessment}
+        eligibility={assessmentEligibility}
+        busy={running || cancelling}
+        onAnalyze={requestAssessment}
+        onRegenerate={redoRecommendation}
+        onApprove={approveAssessment}
+      />
     </main>
   )
 }

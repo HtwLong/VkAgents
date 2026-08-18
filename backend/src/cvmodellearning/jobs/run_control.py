@@ -32,7 +32,13 @@ def read_run_state(job_id: str) -> dict[str, Any] | None:
     return value if isinstance(value, dict) else None
 
 
-def write_run_state(job_id: str, status: str, *, active_step: str | None = None) -> dict[str, Any]:
+def write_run_state(
+    job_id: str,
+    status: str,
+    *,
+    active_step: str | None = None,
+    error: str | None = None,
+) -> dict[str, Any]:
     with _lock:
         previous = read_run_state(job_id) or {}
         attempt = int(previous.get("attempt", 0))
@@ -45,6 +51,8 @@ def write_run_state(job_id: str, status: str, *, active_step: str | None = None)
             "attempt": attempt,
             "updated_at": datetime.now(timezone.utc).isoformat(),
         }
+        if error:
+            state["error"] = error
         path = state_path(job_id)
         temporary = path.with_suffix(".json.tmp")
         temporary.write_text(json.dumps(state, indent=2), encoding="utf-8")
@@ -79,6 +87,11 @@ def raise_if_cancelled(job_id: str) -> None:
 
 def mark_stopped(job_id: str, step_id: str) -> None:
     write_run_state(job_id, "stopped", active_step=step_id)
+
+
+def mark_failed(job_id: str, step_id: str, error: str) -> None:
+    """Publish a durable terminal failure for status polling and restarts."""
+    write_run_state(job_id, "failed", active_step=step_id, error=error)
 
 
 def finish_or_stop(job_id: str, step_id: str, *, status: str = "waiting") -> None:

@@ -91,3 +91,17 @@ def test_cancellation_wins_step_completion_race(monkeypatch, tmp_path):
         run_control.finish_or_stop("job", "prepare-data")
 
     assert run_control.read_run_state("job")["status"] == "stopped"
+
+
+def test_failed_run_state_is_durable(monkeypatch, tmp_path):
+    run = tmp_path / "job"
+    run.mkdir()
+    _patch_run_roots(monkeypatch, tmp_path)
+
+    run_control.write_run_state("job", "running", active_step="train-model")
+    run_control.mark_failed("job", "train-model", "worker exited unexpectedly")
+
+    state = run_control.read_run_state("job")
+    assert state["status"] == "failed"
+    assert state["active_step"] == "train-model"
+    assert state["error"] == "worker exited unexpectedly"
