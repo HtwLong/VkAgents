@@ -135,16 +135,16 @@ def test_ssd_registry_id_retrieves_and_validates_executable_recipe():
 
     assert context["selected_model_id"] == "ssd300_vgg16"
     assert context["base_recipe"]["id"] == RECIPE_ID
-    assert context["base_configuration"]["model_weights"] == "imagenet_backbone"
-    assert context["base_configuration"]["input_size"] == 300
-    assert context["base_configuration"]["max_size"] == 300
-    assert context["base_configuration"]["lr_milestones"] == [80, 110]
-    assert context["base_configuration"]["augmentation_policy"] == "ssd"
-    assert context["base_configuration"]["max_detections"] == 200
+    assert context["reference_configuration"]["model_weights"] == "imagenet_backbone"
+    assert context["reference_configuration"]["input_size"] == 300
+    assert context["reference_configuration"]["max_size"] == 300
+    assert context["reference_configuration"]["lr_milestones"] == [80, 110]
+    assert context["reference_configuration"]["augmentation_policy"] == "ssd"
+    assert context["reference_configuration"]["max_detections"] == 200
 
     candidate = _config(**{
         key: value
-        for key, value in context["base_configuration"].items()
+        for key, value in context["reference_configuration"].items()
         if key != "training_recipe_id"
     }).model_dump(mode="json")
     validate_detection_graph_grounded_config(candidate, context)
@@ -274,3 +274,4 @@ def test_pretrained_ssd_one_epoch_evaluation_and_inference(tmp_path, monkeypatch
         confidence_threshold=0.01,
     )
     assert isinstance(detections, list)
+

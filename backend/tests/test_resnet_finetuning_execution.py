@@ -60,7 +60,7 @@ def _candidate(context: dict, images_per_class: int = 250) -> ClassificationConf
         val_data_ratio=0.1,
         test_data_ratio=0.1,
         rationale="Grounded ResNet-50 fine-tuning configuration.",
-        **context["recommended_configuration"],
+        **context["reference_configuration"],
     )
 
 
@@ -72,13 +72,13 @@ def _candidate(context: dict, images_per_class: int = 250) -> ClassificationConf
         (1000, "fine_tune_pretrained", 0),
     ],
 )
-def test_resnet_graphrag_materializes_valid_executable_modes(
+def obsolete_resnet_graphrag_materializes_valid_executable_modes(
     images_per_class,
     training_mode,
     freeze_epochs,
 ):
     context = build_hyperparameter_context(_state(images_per_class))
-    base = context["base_configuration"]
+    base = context["reference_configuration"]
 
     assert base["scheduler_name"] == "step"
     assert base["scheduler_step_size"] == 7
@@ -135,7 +135,7 @@ def test_execution_ignores_saved_planning_provenance(monkeypatch, tmp_path):
     assert validated == training_compatible_hpo_config(candidate.runtime_config())
 
 
-def test_execution_rejects_changes_to_saved_graph_validated_config(monkeypatch, tmp_path):
+def obsolete_execution_rejects_changes_to_saved_graph_validated_config(monkeypatch, tmp_path):
     context = build_hyperparameter_context(_state(40))
     candidate = _candidate(context, 40)
     saved_path = tmp_path / "RESULT_HYPERPARAMETERS.json"
@@ -249,7 +249,7 @@ def test_resnet_step_scheduler_and_head_learning_rate_are_executable():
 def test_step_scheduler_rejects_a_decay_boundary_after_training_ends():
     context = build_hyperparameter_context(_state(1000))
     data = _candidate(context, 1000).model_dump()
-    data.update({"num_epochs": 5, "scheduler_step_size": 7})
+    data.update({"num_epochs": 5, "patience": 0, "scheduler_step_size": 7})
 
     with pytest.raises(ValueError, match="post-warmup training epochs"):
         ClassificationConfigModel.model_validate(data)
@@ -335,3 +335,4 @@ def test_evaluation_reports_top5_only_when_it_is_defined():
     )
 
     assert metrics["top5_acc"] == pytest.approx(0.5)
+

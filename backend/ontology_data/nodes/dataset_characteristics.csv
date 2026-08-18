@@ -1,6 +1,7 @@
 id,type,dataset_id,property_id,value,confidence,notes,evidence_ids
 char_acdc_lighting,DatasetCharacteristic,ACDC_det_val_night,OutdoorLightingVariation,true,High,Night and adverse-condition driving imagery.,evidence_acdc_dataset
 char_acdc_scale,DatasetCharacteristic,ACDC_det_val_night,ObjectScaleVariation,true,Medium,Road objects occur at different distances.,evidence_acdc_dataset
+char_acdc_train_lighting,DatasetCharacteristic,ACDC_det_train,OutdoorLightingVariation,true,High,The ACDC training split covers nighttime together with fog rain and snow driving scenes.,evidence_acdc_dataset
 char_cub_train_fine,DatasetCharacteristic,CUB-200-2011_cls_train,FineGrainedRecognition,true,High,Two hundred fine-grained bird categories.,evidence_cub200_2011_dataset
 char_cub_test_fine,DatasetCharacteristic,CUB-200-2011_cls_test,FineGrainedRecognition,true,High,Two hundred fine-grained bird categories.,evidence_cub200_2011_dataset
 char_lvis_train_imbalance,DatasetCharacteristic,LVIS_det_train,ClassImbalance,true,High,LVIS uses a long-tail category distribution.,evidence_lvis_dataset

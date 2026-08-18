@@ -30,7 +30,7 @@ def _write_download_artifacts(tmp_path, selected_data):
     for label in (item["class_name"] for item in selected_data):
         for split in ("train", "validation", "test"):
             filename = f"{label}_{split}.jpg"
-            (tmp_path / filename).write_bytes(b"image")
+            (tmp_path / filename).write_bytes(f"image:{filename}".encode("utf-8"))
             rows.append({"image_filename": filename, "labels": label})
             samples.append({
                 "sample_id": filename,

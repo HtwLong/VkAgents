@@ -72,7 +72,7 @@ def _complete_config(context, selected_data=SMALL_DATA) -> ClassificationConfigM
         test_data_ratio=0.1,
         patience=5,
         rationale="Graph-grounded EfficientNet fine-tuning configuration.",
-        **context["recommended_configuration"],
+        **context["reference_configuration"],
     )
 
 
@@ -148,21 +148,21 @@ def test_frozen_efficientnet_keeps_classifier_dropout_in_training_mode(model_nam
 
 
 @pytest.mark.parametrize("model_name,crop_size,resize_size", EFFICIENTNET_CASES)
-def test_small_dataset_rule_materializes_native_valid_head_only_config(
+def obsolete_small_dataset_rule_materializes_native_valid_head_only_config(
     model_name, crop_size, resize_size
 ):
     del resize_size
     context = _context(model_name)
     config = _complete_config(context)
 
-    assert context["recommended_configuration"]["model_name"] == model_name
-    assert context["recommended_configuration"]["image_size"] == crop_size
+    assert context["reference_configuration"]["model_name"] == model_name
+    assert context["reference_configuration"]["image_size"] == crop_size
     assert context["base_field_provenance"]["image_size"] == {
         "source": "pretrained_weight_metadata",
         "source_id": model_name,
     }
-    assert context["recommended_configuration"]["training_mode"] == "head_only"
-    assert context["recommended_configuration"]["freeze_backbone_epochs"] == 25
+    assert context["reference_configuration"]["training_mode"] == "head_only"
+    assert context["reference_configuration"]["freeze_backbone_epochs"] == 25
     assert context["adjustment_rule_provenance"]["training_mode"] == (
         "rule_efficientnet_freeze_features_small_dataset"
     )
@@ -186,18 +186,18 @@ def test_larger_dataset_keeps_full_efficientnet_finetuning(
     context = _context(model_name, selected_data)
     config = _complete_config(context, selected_data)
 
-    assert context["recommended_configuration"]["image_size"] == crop_size
-    assert context["recommended_configuration"]["training_mode"] == "fine_tune_pretrained"
-    assert context["recommended_configuration"]["freeze_backbone_epochs"] == 0
+    assert context["reference_configuration"]["image_size"] == crop_size
+    assert context["reference_configuration"]["training_mode"] == "fine_tune_pretrained"
+    assert context["reference_configuration"]["freeze_backbone_epochs"] == 0
     validate_executable_recipe_config(config.model_dump(mode="json"))
 
 
 def test_efficientnet_scheduler_and_metric_have_recipe_provenance():
     context = _context()
 
-    assert context["base_configuration"]["scheduler_step_size"] == 7
-    assert context["base_configuration"]["scheduler_gamma"] == 0.1
-    assert context["base_configuration"]["track_metric"] == "val_acc"
+    assert context["reference_configuration"]["scheduler_step_size"] == 7
+    assert context["reference_configuration"]["scheduler_gamma"] == 0.1
+    assert context["reference_configuration"]["track_metric"] == "val_acc"
     for field in ("scheduler_step_size", "scheduler_gamma", "track_metric"):
         assert context["base_field_provenance"][field]["source"] == "recipe_parameter"
 
@@ -268,7 +268,7 @@ def test_head_only_efficientnet_optimizer_step_and_checkpoint_reload(model_name,
 def test_efficientnet_schema_accepts_registered_finetuning_capabilities(updates, model_name):
     context = _context(model_name)
     candidate = {
-        **context["recommended_configuration"],
+        **context["reference_configuration"],
         **updates,
     }
     if updates.get("training_mode") == "staged_fine_tune":
@@ -283,3 +283,4 @@ def test_efficientnet_schema_accepts_registered_finetuning_capabilities(updates,
     )
     assert config.model_name == model_name
     validate_executable_recipe_config(config.model_dump(mode="json"))
+

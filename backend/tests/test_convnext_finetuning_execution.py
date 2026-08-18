@@ -67,14 +67,14 @@ def _candidate(context: dict) -> ClassificationConfigModel:
         val_data_ratio=0.1,
         test_data_ratio=0.1,
         rationale="Evidence-grounded ConvNeXt Tiny fine-tuning configuration.",
-        **context["recommended_configuration"],
+        **context["reference_configuration"],
     )
 
 
 def test_convnext_graphrag_materializes_complete_executable_recipe():
     get_hyperparameter_graph.cache_clear()
     context = build_hyperparameter_context(_state())
-    recommended = context["recommended_configuration"]
+    recommended = context["reference_configuration"]
 
     assert recommended == {
         "model_name": "convnext_tiny",

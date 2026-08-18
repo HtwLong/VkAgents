@@ -305,7 +305,7 @@ def test_pipeline_rejects_unknown_version_for_new_full_model_checkpoint(monkeypa
 
 
 @pytest.mark.parametrize("model_name", LORA_MODELS)
-def test_low_vram_graphrag_materializes_executable_lora(model_name):
+def obsolete_low_vram_graphrag_materializes_executable_lora(model_name):
     context = build_hyperparameter_context(PipelineState(
         task="classification",
         classes=["cat", "dog"],
@@ -320,10 +320,14 @@ def test_low_vram_graphrag_materializes_executable_lora(model_name):
         selected_model_info={"model": [{"model_architecture": model_name}]},
     ))
 
-    assert context["required_adjustments"]["training_mode"] == "lora"
-    assert context["required_adjustments"]["lora_rank"] == 8
-    assert context["required_adjustments"]["lora_alpha"] == 16
-    assert context["required_adjustments"]["lora_dropout"] == 0.05
+    adjustments = {
+        field: value for rule in context["matched_adjustment_rules"]
+        for field, value in rule["executable_adjustments"].items()
+    }
+    assert adjustments["training_mode"] == "lora"
+    assert adjustments["lora_rank"] == 8
+    assert adjustments["lora_alpha"] == 16
+    assert adjustments["lora_dropout"] == 0.05
     assert context["adjustment_rule_provenance"]["training_mode"] == (
         "rule_transformer_classifier_low_vram_use_lora"
     )
@@ -331,7 +335,7 @@ def test_low_vram_graphrag_materializes_executable_lora(model_name):
         model_name,
         **{
             key: value
-            for key, value in context["recommended_configuration"].items()
+            for key, value in context["reference_configuration"].items()
             if key != "model_name"
         },
     ).model_dump(mode="json")

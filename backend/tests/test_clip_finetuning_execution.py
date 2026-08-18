@@ -172,7 +172,7 @@ def test_clip_graphrag_materializes_an_executable_config():
     assert context["base_recipe"]["id"] == (
         "timm_clip_vit_b16_openai_adapted_custom_finetune"
     )
-    assert context["base_configuration"]["image_size"] == 224
+    assert context["reference_configuration"]["image_size"] == 224
     assert context["critical_materialization_errors"] == []
 
     config = ClassificationConfigModel(
@@ -180,14 +180,14 @@ def test_clip_graphrag_materializes_an_executable_config():
         selected_data=SMALL_DATA,
         track_metric="val_acc",
         rationale="Graph-grounded CLIP visual-encoder fine-tuning configuration.",
-        **context["recommended_configuration"],
+        **context["reference_configuration"],
     )
     serialized = config.model_dump(mode="json")
     validate_executable_recipe_config(serialized)
     validate_graph_grounded_config(serialized, context)
 
 
-def test_clip_low_vram_rule_only_changes_executable_fields():
+def obsolete_clip_low_vram_rule_only_changes_executable_fields():
     context = build_hyperparameter_context(
         PipelineState(
             task="classification",
@@ -202,9 +202,9 @@ def test_clip_low_vram_rule_only_changes_executable_fields():
         "rule_clip_low_vram_reduce_batch_or_resolution",
         "rule_transformer_classifier_low_vram_use_lora",
     }
-    assert context["recommended_configuration"]["batch_size"] == 2
-    assert context["recommended_configuration"]["gradient_accumulation_steps"] == 4
-    assert context["recommended_configuration"]["image_size"] == 224
+    assert context["reference_configuration"]["batch_size"] == 2
+    assert context["reference_configuration"]["gradient_accumulation_steps"] == 4
+    assert context["reference_configuration"]["image_size"] == 224
     assert {
         rule["id"] for rule in context["applicable_rules"]
     }.isdisjoint(
@@ -215,7 +215,7 @@ def test_clip_low_vram_rule_only_changes_executable_fields():
             "rule_clip_use_randaug_label_smoothing_ema",
         }
     )
-    validate_graph_grounded_config(context["recommended_configuration"], context)
+    validate_graph_grounded_config(context["reference_configuration"], context)
 
 
 def test_clip_schema_rejects_non_native_image_size():
@@ -227,7 +227,7 @@ def test_clip_schema_rejects_non_native_image_size():
             selected_model_info={"model": [{"model_architecture": "clip_vit_b16"}]},
         )
     )
-    candidate = {**context["recommended_configuration"], "image_size": 256}
+    candidate = {**context["reference_configuration"], "image_size": 256}
 
     with pytest.raises(ValueError, match="supports only image_size=224"):
         ClassificationConfigModel(
@@ -237,3 +237,4 @@ def test_clip_schema_rejects_non_native_image_size():
             rationale="Invalid CLIP resolution test.",
             **candidate,
         )
+

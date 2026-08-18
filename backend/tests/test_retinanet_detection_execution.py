@@ -101,14 +101,14 @@ def test_retinanet_registry_id_retrieves_and_validates_executable_recipe():
 
     assert context["selected_model_id"] == "retinanet_resnet50_fpn"
     assert context["base_recipe"]["id"] == RECIPE_ID
-    assert context["base_configuration"]["loss_cls"] == "focal"
-    assert context["base_configuration"]["lr_milestones"] == [16, 22]
-    assert context["base_configuration"]["amp"] is False
+    assert context["reference_configuration"]["loss_cls"] == "focal"
+    assert context["reference_configuration"]["lr_milestones"] == [16, 22]
+    assert context["reference_configuration"]["amp"] is False
     assert not context["applicable_rules"]
 
     candidate = _config(**{
         key: value
-        for key, value in context["base_configuration"].items()
+        for key, value in context["reference_configuration"].items()
         if key not in {"training_recipe_id"}
     }).model_dump(mode="json")
     validate_detection_graph_grounded_config(candidate, context)
@@ -263,3 +263,4 @@ def test_pretrained_retinanet_one_epoch_evaluation_and_inference(tmp_path, monke
         torch.device("cpu"),
     )
     assert isinstance(detections, list)
+

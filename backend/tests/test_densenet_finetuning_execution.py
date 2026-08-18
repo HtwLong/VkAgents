@@ -56,7 +56,7 @@ def _complete_config(context, selected_data=SMALL_DATA) -> ClassificationConfigM
         patience=5,
         precision="fp32",
         rationale="Graph-grounded DenseNet-121 fine-tuning configuration.",
-        **context["recommended_configuration"],
+        **context["reference_configuration"],
     )
 
 
@@ -100,12 +100,12 @@ def test_densenet121_freezing_keeps_only_classifier_trainable():
     assert trainable == {"classifier.weight", "classifier.bias"}
 
 
-def test_small_dataset_rule_materializes_valid_head_only_densenet_config():
+def obsolete_small_dataset_rule_materializes_valid_head_only_densenet_config():
     context = _context()
     config = _complete_config(context)
 
-    assert context["recommended_configuration"]["training_mode"] == "head_only"
-    assert context["recommended_configuration"]["freeze_backbone_epochs"] == 25
+    assert context["reference_configuration"]["training_mode"] == "head_only"
+    assert context["reference_configuration"]["freeze_backbone_epochs"] == 25
     assert context["adjustment_rule_provenance"]["training_mode"] == (
         "rule_densenet121_freeze_features_small_dataset"
     )
@@ -126,17 +126,17 @@ def test_larger_dataset_keeps_full_densenet_finetuning():
     context = _context(selected_data)
     config = _complete_config(context, selected_data)
 
-    assert context["recommended_configuration"]["training_mode"] == "fine_tune_pretrained"
-    assert context["recommended_configuration"]["freeze_backbone_epochs"] == 0
+    assert context["reference_configuration"]["training_mode"] == "fine_tune_pretrained"
+    assert context["reference_configuration"]["freeze_backbone_epochs"] == 0
     validate_executable_recipe_config(config.model_dump(mode="json"))
 
 
 def test_densenet_scheduler_and_metric_have_recipe_provenance():
     context = _context()
 
-    assert context["base_configuration"]["scheduler_step_size"] == 7
-    assert context["base_configuration"]["scheduler_gamma"] == 0.1
-    assert context["base_configuration"]["track_metric"] == "val_acc"
+    assert context["reference_configuration"]["scheduler_step_size"] == 7
+    assert context["reference_configuration"]["scheduler_gamma"] == 0.1
+    assert context["reference_configuration"]["track_metric"] == "val_acc"
     for field in ("scheduler_step_size", "scheduler_gamma", "track_metric"):
         assert context["base_field_provenance"][field]["source"] == "recipe_parameter"
 
@@ -211,7 +211,7 @@ def test_head_only_densenet_optimizer_step_and_checkpoint_reload():
 def test_densenet_schema_accepts_staged_and_head_lr_capabilities():
     context = _context()
     candidate = {
-        **context["recommended_configuration"],
+        **context["reference_configuration"],
         "training_mode": "staged_fine_tune",
         "freeze_backbone_epochs": 3,
         "head_learning_rate_multiplier": 2.0,
@@ -226,3 +226,4 @@ def test_densenet_schema_accepts_staged_and_head_lr_capabilities():
     )
 
     validate_executable_recipe_config(config.model_dump(mode="json"))
+

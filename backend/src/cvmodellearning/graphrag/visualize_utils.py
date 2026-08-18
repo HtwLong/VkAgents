@@ -19,6 +19,7 @@ matplotlib.use("Agg")
 
 import matplotlib.pyplot as plt
 import networkx as nx
+from matplotlib.patches import Patch
 from matplotlib.lines import Line2D
 
 
@@ -70,6 +71,108 @@ TYPE_BASE_SIZES = {
     "HardwareProfile": 18,
     "EvidenceSource": 14,
 }
+
+
+SCHEMA_GROUP_COLORS = {
+    "core": "#DBEAFE",
+    "data": "#FEF3C7",
+    "model": "#DCFCE7",
+    "training": "#F3E8FF",
+    "evidence": "#F3F4F6",
+}
+
+SCHEMA_NODE_GROUPS = {
+    "Task": "core",
+    "EvaluationMetric": "core",
+    "Dataset": "data",
+    "Domain": "data",
+    "DatasetCharacteristic": "data",
+    "DatasetProperty": "data",
+    "Model": "model",
+    "ModelBenchmarkResult": "model",
+    "ModelInferenceMemoryEstimate": "model",
+    "ModelTrainingHardwareRequirement": "model",
+    "HardwareProfile": "model",
+    "TrainingRecipe": "training",
+    "TrainingRecipeParameter": "training",
+    "ImageClassificationRecipeDetails": "training",
+    "ObjectDetectionRecipeDetails": "training",
+    "VQARecipeDetails": "training",
+    "AdjustmentRule": "training",
+    "EvidenceSource": "evidence",
+}
+
+SCHEMA_TYPE_LABELS = {
+    "Task": "Task",
+    "EvaluationMetric": "Evaluation\nMetric",
+    "Dataset": "Dataset",
+    "Domain": "Domain",
+    "DatasetCharacteristic": "Dataset\nCharacteristic",
+    "DatasetProperty": "Dataset\nProperty",
+    "Model": "Model",
+    "ModelBenchmarkResult": "Model Benchmark\nResult",
+    "ModelInferenceMemoryEstimate": "Inference Memory\nEstimate",
+    "ModelTrainingHardwareRequirement": "Training Hardware\nRequirement",
+    "HardwareProfile": "Hardware\nProfile",
+    "TrainingRecipe": "Training\nRecipe",
+    "TrainingRecipeParameter": "Recipe\nParameter",
+    "ImageClassificationRecipeDetails": "Classification\nRecipe Details",
+    "ObjectDetectionRecipeDetails": "Detection\nRecipe Details",
+    "VQARecipeDetails": "VQA Recipe\nDetails",
+    "AdjustmentRule": "Adjustment\nRule",
+    "EvidenceSource": "Evidence\nSource",
+}
+
+# Fixed positions make the overview stable across ontology revisions and keep
+# the conceptual groups legible in a printed thesis figure.
+SCHEMA_POSITIONS = {
+    "Task": (0.0, 5.6),
+    "EvaluationMetric": (3.0, 5.6),
+    "Dataset": (-5.3, 3.6),
+    "Domain": (-7.5, 1.7),
+    "DatasetCharacteristic": (-5.0, 1.2),
+    "DatasetProperty": (-5.0, -1.0),
+    "Model": (2.2, 3.5),
+    "ModelBenchmarkResult": (5.2, 2.8),
+    "HardwareProfile": (7.4, 1.0),
+    "ModelInferenceMemoryEstimate": (2.8, 1.0),
+    "ModelTrainingHardwareRequirement": (2.4, -1.0),
+    "TrainingRecipe": (-0.3, 0.7),
+    "TrainingRecipeParameter": (-1.7, -1.4),
+    "ImageClassificationRecipeDetails": (-2.7, -3.3),
+    "ObjectDetectionRecipeDetails": (-0.3, -3.3),
+    "VQARecipeDetails": (2.0, -3.3),
+    "AdjustmentRule": (4.6, -2.4),
+    "EvidenceSource": (0.0, -5.5),
+}
+
+# Only the relationships needed to understand the ontology's design are drawn.
+# Provenance is summarized separately because drawing every evidence-bearing
+# entity type would dominate the diagram.
+SCHEMA_RELATIONSHIPS = (
+    ("Model", "supports_task", "Task"),
+    ("Dataset", "supports_task", "Task"),
+    ("EvaluationMetric", "applies_to_task", "Task"),
+    ("Dataset", "in_domain", "Domain"),
+    ("Dataset", "has_characteristic", "DatasetCharacteristic"),
+    ("DatasetCharacteristic", "characteristic_type", "DatasetProperty"),
+    ("Model", "has_benchmark_result", "ModelBenchmarkResult"),
+    ("ModelBenchmarkResult", "evaluated_for_task", "Task"),
+    ("ModelBenchmarkResult", "evaluated_on_dataset", "Dataset"),
+    ("ModelBenchmarkResult", "measures_metric", "EvaluationMetric"),
+    ("ModelBenchmarkResult", "measured_on_hardware", "HardwareProfile"),
+    ("Model", "has_inference_memory_estimate", "ModelInferenceMemoryEstimate"),
+    ("Model", "has_training_hardware_requirement", "ModelTrainingHardwareRequirement"),
+    ("Model", "has_training_recipe", "TrainingRecipe"),
+    ("TrainingRecipe", "for_task", "Task"),
+    ("TrainingRecipe", "has_parameter", "TrainingRecipeParameter"),
+    ("TrainingRecipe", "has_recipe_details", "ImageClassificationRecipeDetails"),
+    ("TrainingRecipe", "has_recipe_details", "ObjectDetectionRecipeDetails"),
+    ("TrainingRecipe", "has_recipe_details", "VQARecipeDetails"),
+    ("AdjustmentRule", "applies_to_task", "Task"),
+    ("AdjustmentRule", "applies_to_model", "Model"),
+    ("AdjustmentRule", "modifies_recipe", "TrainingRecipe"),
+)
 
 
 def _contains_any(text: str, needles: list[str]) -> bool:
@@ -722,6 +825,264 @@ def _edge_labels(G: nx.MultiDiGraph) -> dict[tuple[object, object], str]:
         label = ", ".join(sorted(relations))
         labels[pair] = shorten(label, width=28, placeholder="...")
     return labels
+
+
+def _schema_node_counts(G: nx.MultiDiGraph) -> dict[str, int]:
+    counts: dict[str, int] = defaultdict(int)
+    for _, attrs in G.nodes(data=True):
+        counts[_node_type(attrs)] += 1
+    return dict(counts)
+
+
+def _schema_relation_counts(
+    G: nx.MultiDiGraph,
+) -> dict[tuple[str, str, str], int]:
+    counts: dict[tuple[str, str, str], int] = defaultdict(int)
+    for source, target, attrs in G.edges(data=True):
+        relation = str(attrs.get("relation", "")).strip()
+        if not relation:
+            continue
+        source_type = _node_type(G.nodes[source])
+        target_type = _node_type(G.nodes[target])
+        counts[(source_type, relation, target_type)] += 1
+    return dict(counts)
+
+
+def _schema_relation_label(relation: str, count: int) -> str:
+    readable = relation.replace("_", " ")
+    return f"{readable}\n({count})"
+
+
+def visualize_ontology_schema(
+    G: nx.MultiDiGraph,
+    output_path: str | Path,
+    *,
+    title: str = "Computer Vision Planning Ontology",
+) -> Path:
+    """Render a deterministic, publication-oriented ontology overview.
+
+    Unlike :func:`visualize_graph`, this function does not draw individual
+    ontology instances. It aggregates them by entity type, labels each type with
+    its instance count, and draws only the principal semantic relationships used
+    by planning. The fixed layout is intended for a thesis figure and remains
+    stable when individual ontology records are added or removed.
+
+    The output format is selected from ``output_path``. SVG or PDF is recommended
+    for publication; PNG is also supported by Matplotlib.
+    """
+    output_path = Path(output_path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    if G.number_of_nodes() == 0:
+        raise ValueError("Cannot visualize an empty graph.")
+    if output_path.suffix.lower() not in {".svg", ".pdf", ".png"}:
+        raise ValueError("Ontology schema output must use .svg, .pdf, or .png.")
+
+    node_counts = _schema_node_counts(G)
+    relation_counts = _schema_relation_counts(G)
+    visible_types = {
+        node_type
+        for node_type in SCHEMA_POSITIONS
+        if node_counts.get(node_type, 0) > 0
+    }
+
+    fig, ax = plt.subplots(figsize=(19, 12), constrained_layout=True)
+    ax.set_xlim(-9.0, 9.0)
+    ax.set_ylim(-6.5, 6.7)
+    ax.axis("off")
+    ax.set_title(title, fontsize=22, fontweight="bold", pad=18, color="#172033")
+    ax.text(
+        0,
+        6.25,
+        f"Schema-level view of {G.number_of_nodes():,} entities and {G.number_of_edges():,} relationships",
+        ha="center",
+        va="center",
+        fontsize=11,
+        color="#4B5563",
+    )
+
+    # Draw relationships first so node boxes remain visually dominant.
+    drawn_edges: list[tuple[str, str, str, int]] = []
+    for source_type, relation, target_type in SCHEMA_RELATIONSHIPS:
+        count = relation_counts.get((source_type, relation, target_type), 0)
+        if count == 0 or source_type not in visible_types or target_type not in visible_types:
+            continue
+        drawn_edges.append((source_type, relation, target_type, count))
+        source_pos = SCHEMA_POSITIONS[source_type]
+        target_pos = SCHEMA_POSITIONS[target_type]
+        ax.annotate(
+            "",
+            xy=target_pos,
+            xytext=source_pos,
+            arrowprops={
+                "arrowstyle": "-|>",
+                "color": "#374151",
+                "linewidth": 1.9,
+                "alpha": 0.95,
+                "shrinkA": 28,
+                "shrinkB": 28,
+                "connectionstyle": "arc3,rad=0.05",
+            },
+            zorder=1,
+        )
+
+    # Compact relationship labels are offset perpendicular to their edges.
+    pair_occurrences: dict[tuple[str, str], int] = defaultdict(int)
+    for source_type, relation, target_type, count in drawn_edges:
+        source_x, source_y = SCHEMA_POSITIONS[source_type]
+        target_x, target_y = SCHEMA_POSITIONS[target_type]
+        pair = tuple(sorted((source_type, target_type)))
+        occurrence = pair_occurrences[pair]
+        pair_occurrences[pair] += 1
+        dx, dy = target_x - source_x, target_y - source_y
+        length = max((dx * dx + dy * dy) ** 0.5, 0.1)
+        direction = -1 if occurrence % 2 else 1
+        offset = 0.16 + 0.13 * occurrence
+        label_x = (source_x + target_x) / 2 + direction * (-dy / length) * offset
+        label_y = (source_y + target_y) / 2 + direction * (dx / length) * offset
+        ax.text(
+            label_x,
+            label_y,
+            _schema_relation_label(relation, count),
+            ha="center",
+            va="center",
+            fontsize=7.2,
+            fontweight="semibold",
+            color="#111827",
+            linespacing=0.92,
+            bbox={
+                "boxstyle": "round,pad=0.18",
+                "facecolor": "white",
+                "edgecolor": "#D1D5DB",
+                "linewidth": 0.65,
+                "alpha": 0.96,
+            },
+            zorder=2,
+        )
+
+    for node_type in visible_types:
+        x, y = SCHEMA_POSITIONS[node_type]
+        group = SCHEMA_NODE_GROUPS[node_type]
+        label = SCHEMA_TYPE_LABELS.get(node_type, node_type)
+        ax.text(
+            x,
+            y,
+            f"{label}\n{node_counts[node_type]} entities",
+            ha="center",
+            va="center",
+            fontsize=9.2,
+            fontweight="bold",
+            color="#172033",
+            linespacing=1.2,
+            bbox={
+                "boxstyle": "round,pad=0.62,rounding_size=0.15",
+                "facecolor": SCHEMA_GROUP_COLORS[group],
+                "edgecolor": "#374151",
+                "linewidth": 1.25,
+            },
+            zorder=4,
+        )
+
+    total_evidence_edges = sum(
+        count
+        for (source_type, relation, target_type), count in relation_counts.items()
+        if relation == "supported_by_evidence" and target_type == "EvidenceSource"
+    )
+    if "EvidenceSource" in visible_types and total_evidence_edges:
+        note_pos = (-4.1, -5.5)
+        evidence_pos = SCHEMA_POSITIONS["EvidenceSource"]
+        ax.text(
+            *note_pos,
+            "Evidence-linked ontology records\n(all supported entity types)",
+            ha="center",
+            va="center",
+            fontsize=8.5,
+            color="#374151",
+            bbox={
+                "boxstyle": "round,pad=0.48",
+                "facecolor": "white",
+                "edgecolor": "#9CA3AF",
+                "linestyle": "--",
+            },
+            zorder=4,
+        )
+        ax.annotate(
+            "",
+            xy=evidence_pos,
+            xytext=note_pos,
+            arrowprops={
+                "arrowstyle": "-|>",
+                "color": "#374151",
+                "linewidth": 1.9,
+                "linestyle": "--",
+                "shrinkA": 58,
+                "shrinkB": 34,
+            },
+            zorder=2,
+        )
+        ax.text(
+            -2.1,
+            -5.22,
+            f"supported by evidence\n({total_evidence_edges:,} links)",
+            ha="center",
+            va="center",
+            fontsize=7.5,
+            fontweight="semibold",
+            color="#111827",
+            bbox={
+                "facecolor": "white",
+                "edgecolor": "#D1D5DB",
+                "linewidth": 0.65,
+                "alpha": 0.96,
+            },
+            zorder=3,
+        )
+
+    legend_items = [
+        Patch(
+            facecolor=SCHEMA_GROUP_COLORS[group],
+            edgecolor="#374151",
+            label=label,
+        )
+        for group, label in (
+            ("core", "Core task concepts"),
+            ("data", "Dataset knowledge"),
+            ("model", "Model and hardware knowledge"),
+            ("training", "Training knowledge"),
+            ("evidence", "Evidence and provenance"),
+        )
+    ]
+    legend_items.append(
+        Line2D([0], [0], color="#374151", linewidth=1.9, label="Semantic relationship")
+    )
+    legend_items.append(
+        Line2D(
+            [0], [0], color="#374151", linewidth=1.9, linestyle="--",
+            label="Aggregated provenance relationship",
+        )
+    )
+    ax.legend(
+        handles=legend_items,
+        loc="upper left",
+        bbox_to_anchor=(0.005, 0.995),
+        frameon=True,
+        framealpha=0.96,
+        edgecolor="#D1D5DB",
+        fontsize=8.5,
+        ncol=1,
+    )
+
+    ax.text(
+        8.8,
+        -6.2,
+        "Counts are calculated from the loaded ontology snapshot.",
+        ha="right",
+        va="bottom",
+        fontsize=7.5,
+        color="#6B7280",
+    )
+    fig.savefig(output_path, dpi=220, bbox_inches="tight", facecolor="white")
+    plt.close(fig)
+    return output_path
 
 
 def visualize_graph(

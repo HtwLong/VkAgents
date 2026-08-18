@@ -7,6 +7,7 @@ llava_1_5_mix665k,in_domain,domain_general_everyday_objects,evidence_llava_1_5_p
 llava_pretrain_558k,in_domain,domain_general_everyday_objects,evidence_llava_1_5_paper,Medium,LLaVA pretraining uses broad image-text data.
 vqa_multibench_llava,in_domain,domain_general_everyday_objects,evidence_llava_1_5_paper,Medium,LLaVA VQA benchmarks cover broad visual understanding tasks.
 ACDC_det_val_night,in_domain,domain_street_autonomous_driving,evidence_acdc_dataset,High,ACDC is an adverse-condition driving dataset.
+ACDC_det_train,in_domain,domain_street_autonomous_driving,evidence_acdc_dataset,High,ACDC training data contains adverse-condition driving scenes.
 CUB-200-2011_cls_test,in_domain,domain_fine_grained_wildlife_nature,evidence_cub200_2011_dataset,High,CUB is a fine-grained bird dataset.
 CUB-200-2011_cls_train,in_domain,domain_fine_grained_wildlife_nature,evidence_cub200_2011_dataset,High,CUB is a fine-grained bird dataset.
 LVIS_det_train,in_domain,domain_general_everyday_objects,evidence_lvis_dataset,High,LVIS covers large-vocabulary everyday object categories.

@@ -49,7 +49,10 @@ import networkx as nx
 import pandas as pd
 
 from cvmodellearning.graphrag.graph_edge_utils import add_generated_edges
-from cvmodellearning.graphrag.visualize_utils import visualize_interactive_graph
+from cvmodellearning.graphrag.visualize_utils import (
+    visualize_interactive_graph,
+    visualize_ontology_schema,
+)
 
 
 ENTITY_FILE_STEMS = [
@@ -73,6 +76,7 @@ ENTITY_FILE_STEMS = [
     "cv_problems",
     "model_benchmark_results",
     "model_inference_memory_estimates",
+    "model_training_hardware_requirements",
 ]
 
 
@@ -218,6 +222,8 @@ def main() -> None:
     print(summarize_graph(G))
     visualization_path = visualize_interactive_graph(G, ontology_data_dir / "graph_visualization.html", [], [])
     print(f"\nGraph visualization saved to: {visualization_path}")
+    schema_path = visualize_ontology_schema(G, ontology_data_dir / "ontology_schema_overview.svg")
+    print(f"Ontology schema overview saved to: {schema_path}")
     print(summarize_graph(G))
 
 

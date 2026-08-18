@@ -51,7 +51,6 @@ def test_provenance_records_disjoint_training_and_evaluation_inputs(monkeypatch,
         preparation=preparation,
         split_artifacts={"test": artifacts["test"]},
     )
-
     audit = json.loads(audit_path.read_text())
     assert set(audit["stages"]["training"]["splits"]) == {"train", "validation"}
     assert set(audit["stages"]["evaluation"]["splits"]) == {"test"}
