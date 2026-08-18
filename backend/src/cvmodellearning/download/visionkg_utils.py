@@ -12,11 +12,14 @@ from pprint import pprint
 import requests
 from PIL import Image, UnidentifiedImageError
 
+from cvmodellearning.download.image_cache import image_path_below, safe_relative_image_path
+
 
 LOGGER = logging.getLogger(__name__)
 DEFAULT_DOWNLOAD_WORKERS = 12
 DEFAULT_DOWNLOAD_ATTEMPTS = 5
 DEFAULT_DOWNLOAD_REQUESTS_PER_MINUTE = 110
+FAILED_DOWNLOAD_CACHE_TTL_SECONDS = 6 * 60 * 60
 DEFAULT_SPARQL_TIMEOUT = 90
 DEFAULT_SPARQL_ATTEMPTS = 3
 DOWNLOAD_WORKERS_ENV = "VISIONKG_DOWNLOAD_WORKERS"
@@ -30,8 +33,6 @@ _rate_limit_lock = threading.Lock()
 _rate_limit_until = 0.0
 _request_pacing_lock = threading.Lock()
 _next_download_request_at = 0.0
-_view_fallback_lock = threading.Lock()
-_prefer_view_endpoint = False
 
 
 def _positive_env_int(name: str, default: int) -> int:
@@ -140,18 +141,6 @@ def _visionkg_view_fallback_url(url: str) -> str | None:
     return url.replace(raw_prefix, "https://vision-api.semkg.org/api/view?", 1)
 
 
-def _preferred_visionkg_url(url: str) -> str:
-    with _view_fallback_lock:
-        prefer_view = _prefer_view_endpoint
-    return (_visionkg_view_fallback_url(url) or url) if prefer_view else url
-
-
-def _prefer_visionkg_view_endpoint() -> None:
-    global _prefer_view_endpoint
-    with _view_fallback_lock:
-        _prefer_view_endpoint = True
-
-
 def query(query_string, token="", *, cancel_check=None):
     """
     Executes a SPARQL query against the VisionKG endpoint.
@@ -224,18 +213,27 @@ def _validated_existing_image(path: Path) -> bool:
         return False
 
 
+def _is_recent_cached_failure(cached) -> bool:
+    if not isinstance(cached, dict) or cached.get("status") != "failed":
+        return False
+    try:
+        age = time.time() - float(cached["failed_at"])
+    except (KeyError, TypeError, ValueError):
+        return False
+    return 0 <= age < FAILED_DOWNLOAD_CACHE_TTL_SECONDS
+
+
 def _download_one_image(image, root: Path, max_attempts: int, timeout: int, cancel_check=None):
     """Resolve one image and return (successful, result metadata)."""
-    from cvmodellearning.download.image_cache import image_path_below, safe_relative_image_path
-
-    relative_path = safe_relative_image_path(image["image_path"])
-    destination = image_path_below(root, str(relative_path))
+    destination = image_path_below(root, image["image_path"])
+    relative_path = destination.relative_to(root.resolve())
     destination.parent.mkdir(parents=True, exist_ok=True)
     url = image.get("url")
     failure = {**image, "error": "No download URL", "status_code": None}
     if not url:
         return False, failure
-    url = _preferred_visionkg_url(url)
+    # Endpoint fallback is deliberately local to this image. A broken image must
+    # not switch every later request in the process to the fallback endpoint.
 
     partial = destination.with_name(f".{destination.name}.{uuid.uuid4().hex}.part")
     started = time.perf_counter()
@@ -262,7 +260,6 @@ def _download_one_image(image, root: Path, max_attempts: int, timeout: int, canc
                             relative_path,
                             fallback_url,
                         )
-                        _prefer_visionkg_view_endpoint()
                         url = fallback_url
                     raise requests.HTTPError(f"HTTP {status_code}", response=response)
                 if not content_type.startswith("image/"):
@@ -365,16 +362,16 @@ def prepare_data(
         cache = {}
 
     cache_hits = 0
+    cached_failures = 0
     ordered_results = [None] * len(images)
     pending = {}
     for index, image in enumerate(images):
         if cancel_check is not None:
             cancel_check()
-        from cvmodellearning.download.image_cache import image_path_below, safe_relative_image_path
-
-        relative_path = safe_relative_image_path(image["image_path"])
-        destination = image_path_below(root, str(relative_path))
-        cached = cache.get(str(relative_path))
+        destination = image_path_below(root, image["image_path"])
+        relative_path = destination.relative_to(root.resolve())
+        portable_path = safe_relative_image_path(image["image_path"]).as_posix()
+        cached = cache.get(portable_path)
         try:
             stat = destination.stat()
         except OSError:
@@ -383,19 +380,19 @@ def prepare_data(
             ordered_results[index] = (True, image)
             cache_hits += 1
             if progress_callback:
-                progress_callback(successful=True, image_path=str(Path(image["image_path"])))
+                progress_callback(successful=True, image_path=portable_path)
         elif stat is not None:
             validation_started = time.perf_counter()
             if _validated_existing_image(destination):
                 stat = destination.stat()
-                cache[str(Path(image["image_path"]))] = {
+                cache[portable_path] = {
                     "size": stat.st_size,
                     "mtime_ns": stat.st_mtime_ns,
                 }
                 ordered_results[index] = (True, image)
                 cache_hits += 1
                 if progress_callback:
-                    progress_callback(successful=True, image_path=str(Path(image["image_path"])))
+                    progress_callback(successful=True, image_path=portable_path)
                 continue
             LOGGER.debug(
                 "Existing image validation failed after %.4fs: %s",
@@ -403,6 +400,16 @@ def prepare_data(
                 destination,
             )
             pending[index] = image
+        elif _is_recent_cached_failure(cached):
+            ordered_results[index] = (False, {
+                **image,
+                "error": "Recently failed; retry deferred",
+                "status_code": cached.get("status_code"),
+                "cached_failure": True,
+            })
+            cached_failures += 1
+            if progress_callback:
+                progress_callback(successful=False, image_path=portable_path)
         else:
             pending[index] = image
 
@@ -428,7 +435,7 @@ def prepare_data(
             if progress_callback:
                 progress_callback(
                     successful=successful,
-                    image_path=str(Path(images[index]["image_path"])),
+                    image_path=safe_relative_image_path(images[index]["image_path"]).as_posix(),
                 )
     except BaseException:
         for future in futures:
@@ -441,6 +448,7 @@ def prepare_data(
     metrics = {
         "requested": len(images),
         "cache_hits": cache_hits,
+        "cached_failures": cached_failures,
         "bytes_downloaded": 0,
         "retries": 0,
         "transfer_and_validation_seconds": 0.0,
@@ -461,9 +469,19 @@ def prepare_data(
                 stat = destination.stat()
             except OSError:
                 continue
-            cache[str(Path(item["image_path"]))] = {
+            cache[safe_relative_image_path(item["image_path"]).as_posix()] = {
                 "size": stat.st_size,
                 "mtime_ns": stat.st_mtime_ns,
+            }
+        elif (
+            item.get("status_code") in {500, 502, 503, 504}
+            and not item.get("rate_limited", False)
+            and not item.get("cached_failure", False)
+        ):
+            cache[safe_relative_image_path(item["image_path"]).as_posix()] = {
+                "status": "failed",
+                "status_code": item["status_code"],
+                "failed_at": time.time(),
             }
     if clean_results:
         temporary = cache_path.with_name(f".{cache_path.name}.{uuid.uuid4().hex}.tmp")
@@ -478,10 +496,16 @@ def prepare_data(
 
 
 
-def get_multi_class_stats(classes: list, query_output_path=None) -> dict:
+def get_multi_class_stats(classes: list, query_output_path=None, *, task=None) -> dict:
     """
-    Retrieves dataset statistics for multiple classes using a single 
-    SPARQL query optimized with the VALUES clause.
+    Retrieves dataset statistics using one SPARQL query per class.
+
+    VisionKG can return successful but incomplete results for a large grouped
+    VALUES query. Keeping each class in its own query prevents one expensive
+    label from causing another label's dataset rows to disappear. If ``task``
+    is supplied and a class has no eligible official training source, exact
+    class/dataset counts are queried as a fallback for every registered,
+    downloadable training dataset for that task.
     
     Args:
         classes (list): A list of strings, e.g., ["cat", "dog", "bird"].
@@ -500,61 +524,98 @@ def get_multi_class_stats(classes: list, query_output_path=None) -> dict:
     # Initialize the output structure with empty dicts for all requested classes
     all_stats = {cls: {} for cls in classes}
 
-    # Format the classes into a SPARQL VALUES string: "cat" "dog" "bird"
-    values_string = " ".join([f'"{cls}"' for cls in classes])
+    rendered_queries = []
 
-    # 1. Construct the Main Query
-    query_string = f"""
-    PREFIX cv: <http://vision.semkg.org/onto/v0.1/>
-    PREFIX schema: <http://schema.org/>
+    def execute(query_string):
+        rendered_queries.append(query_string.strip())
+        if query_output_path is not None:
+            query_path = Path(query_output_path)
+            query_path.parent.mkdir(parents=True, exist_ok=True)
+            query_path.write_text("\n\n".join(rendered_queries) + "\n", encoding="utf-8")
+        return query(query_string)
 
-    SELECT ?targetLabel ?datasetName (COUNT(DISTINCT ?image) AS ?count)
-    WHERE {{
-        # Inject the list of classes directly into the query engine's execution plan
-        VALUES ?targetLabel {{ {values_string} }} 
-        
-        ?image cv:hasAnnotation ?annotation .
-        ?annotation cv:hasLabel ?lbl .
-        ?lbl cv:label ?targetLabel .
-        ?image schema:isPartOf / schema:name ?datasetName .
-    }}
-    GROUP BY ?targetLabel ?datasetName
-    ORDER BY ?targetLabel DESC(?count)
-    """
+    def bindings_from(raw_result):
+        if isinstance(raw_result, dict) and 'results' in raw_result:
+            return raw_result['results']['bindings']
+        if isinstance(raw_result, list):
+            return raw_result
+        return []
 
-    if query_output_path is not None:
-        query_path = Path(query_output_path)
-        query_path.parent.mkdir(parents=True, exist_ok=True)
-        query_path.write_text(query_string.strip() + "\n", encoding="utf-8")
-    
-    print(f"Querying VisionKG for {len(classes)} classes using VALUES...")
+    def get_val(item):
+        return item.get('value') if isinstance(item, dict) else item
 
-    # 2. Execute the Query
-    raw_result = query(query_string)
+    print(f"Querying VisionKG for {len(classes)} classes individually...")
+    for class_name in classes:
+        class_literal = json.dumps(class_name, ensure_ascii=False)
+        query_string = f"""
+        PREFIX cv: <http://vision.semkg.org/onto/v0.1/>
+        PREFIX schema: <http://schema.org/>
 
-    # 3. Parse Results into Nested Dictionary
-    bindings = []
-    if isinstance(raw_result, dict) and 'results' in raw_result:
-        bindings = raw_result['results']['bindings']
-    elif isinstance(raw_result, list):
-        bindings = raw_result
+        SELECT ?datasetName (COUNT(DISTINCT ?image) AS ?count)
+        WHERE {{
+            ?image cv:hasAnnotation/cv:hasLabel/cv:label {class_literal} .
+            ?image schema:isPartOf / schema:name ?datasetName .
+        }}
+        GROUP BY ?datasetName
+        ORDER BY DESC(?count)
+        """
+        bindings = bindings_from(execute(query_string))
+        for row in bindings:
+            d_name = get_val(row.get('datasetName'))
+            count_val = get_val(row.get('count'))
+            if d_name and count_val:
+                try:
+                    all_stats[class_name][d_name] = int(count_val)
+                except ValueError:
+                    pass
 
-    for row in bindings:
-        # Helper to extract 'value' if it's a dict, or use the item directly
-        def get_val(item):
-            return item.get('value') if isinstance(item, dict) else item
+    if not task:
+        return all_stats
 
-        label = get_val(row.get('targetLabel'))
-        d_name = get_val(row.get('datasetName'))
-        count_val = get_val(row.get('count'))
+    # Import lazily to keep this low-level download module free of an import
+    # cycle with dataset selection.
+    from cvmodellearning.datasets.availability import is_dataset_downloadable
+    from cvmodellearning.datasets.registry import DATASET_REGISTRY, DatasetRole
 
-        if label and d_name and count_val:
+    training_datasets = sorted(
+        info.dataset_id
+        for info in DATASET_REGISTRY.values()
+        if info.task == task
+        and info.role == DatasetRole.TRAIN
+        and is_dataset_downloadable(info.dataset_id)
+    )
+
+    for class_name in classes:
+        has_training_source = any(
+            dataset_name in training_datasets and count > 0
+            for dataset_name, count in all_stats[class_name].items()
+        )
+        if has_training_source:
+            continue
+
+        class_literal = json.dumps(class_name, ensure_ascii=False)
+        for dataset_name in training_datasets:
+            dataset_literal = json.dumps(dataset_name, ensure_ascii=False)
+            fallback_query = f"""
+            PREFIX cv: <http://vision.semkg.org/onto/v0.1/>
+            PREFIX schema: <http://schema.org/>
+
+            SELECT (COUNT(DISTINCT ?image) AS ?count)
+            WHERE {{
+                ?image schema:isPartOf / schema:name {dataset_literal} .
+                ?image cv:hasAnnotation/cv:hasLabel/cv:label {class_literal} .
+            }}
+            """
+            bindings = bindings_from(execute(fallback_query))
+            if not bindings:
+                continue
+            count_val = get_val(bindings[0].get('count'))
             try:
-                # Map the results back to the initialized dictionary
-                if label in all_stats:
-                    all_stats[label][d_name] = int(count_val)
-            except ValueError:
-                pass
+                count = int(count_val)
+            except (TypeError, ValueError):
+                continue
+            if count > 0:
+                all_stats[class_name][dataset_name] = count
 
     return all_stats
 
@@ -614,7 +675,7 @@ def visionkg2cocoDet(query_bindings: List[Dict],
                 'height': image_height,
                 'width': image_width,
                 'url': image_url,
-                'image_path': os.path.join(dataset_name, image_name),
+                'image_path': f"{dataset_name}/{image_name}",
             }
             coco_images_info.append(image_info)
             batch_processed_images.add(image_key)
@@ -688,7 +749,7 @@ def visionkg_parse_classification(query_bindings: List[Dict], global_image_set: 
         label_name = anno['labelName']
 
         # Create the relative path expected by your CocoImageDataset loader
-        rel_image_path = os.path.join(dataset_name, image_name)
+        rel_image_path = f"{dataset_name}/{image_name}"
 
         # Track unique images so we don't download duplicates across batches
         if rel_image_path not in global_image_set:

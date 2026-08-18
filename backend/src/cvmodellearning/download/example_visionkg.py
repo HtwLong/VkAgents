@@ -1,6 +1,10 @@
 import requests
 import pprint
+import json
+import time
 from cvmodellearning.download.download_data import download_visionkg_mixed_datasets_detection, download_visionkg_images_flat
+from cvmodellearning.download.visionkg_utils import prepare_data, query as production_query, visionkg2cocoDet
+from cvmodellearning.paths import visionkg_cache_dir
 
 def query(query_string, token=""):
       response = requests.get('https://vision.semkg.org/sparql',
@@ -342,5 +346,232 @@ def inspect_selected_config_flat_urls():
     )
 
 
+def try_download_person_10_with_production_query(
+    dataset_name="openimages_challenge_2019_det_train",
+    split="train",
+):
+    """Download ten Open Images person samples through the production code path.
+
+    This deliberately uses the same query construction, response validation,
+    annotation conversion, persistent image cache, and run materialization as
+    the detection download endpoint. Only the requested allocation is smaller.
+    """
+
+    selected_data = [{
+        "class_name": "person",
+        "sources": [{
+            "dataset_name": dataset_name,
+            "allocations": [{
+                "split": split,
+                "count": 10,
+                "assignment_type": "official_split",
+            }],
+        }],
+    }]
+    report = download_visionkg_mixed_datasets_detection(
+        f"visionkg-example-person-10-{split}",
+        selected_data,
+    )
+    print(json.dumps(report, indent=2))
+    return report
+
+
+def try_download_person_10_with_exact_bindings():
+    """Test an alternative query locally without changing the pipeline query."""
+
+    query_string = """
+    PREFIX cv:<http://vision.semkg.org/onto/v0.1/>
+    PREFIX schema:<http://schema.org/>
+
+    SELECT ?datasetName ?imageWidth ?imageHeight ?imageName ?image
+           ?labelName ?bbHeight ?bbWidth ?bbCentreX ?bbCentreY
+    WHERE {
+        {
+            SELECT DISTINCT ?image ?datasetName
+            WHERE {
+                VALUES ?datasetName { "openimages_challenge_2019_det_val" }
+                ?image schema:isPartOf / schema:name ?datasetName .
+                ?image cv:hasAnnotation ?ann .
+                ?ann cv:hasLabel/cv:label "person" .
+            }
+            ORDER BY STR(?image)
+            LIMIT 10
+            OFFSET 0
+        }
+
+        ?image schema:name ?imageName .
+        ?image cv:imgWidth ?imageWidth .
+        ?image cv:imgHeight ?imageHeight .
+        ?image cv:hasAnnotation ?annotation .
+        ?annotation cv:hasLabel/cv:label ?labelName .
+        VALUES ?labelName { "person" }
+        ?annotation cv:hasBox ?bbox .
+        ?bbox cv:boxHeight ?bbHeight .
+        ?bbox cv:boxWidth ?bbWidth .
+        ?bbox cv:centerX ?bbCentreX .
+        ?bbox cv:centerY ?bbCentreY .
+    }
+    """
+    print("SPARQL query:\n", query_string.strip())
+    rows = production_query(query_string)
+    coco = visionkg2cocoDet(rows)
+    result = prepare_data(coco["images"], DATA_ROOT_PATH=str(visionkg_cache_dir()))
+    summary = {
+        "query_rows": len(rows),
+        "candidate_images": len(coco["images"]),
+        "annotations": len(coco["annotations"]),
+        "successful_downloads": len(result["successful"]),
+        "failed_downloads": len(result["failures"]),
+        "metrics": result["metrics"],
+    }
+    print(json.dumps(summary, indent=2))
+    return summary
+
+
+def compare_person_query_variants(limits=(10, 100, 500, 1400)):
+    """Benchmark candidate-filter variants without changing production code."""
+
+    dataset_name = "openimages_challenge_2019_det_val"
+    class_name = "person"
+    variants = {
+        "values": (
+            f'VALUES ?datasetName {{ "{dataset_name}" }}\n'
+            "                ?image schema:isPartOf / schema:name ?datasetName .\n"
+            "                ?image cv:hasAnnotation ?ann .\n"
+            f'                ?ann cv:hasLabel/cv:label "{class_name}" .'
+        ),
+        "str_equality": (
+            "?image schema:isPartOf / schema:name ?datasetName .\n"
+            f'                FILTER(STR(?datasetName) = "{dataset_name}")\n'
+            "                ?image cv:hasAnnotation ?ann .\n"
+            "                ?ann cv:hasLabel/cv:label ?candidateLabel .\n"
+            f'                FILTER(STR(?candidateLabel) = "{class_name}")'
+        ),
+        "lcase_str": (
+            "?image schema:isPartOf / schema:name ?datasetName .\n"
+            f'                FILTER(LCASE(STR(?datasetName)) = LCASE("{dataset_name}"))\n'
+            "                ?image cv:hasAnnotation ?ann .\n"
+            "                ?ann cv:hasLabel/cv:label ?candidateLabel .\n"
+            f'                FILTER(LCASE(STR(?candidateLabel)) = LCASE("{class_name}"))'
+        ),
+        "regex": (
+            "?image schema:isPartOf / schema:name ?datasetName .\n"
+            f'                FILTER regex(?datasetName, "^{dataset_name}$", "i")\n'
+            "                ?image cv:hasAnnotation ?ann .\n"
+            "                ?ann cv:hasLabel/cv:label ?candidateLabel .\n"
+            f'                FILTER regex(?candidateLabel, "^{class_name}$", "i")'
+        ),
+    }
+    results = []
+    for variant_name, candidate_pattern in variants.items():
+        for ordered in (False, True):
+            for limit in limits:
+                order_clause = "ORDER BY STR(?image)" if ordered else ""
+                query_string = f"""
+                PREFIX cv:<http://vision.semkg.org/onto/v0.1/>
+                PREFIX schema:<http://schema.org/>
+
+                SELECT ?datasetName ?imageWidth ?imageHeight ?imageName ?image
+                       ?labelName ?bbHeight ?bbWidth ?bbCentreX ?bbCentreY
+                WHERE {{
+                    {{
+                        SELECT DISTINCT ?image ?datasetName
+                        WHERE {{
+                            {candidate_pattern}
+                        }}
+                        {order_clause}
+                        LIMIT {limit}
+                        OFFSET 0
+                    }}
+                    ?image schema:name ?imageName .
+                    ?image cv:imgWidth ?imageWidth .
+                    ?image cv:imgHeight ?imageHeight .
+                    ?image cv:hasAnnotation ?annotation .
+                    ?annotation cv:hasLabel/cv:label ?labelName .
+                    VALUES ?labelName {{ "person" }}
+                    ?annotation cv:hasBox ?bbox .
+                    ?bbox cv:boxHeight ?bbHeight .
+                    ?bbox cv:boxWidth ?bbWidth .
+                    ?bbox cv:centerX ?bbCentreX .
+                    ?bbox cv:centerY ?bbCentreY .
+                }}
+                """
+                started = time.perf_counter()
+                try:
+                    rows = production_query(query_string)
+                    record = {
+                        "variant": variant_name,
+                        "ordered": ordered,
+                        "limit": limit,
+                        "status": "ok",
+                        "rows": len(rows),
+                        "images": len({row.get("image") for row in rows}),
+                        "seconds": round(time.perf_counter() - started, 3),
+                    }
+                except Exception as exc:
+                    record = {
+                        "variant": variant_name,
+                        "ordered": ordered,
+                        "limit": limit,
+                        "status": "error",
+                        "error": str(exc),
+                        "seconds": round(time.perf_counter() - started, 3),
+                    }
+                results.append(record)
+                print(json.dumps(record))
+                if record["status"] == "error":
+                    break
+    return results
+
+
+def test_recommended_multilabel_query(limit=1400, offset=1400):
+    """Exercise the proposed production query with multi-label boxes and paging."""
+
+    query_string = f"""
+    PREFIX cv:<http://vision.semkg.org/onto/v0.1/>
+    PREFIX schema:<http://schema.org/>
+
+    SELECT ?datasetName ?imageWidth ?imageHeight ?imageName ?image
+           ?labelName ?bbHeight ?bbWidth ?bbCentreX ?bbCentreY
+    WHERE {{
+        {{
+            SELECT DISTINCT ?image ?datasetName
+            WHERE {{
+                VALUES ?datasetName {{ "openimages_challenge_2019_det_val" }}
+                ?image schema:isPartOf / schema:name ?datasetName .
+                ?image cv:hasAnnotation ?ann .
+                ?ann cv:hasLabel/cv:label "person" .
+            }}
+            ORDER BY STR(?image)
+            LIMIT {limit}
+            OFFSET {offset}
+        }}
+        ?image schema:name ?imageName .
+        ?image cv:imgWidth ?imageWidth .
+        ?image cv:imgHeight ?imageHeight .
+        ?image cv:hasAnnotation ?annotation .
+        ?annotation cv:hasLabel/cv:label ?labelName .
+        VALUES ?labelName {{ "cat" "dog" "person" }}
+        ?annotation cv:hasBox ?bbox .
+        ?bbox cv:boxHeight ?bbHeight .
+        ?bbox cv:boxWidth ?bbWidth .
+        ?bbox cv:centerX ?bbCentreX .
+        ?bbox cv:centerY ?bbCentreY .
+    }}
+    """
+    started = time.perf_counter()
+    rows = production_query(query_string)
+    result = {
+        "limit": limit,
+        "offset": offset,
+        "rows": len(rows),
+        "images": len({row.get("image") for row in rows}),
+        "labels": sorted({row.get("labelName") for row in rows}),
+        "seconds": round(time.perf_counter() - started, 3),
+    }
+    print(json.dumps(result, indent=2))
+    return result
+
+
 if __name__ == "__main__":
-    inspect_selected_config_flat_urls()
+    test_recommended_multilabel_query()

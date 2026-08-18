@@ -1,7 +1,20 @@
 import csv
+import hashlib
 import json
 
+import pytest
+
 from cvmodellearning.download import download_data
+
+
+@pytest.fixture(autouse=True)
+def _distinct_mocked_image_content(monkeypatch):
+    """Mocked transfers in this module do not normally materialize files."""
+    monkeypatch.setattr(
+        download_data,
+        "file_sha256",
+        lambda path: hashlib.sha256(str(path).encode()).hexdigest(),
+    )
 
 
 def test_classification_download_uses_exact_matching_and_only_writes_successes(
@@ -51,8 +64,8 @@ def test_classification_download_uses_exact_matching_and_only_writes_successes(
         }],
     )
 
-    assert 'LCASE(STR(?labelName)) = LCASE("car")' in captured["query"]
-    assert 'LCASE(STR(?datasetName)) = LCASE("bdd_100k_det_train")' in captured["query"]
+    assert 'VALUES ?labelName { "car" }' in captured["query"]
+    assert 'VALUES ?datasetName { "bdd_100k_det_train" }' in captured["query"]
     assert "regex(?labelName" not in captured["query"]
     assert report["complete"] is True
     with (data_root / "image_labels.csv").open(newline="") as source:
@@ -110,7 +123,7 @@ def test_classification_download_allocates_scarce_class_before_abundant_class(
     artifacts_root.mkdir()
 
     def fake_query(query_string):
-        names = ["1.jpg", "2.jpg"] if 'LCASE("rare")' in query_string else [
+        names = ["1.jpg", "2.jpg"] if 'VALUES ?labelName { "rare" }' in query_string else [
             "1.jpg", "2.jpg", "3.jpg", "4.jpg",
         ]
         return [
@@ -186,3 +199,143 @@ def test_classification_download_replaces_failed_assigned_candidate(monkeypatch,
             "coco2017_det_train/good-1.jpg",
             "coco2017_det_train/good-2.jpg",
         }
+
+
+def test_classification_download_replaces_different_paths_with_identical_content(
+    monkeypatch,
+    tmp_path,
+):
+    data_root = tmp_path / "data"
+    artifacts_root = tmp_path / "artifacts"
+    data_root.mkdir()
+    artifacts_root.mkdir()
+    rows = [
+        {
+            "datasetName": "SOP_cls_train",
+            "imageName": name,
+            "image": f"image:{name}",
+        }
+        for name in ("chair-duplicate.jpg", "sofa-duplicate.jpg", "sofa-replacement.jpg")
+    ]
+
+    def fake_query(query_string):
+        if 'VALUES ?labelName { "chair" }' in query_string:
+            return rows[:1]
+        return rows[1:]
+
+    def materialize(images, _job_id, _progress_callback, _cancel_check):
+        for image in images:
+            path = data_root / image["image_path"]
+            path.parent.mkdir(parents=True, exist_ok=True)
+            content = (
+                b"same photograph"
+                if path.name in {"chair-duplicate.jpg", "sofa-duplicate.jpg"}
+                else b"unique replacement"
+            )
+            path.write_bytes(content)
+        return {"successful": images, "failures": []}
+
+    monkeypatch.setattr(download_data, "query", fake_query)
+    monkeypatch.setattr(download_data, "_prepare_with_progress", materialize)
+    monkeypatch.setattr(
+        download_data,
+        "file_sha256",
+        lambda path: hashlib.sha256(path.read_bytes()).hexdigest(),
+    )
+    monkeypatch.setattr(download_data, "data_dir", lambda _job_id: data_root)
+    monkeypatch.setattr(download_data, "csv_labels_path", lambda _job_id: data_root / "image_labels.csv")
+    monkeypatch.setattr(download_data, "dataset_manifest_path", lambda _job_id: data_root / "dataset_manifest.json")
+    monkeypatch.setattr(download_data, "download_report_path", lambda _job_id: artifacts_root / "download_report.json")
+    requests = [
+        {
+            "class_name": "chair",
+            "sources": [{"dataset_name": "SOP_cls_train", "count": 1}],
+        },
+        {
+            "class_name": "sofa",
+            "sources": [{"dataset_name": "SOP_cls_train", "count": 1}],
+        },
+    ]
+
+    report = download_data.download_visionkg_mixed_datasets_classification(
+        "test-job",
+        requests,
+    )
+
+    manifest = json.loads((data_root / "dataset_manifest.json").read_text())
+    assert [sample["image_path"] for sample in manifest["samples"]] == [
+        "SOP_cls_train/chair-duplicate.jpg",
+        "SOP_cls_train/sofa-replacement.jpg",
+    ]
+    sofa_report = report["sources"][1]
+    assert sofa_report["content_duplicate_conflicts"] == 1
+    assert sofa_report["content_duplicates"][0]["duplicate_class_name"] == "chair"
+    assert report["complete"] is True
+    assert report["downloaded"] == 2
+
+
+def test_classification_duplicate_replacement_pages_beyond_initial_window_and_confirms_bytes(
+    monkeypatch,
+    tmp_path,
+):
+    data_root = tmp_path / "data"
+    artifacts_root = tmp_path / "artifacts"
+    data_root.mkdir()
+    artifacts_root.mkdir()
+    rows = [
+        {
+            "datasetName": "SOP_cls_train",
+            "imageName": f"{index}.jpg",
+            "image": f"image:{index}",
+        }
+        for index in range(1, 5)
+    ]
+
+    def paged_query(query_string):
+        import re
+
+        limit = int(re.search(r"LIMIT (\d+)", query_string).group(1))
+        offset = int(re.search(r"OFFSET (\d+)", query_string).group(1))
+        return rows[offset:offset + limit]
+
+    def materialize(images, _job_id, _progress_callback, _cancel_check):
+        for image in images:
+            path = data_root / image["image_path"]
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(
+                b"same photograph" if path.name != "4.jpg" else b"hash collision"
+            )
+        return {"successful": images, "failures": []}
+
+    monkeypatch.setattr(download_data, "query", paged_query)
+    monkeypatch.setattr(download_data, "_prepare_with_progress", materialize)
+    # Simulate every file landing in the same hash bucket. The byte comparison
+    # must still accept 4.jpg because its bytes differ.
+    monkeypatch.setattr(download_data, "file_sha256", lambda _path: "same-hash")
+    monkeypatch.setattr(download_data, "data_dir", lambda _job_id: data_root)
+    monkeypatch.setattr(download_data, "csv_labels_path", lambda _job_id: data_root / "image_labels.csv")
+    monkeypatch.setattr(download_data, "dataset_manifest_path", lambda _job_id: data_root / "dataset_manifest.json")
+    monkeypatch.setattr(download_data, "download_report_path", lambda _job_id: artifacts_root / "download_report.json")
+    requests = [{
+        "class_name": "chair",
+        "sources": [{
+            "dataset_name": "SOP_cls_train",
+            "allocations": [
+                {"split": "train", "count": 1, "assignment_type": "official_split"},
+                {"split": "validation", "count": 1, "assignment_type": "derived_from_train"},
+            ],
+        }],
+    }]
+
+    report = download_data.download_visionkg_mixed_datasets_classification(
+        "test-job",
+        requests,
+    )
+
+    manifest = json.loads((data_root / "dataset_manifest.json").read_text())
+    assert [sample["image_path"] for sample in manifest["samples"]] == [
+        "SOP_cls_train/2.jpg",
+        "SOP_cls_train/4.jpg",
+    ]
+    assert report["sources"][1]["content_duplicate_conflicts"] == 2
+    assert report["complete"] is True

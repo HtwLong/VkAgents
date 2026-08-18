@@ -61,6 +61,43 @@ def test_download_progress_tracker_throttles_intermediate_writes(monkeypatch, tm
     assert snapshot["status"] == "completed"
 
 
+def test_download_progress_tracker_retries_transient_replace_denial(monkeypatch, tmp_path):
+    progress_path = tmp_path / "download_progress.json"
+    real_replace = progress.os.replace
+    attempts = 0
+    delays = []
+
+    def intermittently_denied(source, destination):
+        nonlocal attempts
+        attempts += 1
+        if attempts < 3:
+            raise PermissionError("file is temporarily in use")
+        real_replace(source, destination)
+
+    monkeypatch.setattr(progress, "download_progress_path", lambda _job_id: progress_path)
+    monkeypatch.setattr(progress.os, "replace", intermittently_denied)
+    monkeypatch.setattr(progress.time, "sleep", delays.append)
+
+    DownloadProgressTracker("job", total=1)
+
+    assert json.loads(progress_path.read_text(encoding="utf-8"))["status"] == "running"
+    assert attempts == 3
+    assert delays == [0.01, 0.02]
+    assert list(tmp_path.glob("*.tmp")) == []
+
+
+def test_download_progress_tracker_reports_previous_attempt(monkeypatch, tmp_path):
+    progress_path = tmp_path / "download_progress.json"
+    progress_path.write_text(json.dumps({"downloaded": 17}), encoding="utf-8")
+    monkeypatch.setattr(progress, "download_progress_path", lambda _job_id: progress_path)
+
+    DownloadProgressTracker("job", total=30, resume=True)
+
+    snapshot = json.loads(progress_path.read_text(encoding="utf-8"))
+    assert snapshot["downloaded"] == 0
+    assert snapshot["previous_downloaded"] == 17
+
+
 def test_prepare_data_reports_reused_valid_image(tmp_path):
     image_path = tmp_path / "dataset" / "one.jpg"
     image_path.parent.mkdir()
@@ -99,6 +136,79 @@ def test_prepare_data_uses_validation_metadata_on_second_run(monkeypatch, tmp_pa
 
     assert first["metrics"]["cache_hits"] == 1
     assert second["metrics"]["cache_hits"] == 1
+
+
+def test_prepare_data_defers_recent_server_failure(monkeypatch, tmp_path):
+    calls = 0
+
+    def fail_download(image, _root, _max_attempts, _timeout):
+        nonlocal calls
+        calls += 1
+        return False, {
+            **image,
+            "status_code": 500,
+            "rate_limited": False,
+            "error": "HTTP 500",
+        }
+
+    monkeypatch.setattr(visionkg_utils, "_download_one_image", fail_download)
+    images = [{"image_path": "dataset/broken.jpg", "url": "https://example.test/broken"}]
+
+    first = prepare_data(images, DATA_ROOT_PATH=str(tmp_path), max_workers=1)
+    second = prepare_data(images, DATA_ROOT_PATH=str(tmp_path), max_workers=1)
+
+    assert calls == 1
+    assert first["metrics"]["cached_failures"] == 0
+    assert second["metrics"]["cached_failures"] == 1
+    assert second["failures"][0]["cached_failure"] is True
+
+
+def test_prepare_data_retries_expired_server_failure(monkeypatch, tmp_path):
+    cache_path = tmp_path / ".download_validation_cache.json"
+    cache_path.write_text(json.dumps({
+        "dataset/broken.jpg": {
+            "status": "failed",
+            "status_code": 500,
+            "failed_at": 1,
+        },
+    }), encoding="utf-8")
+    calls = 0
+
+    def fail_download(image, _root, _max_attempts, _timeout):
+        nonlocal calls
+        calls += 1
+        return False, {**image, "status_code": 500, "error": "HTTP 500"}
+
+    monkeypatch.setattr(visionkg_utils, "_download_one_image", fail_download)
+    prepare_data(
+        [{"image_path": "dataset/broken.jpg", "url": "https://example.test/broken"}],
+        DATA_ROOT_PATH=str(tmp_path),
+        max_workers=1,
+    )
+
+    assert calls == 1
+
+
+def test_prepare_data_does_not_cache_rate_limit_failure(monkeypatch, tmp_path):
+    calls = 0
+
+    def rate_limited(image, _root, _max_attempts, _timeout):
+        nonlocal calls
+        calls += 1
+        return False, {
+            **image,
+            "status_code": 429,
+            "rate_limited": True,
+            "error": "HTTP 429",
+        }
+
+    monkeypatch.setattr(visionkg_utils, "_download_one_image", rate_limited)
+    images = [{"image_path": "dataset/limited.jpg", "url": "https://example.test/limited"}]
+
+    prepare_data(images, DATA_ROOT_PATH=str(tmp_path), max_workers=1)
+    prepare_data(images, DATA_ROOT_PATH=str(tmp_path), max_workers=1)
+
+    assert calls == 2
 
 
 def test_download_worker_count_uses_valid_environment(monkeypatch):
@@ -209,20 +319,7 @@ def test_visionkg_raw_image_url_has_view_fallback():
     assert visionkg_utils._visionkg_view_fallback_url("https://example.com/image.png") is None
 
 
-def test_view_endpoint_circuit_breaker_rewrites_later_urls(monkeypatch):
-    monkeypatch.setattr(visionkg_utils, "_prefer_view_endpoint", False)
-    raw_url = "https://vision-api.semkg.org/api/image?image=/mnist_cls_train/2/46591.png"
-    assert visionkg_utils._preferred_visionkg_url(raw_url) == raw_url
-
-    visionkg_utils._prefer_visionkg_view_endpoint()
-
-    assert visionkg_utils._preferred_visionkg_url(raw_url) == (
-        "https://vision-api.semkg.org/api/view?image=/mnist_cls_train/2/46591.png"
-    )
-
-
 def test_download_falls_back_to_view_endpoint_after_genuine_raw_500(monkeypatch, tmp_path):
-    monkeypatch.setattr(visionkg_utils, "_prefer_view_endpoint", False)
     image_bytes = io.BytesIO()
     Image.new("L", (2, 2)).save(image_bytes, format="PNG")
 
@@ -271,3 +368,58 @@ def test_download_falls_back_to_view_endpoint_after_genuine_raw_500(monkeypatch,
         "https://vision-api.semkg.org/api/image?image=/mnist_cls_train/2/46591.png",
         "https://vision-api.semkg.org/api/view?image=/mnist_cls_train/2/46591.png",
     ]
+
+
+def test_view_fallback_does_not_rewrite_the_next_image(monkeypatch, tmp_path):
+    image_bytes = io.BytesIO()
+    Image.new("L", (2, 2)).save(image_bytes, format="PNG")
+
+    class FakeResponse:
+        def __init__(self, status_code, headers, body=b""):
+            self.status_code = status_code
+            self.headers = headers
+            self.body = body
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            return False
+
+        def iter_content(self, chunk_size):
+            del chunk_size
+            yield self.body
+
+    requested = []
+
+    class FakeSession:
+        def get(self, url, **_kwargs):
+            requested.append(url)
+            if "first.png" in url and "/api/image?" in url:
+                return FakeResponse(500, {"X-RateLimit-Remaining": "59"})
+            return FakeResponse(
+                200,
+                {"Content-Type": "image/png"},
+                image_bytes.getvalue(),
+            )
+
+    monkeypatch.setattr(visionkg_utils, "_download_session", lambda: FakeSession())
+    monkeypatch.setattr(visionkg_utils, "_wait_for_rate_limit", lambda *_args: None)
+    monkeypatch.setattr(visionkg_utils, "_wait_for_download_request_slot", lambda *_args: None)
+    monkeypatch.setattr(visionkg_utils, "_interruptible_wait", lambda *_args: None)
+
+    for name in ("first.png", "second.png"):
+        successful, _result = visionkg_utils._download_one_image(
+            {
+                "image_path": f"dataset/{name}",
+                "url": f"https://vision-api.semkg.org/api/image?image=/dataset/{name}",
+            },
+            tmp_path,
+            max_attempts=2,
+            timeout=30,
+        )
+        assert successful is True
+
+    assert requested[-1] == (
+        "https://vision-api.semkg.org/api/image?image=/dataset/second.png"
+    )

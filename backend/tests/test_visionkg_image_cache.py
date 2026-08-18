@@ -31,7 +31,38 @@ def test_materialize_cached_image_preserves_dataset_path_without_copying(tmp_pat
 
 @pytest.mark.parametrize("path", ["../escape.jpg", "/absolute.jpg", "dataset/../../escape.jpg", ""])
 def test_cache_rejects_unsafe_image_paths(tmp_path, path):
-    with pytest.raises(ValueError, match="Unsafe|escapes"):
+    with pytest.raises(ValueError, match="Unsafe VisionKG image path"):
+        image_path_below(tmp_path, path)
+
+
+@pytest.mark.parametrize(
+    ("value", "parts"),
+    [
+        ("dataset/image.jpg", ("dataset", "image.jpg")),
+        (r"dataset\image.jpg", ("dataset", "image.jpg")),
+    ],
+)
+def test_cache_accepts_portable_path_separators(tmp_path, value, parts):
+    assert image_path_below(tmp_path, value) == tmp_path.resolve().joinpath(*parts)
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        ".",
+        "..",
+        r"..\escape.jpg",
+        r"C:\absolute.jpg",
+        r"C:drive-relative.jpg",
+        r"\\server\share\image.jpg",
+        "dataset//image.jpg",
+        "dataset/./image.jpg",
+        "dataset/../image.jpg",
+        "dataset/image.jpg/",
+    ],
+)
+def test_cache_rejects_unsafe_paths_on_every_platform(tmp_path, path):
+    with pytest.raises(ValueError, match="Unsafe VisionKG image path"):
         image_path_below(tmp_path, path)
 
 

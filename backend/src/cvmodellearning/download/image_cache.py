@@ -4,27 +4,30 @@ import errno
 import os
 import shutil
 import uuid
-from pathlib import Path
+from pathlib import Path, PurePosixPath, PureWindowsPath
 from typing import Iterable, Mapping
 
 
 def safe_relative_image_path(value: str) -> Path:
-    """Validate an image key before using it below a cache or run directory."""
-    path = Path(str(value))
-    if not str(value).strip() or path.is_absolute() or ".." in path.parts:
+    """Convert a portable image key into a safe native relative path."""
+    raw = str(value).strip()
+    normalized = raw.replace("\\", "/")
+    parts = normalized.split("/")
+
+    unsafe = (
+        not raw
+        or PurePosixPath(normalized).is_absolute()
+        or bool(PureWindowsPath(raw).drive)
+        or any(part in {"", ".", ".."} for part in parts)
+    )
+    if unsafe:
         raise ValueError(f"Unsafe VisionKG image path: {value!r}")
-    if any(part in {"", "."} for part in path.parts):
-        raise ValueError(f"Unsafe VisionKG image path: {value!r}")
-    return path
+    return Path(*parts)
 
 
 def image_path_below(root: Path, value: str) -> Path:
-    """Resolve a validated relative image path and enforce root containment."""
-    root = root.resolve()
-    destination = (root / safe_relative_image_path(value)).resolve(strict=False)
-    if not destination.is_relative_to(root):
-        raise ValueError(f"VisionKG image path escapes its root: {value!r}")
-    return destination
+    """Return a validated image path below root."""
+    return root.resolve() / safe_relative_image_path(value)
 
 
 def link_or_copy(source: Path, destination: Path) -> str:

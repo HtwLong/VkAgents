@@ -27,7 +27,13 @@ class DatasetSourceCount(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    dataset_name: str = Field(..., min_length=1, description="The dataset identifier.")
+    dataset_name: str = Field(
+        ...,
+        min_length=1,
+        description=(
+            "The exact canonical dataset_id. Human-readable display names are not identifiers."
+        ),
+    )
     count: int = Field(..., ge=0, description="Number of available or selected images.")
 
 
