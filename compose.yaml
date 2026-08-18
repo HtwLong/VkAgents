@@ -12,7 +12,11 @@ services:
       ASSESSMENT_LLM_MODEL: ${ASSESSMENT_LLM_MODEL:-gpt-5-nano}
       NVIDIA_VISIBLE_DEVICES: ${NVIDIA_VISIBLE_DEVICES:-all}
       VISIONKG_IMAGE_CACHE_DIR: /app/dataset_cache/visionkg
-    gpus: all
+    gpus:
+      - driver: nvidia
+        count: all
+        capabilities:
+          - gpu
     ports:
       - "${BACKEND_PORT:-8000}:8000"
     volumes:
