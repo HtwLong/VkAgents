@@ -1,8 +1,9 @@
 from agents import Agent
+from cvmodellearning.llm_config import PLANNING_MODEL
 
 from cvmodellearning.models.detection_models.torchvision_trainer import train_torchvision_model
 torchvision_trainer_agent = Agent(
-    model="gpt-5-nano",
+    model=PLANNING_MODEL,
     tools=[train_torchvision_model], 
     instructions=(
         "You are an expert in configuring and launching standard PyTorch/TorchVision "

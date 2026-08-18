@@ -1,0 +1,1023 @@
+[
+  {
+    "job_id": "batch-traffic-participants-graph-1-2d4e3d81",
+    "case_id": "traffic-participants",
+    "repetition": 1,
+    "use_graphrag": true,
+    "status": "failed",
+    "stages": {
+      "completeness": "passed",
+      "task_interpretation": "passed",
+      "data_check": "passed",
+      "model_selection": "passed",
+      "dataset_selection": "failed"
+    },
+    "failure_category": "infeasible_dataset_selection",
+    "error": {
+      "job_id": "batch-traffic-participants-graph-1-2d4e3d81",
+      "message": "Dataset selection remained invalid after two scoped LLM attempts.",
+      "proposed_selection": [
+        {
+          "class_name": "bicycle",
+          "sources": [
+            {
+              "dataset_name": "bdd_100k_det_train",
+              "count": 1200
+            },
+            {
+              "dataset_name": "LVIS_det_train",
+              "count": 500
+            }
+          ]
+        },
+        {
+          "class_name": "bus",
+          "sources": [
+            {
+              "dataset_name": "bdd_100k_det_train",
+              "count": 1200
+            }
+          ]
+        },
+        {
+          "class_name": "car",
+          "sources": [
+            {
+              "dataset_name": "bdd_100k_det_train",
+              "count": 1200
+            }
+          ]
+        },
+        {
+          "class_name": "motorcycle",
+          "sources": [
+            {
+              "dataset_name": "bdd_100k_det_train",
+              "count": 1200
+            },
+            {
+              "dataset_name": "LVIS_det_train",
+              "count": 500
+            }
+          ]
+        },
+        {
+          "class_name": "person",
+          "sources": [
+            {
+              "dataset_name": "LVIS_det_train",
+              "count": 500
+            }
+          ]
+        },
+        {
+          "class_name": "truck",
+          "sources": [
+            {
+              "dataset_name": "bdd_100k_det_train",
+              "count": 1200
+            },
+            {
+              "dataset_name": "LVIS_det_train",
+              "count": 500
+            }
+          ]
+        }
+      ],
+      "validation_findings": [
+        {
+          "code": "SOURCE_NOT_ELIGIBLE_FOR_CLASS",
+          "class_name": "person",
+          "dataset_id": "bdd_100k_det_train",
+          "reason": "The selected source is not eligible for this class.",
+          "facts": {},
+          "available_options": []
+        },
+        {
+          "code": "SOURCE_NOT_ELIGIBLE_FOR_CLASS",
+          "class_name": "car",
+          "dataset_id": "LVIS_det_train",
+          "reason": "The selected source is not eligible for this class.",
+          "facts": {},
+          "available_options": []
+        },
+        {
+          "code": "SOURCE_NOT_ELIGIBLE_FOR_CLASS",
+          "class_name": "bus",
+          "dataset_id": "LVIS_det_train",
+          "reason": "The selected source is not eligible for this class.",
+          "facts": {},
+          "available_options": []
+        },
+        {
+          "code": "CLASS_MINIMUM_COVERAGE_UNMET",
+          "class_name": "bus",
+          "dataset_id": null,
+          "reason": "The compiled source decisions do not meet mandatory class coverage.",
+          "facts": {
+            "compiled": 1200,
+            "minimum": 1250,
+            "preferred": 1750
+          },
+          "available_options": [
+            {
+              "option": "activate_an_eligible_supplement"
+            },
+            {
+              "option": "lower_class_minimum"
+            }
+          ]
+        },
+        {
+          "code": "CLASS_MINIMUM_COVERAGE_UNMET",
+          "class_name": "car",
+          "dataset_id": null,
+          "reason": "The compiled source decisions do not meet mandatory class coverage.",
+          "facts": {
+            "compiled": 1200,
+            "minimum": 1250,
+            "preferred": 1750
+          },
+          "available_options": [
+            {
+              "option": "activate_an_eligible_supplement"
+            },
+            {
+              "option": "lower_class_minimum"
+            }
+          ]
+        },
+        {
+          "code": "CLASS_MINIMUM_COVERAGE_UNMET",
+          "class_name": "person",
+          "dataset_id": null,
+          "reason": "The compiled source decisions do not meet mandatory class coverage.",
+          "facts": {
+            "compiled": 500,
+            "minimum": 1250,
+            "preferred": 1750
+          },
+          "available_options": [
+            {
+              "option": "activate_an_eligible_supplement"
+            },
+            {
+              "option": "lower_class_minimum"
+            }
+          ]
+        }
+      ],
+      "data_selection_policy": {
+        "policy_ids": [
+          "data.detection.robust_pool.v1",
+          "data.detection.source_sufficiency.v1",
+          "data.detection.lineage_safety.v1",
+          "data.detection.domain_mix.v1"
+        ],
+        "target_images_per_class": 1750,
+        "min_mixed_source_count": 500,
+        "min_mixed_source_share": 0.1,
+        "reject_unpaired_original_derived_mix": true,
+        "requested_robustness_dimensions": [],
+        "policy_id": "data.detection.domain_mix.v1",
+        "preferred_primary_domain_share": 0.8,
+        "minimum_primary_domain_share": 0.7,
+        "maximum_generalization_sources": 1,
+        "domain_share_severity": "warning",
+        "domain_share_instruction": "Prefer primary real target-domain data, but a lower share may be used when the rationale explains domain, availability, or transfer evidence.",
+        "dataset_sizing": {
+          "target_images_per_class": 1750,
+          "minimum_images_per_class": 1250,
+          "maximum_images_per_class": 2250,
+          "confidence": "high",
+          "facts": {
+            "pretrained_class_coverage": "full",
+            "domain_shift": "moderate",
+            "accuracy_demand": "high",
+            "robustness_dimensions": [],
+            "object_size_risk": "low",
+            "object_size_evidence": "unknown",
+            "small_object_fraction": null,
+            "median_short_side_px_at_640": null,
+            "previous_run_failed": false
+          },
+          "adjustments": [
+            {
+              "rule": "full_pretrained_class_coverage",
+              "value": -250,
+              "reason": "The selected pretrained detector already covers every requested class."
+            },
+            {
+              "rule": "moderate_domain_shift",
+              "value": 500,
+              "reason": "The deployment domain is moderately different or could not be verified."
+            },
+            {
+              "rule": "high_accuracy_demand",
+              "value": 500,
+              "reason": "The requested accuracy or per-class recall is demanding."
+            }
+          ],
+          "config": {
+            "base_images_per_class": 1000,
+            "full_pretrained_coverage_adjustment": -250,
+            "partial_pretrained_coverage_adjustment": 500,
+            "no_pretrained_coverage_adjustment": 1000,
+            "moderate_domain_shift_adjustment": 500,
+            "strong_domain_shift_adjustment": 1000,
+            "robustness_adjustment_per_dimension": 250,
+            "robustness_adjustment_maximum": 500,
+            "high_accuracy_adjustment": 500,
+            "explicit_small_object_adjustment": 750,
+            "observed_small_object_adjustment": 1250,
+            "normal_minimum": 750,
+            "normal_maximum": 3000,
+            "evidence_backed_expansion_maximum": 5000
+          },
+          "expansion_requires_evidence": true,
+          "calculated_target_images_per_class": 1750,
+          "effective_target_images_per_class": 1750,
+          "explicit_user_override": false,
+          "calculation_stage": "select_datasets_prerequisite"
+        }
+      }
+    },
+    "traceback": "Traceback (most recent call last):\n  File \"C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\src\\cvmodellearning\\benchmarks\\batch_eval.py\", line 184, in evaluate\n    response = await operation(planning.StateRequest(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n        context=context, job_id=job_id, use_graphrag=use_graphrag\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    ))\n    ^^\n  File \"C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\src\\routers\\planning.py\", line 2030, in select_datasets\n    raise HTTPException(status_code=422, detail=failure)\nfastapi.exceptions.HTTPException: 422: {'job_id': 'batch-traffic-participants-graph-1-2d4e3d81', 'message': 'Dataset selection remained invalid after two scoped LLM attempts.', 'proposed_selection': [{'class_name': 'bicycle', 'sources': [{'dataset_name': 'bdd_100k_det_train', 'count': 1200}, {'dataset_name': 'LVIS_det_train', 'count': 500}]}, {'class_name': 'bus', 'sources': [{'dataset_name': 'bdd_100k_det_train', 'count': 1200}]}, {'class_name': 'car', 'sources': [{'dataset_name': 'bdd_100k_det_train', 'count': 1200}]}, {'class_name': 'motorcycle', 'sources': [{'dataset_name': 'bdd_100k_det_train', 'count': 1200}, {'dataset_name': 'LVIS_det_train', 'count': 500}]}, {'class_name': 'person', 'sources': [{'dataset_name': 'LVIS_det_train', 'count': 500}]}, {'class_name': 'truck', 'sources': [{'dataset_name': 'bdd_100k_det_train', 'count': 1200}, {'dataset_name': 'LVIS_det_train', 'count': 500}]}], 'validation_findings': [{'code': 'SOURCE_NOT_ELIGIBLE_FOR_CLASS', 'class_name': 'person', 'dataset_id': 'bdd_100k_det_train', 'reason': 'The selected source is not eligible for this class.', 'facts': {}, 'available_options': []}, {'code': 'SOURCE_NOT_ELIGIBLE_FOR_CLASS', 'class_name': 'car', 'dataset_id': 'LVIS_det_train', 'reason': 'The selected source is not eligible for this class.', 'facts': {}, 'available_options': []}, {'code': 'SOURCE_NOT_ELIGIBLE_FOR_CLASS', 'class_name': 'bus', 'dataset_id': 'LVIS_det_train', 'reason': 'The selected source is not eligible for this class.', 'facts': {}, 'available_options': []}, {'code': 'CLASS_MINIMUM_COVERAGE_UNMET', 'class_name': 'bus', 'dataset_id': None, 'reason': 'The compiled source decisions do not meet mandatory class coverage.', 'facts': {'compiled': 1200, 'minimum': 1250, 'preferred': 1750}, 'available_options': [{'option': 'activate_an_eligible_supplement'}, {'option': 'lower_class_minimum'}]}, {'code': 'CLASS_MINIMUM_COVERAGE_UNMET', 'class_name': 'car', 'dataset_id': None, 'reason': 'The compiled source decisions do not meet mandatory class coverage.', 'facts': {'compiled': 1200, 'minimum': 1250, 'preferred': 1750}, 'available_options': [{'option': 'activate_an_eligible_supplement'}, {'option': 'lower_class_minimum'}]}, {'code': 'CLASS_MINIMUM_COVERAGE_UNMET', 'class_name': 'person', 'dataset_id': None, 'reason': 'The compiled source decisions do not meet mandatory class coverage.', 'facts': {'compiled': 500, 'minimum': 1250, 'preferred': 1750}, 'available_options': [{'option': 'activate_an_eligible_supplement'}, {'option': 'lower_class_minimum'}]}], 'data_selection_policy': {'policy_ids': ['data.detection.robust_pool.v1', 'data.detection.source_sufficiency.v1', 'data.detection.lineage_safety.v1', 'data.detection.domain_mix.v1'], 'target_images_per_class': 1750, 'min_mixed_source_count': 500, 'min_mixed_source_share': 0.1, 'reject_unpaired_original_derived_mix': True, 'requested_robustness_dimensions': [], 'policy_id': 'data.detection.domain_mix.v1', 'preferred_primary_domain_share': 0.8, 'minimum_primary_domain_share': 0.7, 'maximum_generalization_sources': 1, 'domain_share_severity': 'warning', 'domain_share_instruction': 'Prefer primary real target-domain data, but a lower share may be used when the rationale explains domain, availability, or transfer evidence.', 'dataset_sizing': {'target_images_per_class': 1750, 'minimum_images_per_class': 1250, 'maximum_images_per_class': 2250, 'confidence': 'high', 'facts': {'pretrained_class_coverage': 'full', 'domain_shift': 'moderate', 'accuracy_demand': 'high', 'robustness_dimensions': (), 'object_size_risk': 'low', 'object_size_evidence': 'unknown', 'small_object_fraction': None, 'median_short_side_px_at_640': None, 'previous_run_failed': False}, 'adjustments': ({'rule': 'full_pretrained_class_coverage', 'value': -250, 'reason': 'The selected pretrained detector already covers every requested class.'}, {'rule': 'moderate_domain_shift', 'value': 500, 'reason': 'The deployment domain is moderately different or could not be verified.'}, {'rule': 'high_accuracy_demand', 'value': 500, 'reason': 'The requested accuracy or per-class recall is demanding.'}), 'config': {'base_images_per_class': 1000, 'full_pretrained_coverage_adjustment': -250, 'partial_pretrained_coverage_adjustment': 500, 'no_pretrained_coverage_adjustment': 1000, 'moderate_domain_shift_adjustment': 500, 'strong_domain_shift_adjustment': 1000, 'robustness_adjustment_per_dimension': 250, 'robustness_adjustment_maximum': 500, 'high_accuracy_adjustment': 500, 'explicit_small_object_adjustment': 750, 'observed_small_object_adjustment': 1250, 'normal_minimum': 750, 'normal_maximum': 3000, 'evidence_backed_expansion_maximum': 5000}, 'expansion_requires_evidence': True, 'calculated_target_images_per_class': 1750, 'effective_target_images_per_class': 1750, 'explicit_user_override': False, 'calculation_stage': 'select_datasets_prerequisite'}}}\n",
+    "duration_seconds": 226.047,
+    "llm_usage": {
+      "schema_version": 1,
+      "job_id": "batch-traffic-participants-graph-1-2d4e3d81",
+      "scope": "planning",
+      "currency": "USD",
+      "totals": {
+        "requests": 5,
+        "input_tokens": 90580,
+        "cached_input_tokens": 0,
+        "output_tokens": 34663,
+        "reasoning_tokens": 0,
+        "total_tokens": 125243,
+        "calculated_cost_usd": "0.01839420"
+      },
+      "models": {
+        "gpt-5-nano": {
+          "requests": 5,
+          "input_tokens": 90580,
+          "cached_input_tokens": 0,
+          "output_tokens": 34663,
+          "reasoning_tokens": 0,
+          "total_tokens": 125243,
+          "calculated_cost_usd": "0.01839420"
+        }
+      },
+      "operations": {
+        "completeness_check": {
+          "requests": 1,
+          "input_tokens": 258,
+          "cached_input_tokens": 0,
+          "output_tokens": 859,
+          "reasoning_tokens": 0,
+          "total_tokens": 1117,
+          "calculated_cost_usd": "0.00035650"
+        },
+        "task_interpretation": {
+          "requests": 1,
+          "input_tokens": 3174,
+          "cached_input_tokens": 0,
+          "output_tokens": 6084,
+          "reasoning_tokens": 0,
+          "total_tokens": 9258,
+          "calculated_cost_usd": "0.00259230"
+        },
+        "model_selection": {
+          "requests": 1,
+          "input_tokens": 50434,
+          "cached_input_tokens": 0,
+          "output_tokens": 8634,
+          "reasoning_tokens": 0,
+          "total_tokens": 59068,
+          "calculated_cost_usd": "0.00597530"
+        },
+        "dataset_selection": {
+          "requests": 2,
+          "input_tokens": 36714,
+          "cached_input_tokens": 0,
+          "output_tokens": 19086,
+          "reasoning_tokens": 0,
+          "total_tokens": 55800,
+          "calculated_cost_usd": "0.00947010"
+        }
+      },
+      "pricing": {
+        "gpt-5-nano": {
+          "input_per_million": "0.05",
+          "cached_input_per_million": "0.005",
+          "output_per_million": "0.40",
+          "effective_date": "2026-08-15",
+          "source": "https://developers.openai.com/api/docs/models/gpt-5-nano"
+        }
+      },
+      "usage_notes": [
+        "The installed Agents SDK reports aggregate input tokens without a cached-token breakdown; those calls are calculated at the standard input rate."
+      ]
+    }
+  },
+  {
+    "job_id": "batch-traffic-lights-signs-graph-1-12204c9e",
+    "case_id": "traffic-lights-signs",
+    "repetition": 1,
+    "use_graphrag": true,
+    "status": "failed",
+    "stages": {
+      "completeness": "passed",
+      "task_interpretation": "passed",
+      "data_check": "passed",
+      "model_selection": "passed",
+      "dataset_selection": "failed"
+    },
+    "failure_category": "infeasible_dataset_selection",
+    "error": {
+      "job_id": "batch-traffic-lights-signs-graph-1-12204c9e",
+      "message": "Dataset selection remained invalid after two scoped LLM attempts.",
+      "proposed_selection": [
+        {
+          "class_name": "traffic light",
+          "sources": [
+            {
+              "dataset_name": "bdd_100k_det_train",
+              "count": 2400
+            },
+            {
+              "dataset_name": "openimages_challenge_2019_det_train",
+              "count": 600
+            }
+          ]
+        },
+        {
+          "class_name": "traffic sign",
+          "sources": [
+            {
+              "dataset_name": "bdd_100k_det_train",
+              "count": 2400
+            },
+            {
+              "dataset_name": "openimages_challenge_2019_det_train",
+              "count": 600
+            }
+          ]
+        }
+      ],
+      "validation_findings": [
+        {
+          "class_name": "traffic light",
+          "split": "validation",
+          "reason": "No sufficiently represented LLM-approved training source is permitted to provide this derived holdout."
+        }
+      ],
+      "data_selection_policy": {
+        "policy_ids": [
+          "data.detection.robust_pool.v1",
+          "data.detection.source_sufficiency.v1",
+          "data.detection.lineage_safety.v1",
+          "data.detection.domain_mix.v1"
+        ],
+        "target_images_per_class": 3000,
+        "min_mixed_source_count": 500,
+        "min_mixed_source_share": 0.1,
+        "reject_unpaired_original_derived_mix": true,
+        "requested_robustness_dimensions": [
+          "lighting",
+          "scene_density"
+        ],
+        "policy_id": "data.detection.domain_mix.v1",
+        "preferred_primary_domain_share": 0.8,
+        "minimum_primary_domain_share": 0.7,
+        "maximum_generalization_sources": 1,
+        "domain_share_severity": "warning",
+        "domain_share_instruction": "Prefer primary real target-domain data, but a lower share may be used when the rationale explains domain, availability, or transfer evidence.",
+        "dataset_sizing": {
+          "target_images_per_class": 3000,
+          "minimum_images_per_class": 2500,
+          "maximum_images_per_class": 3000,
+          "confidence": "high",
+          "facts": {
+            "pretrained_class_coverage": "partial",
+            "domain_shift": "moderate",
+            "accuracy_demand": "standard",
+            "robustness_dimensions": [
+              "lighting",
+              "scene_density"
+            ],
+            "object_size_risk": "medium",
+            "object_size_evidence": "explicit_requirement",
+            "small_object_fraction": null,
+            "median_short_side_px_at_640": null,
+            "previous_run_failed": false
+          },
+          "adjustments": [
+            {
+              "rule": "partial_pretrained_class_coverage",
+              "value": 500,
+              "reason": "Some requested classes require adaptation of the pretrained detector."
+            },
+            {
+              "rule": "moderate_domain_shift",
+              "value": 500,
+              "reason": "The deployment domain is moderately different or could not be verified."
+            },
+            {
+              "rule": "robustness_coverage",
+              "value": 500,
+              "reason": "Requested robustness dimensions require stratified coverage, with a bounded volume increase."
+            },
+            {
+              "rule": "explicit_small_object_requirement",
+              "value": 750,
+              "reason": "The structured task requirements explicitly prioritize small objects."
+            }
+          ],
+          "config": {
+            "base_images_per_class": 1000,
+            "full_pretrained_coverage_adjustment": -250,
+            "partial_pretrained_coverage_adjustment": 500,
+            "no_pretrained_coverage_adjustment": 1000,
+            "moderate_domain_shift_adjustment": 500,
+            "strong_domain_shift_adjustment": 1000,
+            "robustness_adjustment_per_dimension": 250,
+            "robustness_adjustment_maximum": 500,
+            "high_accuracy_adjustment": 500,
+            "explicit_small_object_adjustment": 750,
+            "observed_small_object_adjustment": 1250,
+            "normal_minimum": 750,
+            "normal_maximum": 3000,
+            "evidence_backed_expansion_maximum": 5000
+          },
+          "expansion_requires_evidence": true,
+          "calculated_target_images_per_class": 3000,
+          "effective_target_images_per_class": 3000,
+          "explicit_user_override": false,
+          "calculation_stage": "select_datasets_prerequisite"
+        }
+      }
+    },
+    "traceback": "Traceback (most recent call last):\n  File \"C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\src\\cvmodellearning\\benchmarks\\batch_eval.py\", line 184, in evaluate\n    response = await operation(planning.StateRequest(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n        context=context, job_id=job_id, use_graphrag=use_graphrag\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    ))\n    ^^\n  File \"C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\src\\routers\\planning.py\", line 2030, in select_datasets\n    raise HTTPException(status_code=422, detail=failure)\nfastapi.exceptions.HTTPException: 422: {'job_id': 'batch-traffic-lights-signs-graph-1-12204c9e', 'message': 'Dataset selection remained invalid after two scoped LLM attempts.', 'proposed_selection': [{'class_name': 'traffic light', 'sources': [{'dataset_name': 'bdd_100k_det_train', 'count': 2400}, {'dataset_name': 'openimages_challenge_2019_det_train', 'count': 600}]}, {'class_name': 'traffic sign', 'sources': [{'dataset_name': 'bdd_100k_det_train', 'count': 2400}, {'dataset_name': 'openimages_challenge_2019_det_train', 'count': 600}]}], 'validation_findings': [{'class_name': 'traffic light', 'split': 'validation', 'reason': 'No sufficiently represented LLM-approved training source is permitted to provide this derived holdout.'}], 'data_selection_policy': {'policy_ids': ['data.detection.robust_pool.v1', 'data.detection.source_sufficiency.v1', 'data.detection.lineage_safety.v1', 'data.detection.domain_mix.v1'], 'target_images_per_class': 3000, 'min_mixed_source_count': 500, 'min_mixed_source_share': 0.1, 'reject_unpaired_original_derived_mix': True, 'requested_robustness_dimensions': ['lighting', 'scene_density'], 'policy_id': 'data.detection.domain_mix.v1', 'preferred_primary_domain_share': 0.8, 'minimum_primary_domain_share': 0.7, 'maximum_generalization_sources': 1, 'domain_share_severity': 'warning', 'domain_share_instruction': 'Prefer primary real target-domain data, but a lower share may be used when the rationale explains domain, availability, or transfer evidence.', 'dataset_sizing': {'target_images_per_class': 3000, 'minimum_images_per_class': 2500, 'maximum_images_per_class': 3000, 'confidence': 'high', 'facts': {'pretrained_class_coverage': 'partial', 'domain_shift': 'moderate', 'accuracy_demand': 'standard', 'robustness_dimensions': ('lighting', 'scene_density'), 'object_size_risk': 'medium', 'object_size_evidence': 'explicit_requirement', 'small_object_fraction': None, 'median_short_side_px_at_640': None, 'previous_run_failed': False}, 'adjustments': ({'rule': 'partial_pretrained_class_coverage', 'value': 500, 'reason': 'Some requested classes require adaptation of the pretrained detector.'}, {'rule': 'moderate_domain_shift', 'value': 500, 'reason': 'The deployment domain is moderately different or could not be verified.'}, {'rule': 'robustness_coverage', 'value': 500, 'reason': 'Requested robustness dimensions require stratified coverage, with a bounded volume increase.'}, {'rule': 'explicit_small_object_requirement', 'value': 750, 'reason': 'The structured task requirements explicitly prioritize small objects.'}), 'config': {'base_images_per_class': 1000, 'full_pretrained_coverage_adjustment': -250, 'partial_pretrained_coverage_adjustment': 500, 'no_pretrained_coverage_adjustment': 1000, 'moderate_domain_shift_adjustment': 500, 'strong_domain_shift_adjustment': 1000, 'robustness_adjustment_per_dimension': 250, 'robustness_adjustment_maximum': 500, 'high_accuracy_adjustment': 500, 'explicit_small_object_adjustment': 750, 'observed_small_object_adjustment': 1250, 'normal_minimum': 750, 'normal_maximum': 3000, 'evidence_backed_expansion_maximum': 5000}, 'expansion_requires_evidence': True, 'calculated_target_images_per_class': 3000, 'effective_target_images_per_class': 3000, 'explicit_user_override': False, 'calculation_stage': 'select_datasets_prerequisite'}}}\n",
+    "duration_seconds": 203.348,
+    "llm_usage": {
+      "schema_version": 1,
+      "job_id": "batch-traffic-lights-signs-graph-1-12204c9e",
+      "scope": "planning",
+      "currency": "USD",
+      "totals": {
+        "requests": 5,
+        "input_tokens": 66581,
+        "cached_input_tokens": 0,
+        "output_tokens": 30758,
+        "reasoning_tokens": 0,
+        "total_tokens": 97339,
+        "calculated_cost_usd": "0.01563225"
+      },
+      "models": {
+        "gpt-5-nano": {
+          "requests": 5,
+          "input_tokens": 66581,
+          "cached_input_tokens": 0,
+          "output_tokens": 30758,
+          "reasoning_tokens": 0,
+          "total_tokens": 97339,
+          "calculated_cost_usd": "0.01563225"
+        }
+      },
+      "operations": {
+        "completeness_check": {
+          "requests": 1,
+          "input_tokens": 313,
+          "cached_input_tokens": 0,
+          "output_tokens": 753,
+          "reasoning_tokens": 0,
+          "total_tokens": 1066,
+          "calculated_cost_usd": "0.00031685"
+        },
+        "task_interpretation": {
+          "requests": 1,
+          "input_tokens": 3229,
+          "cached_input_tokens": 0,
+          "output_tokens": 5624,
+          "reasoning_tokens": 0,
+          "total_tokens": 8853,
+          "calculated_cost_usd": "0.00241105"
+        },
+        "model_selection": {
+          "requests": 1,
+          "input_tokens": 48310,
+          "cached_input_tokens": 0,
+          "output_tokens": 9315,
+          "reasoning_tokens": 0,
+          "total_tokens": 57625,
+          "calculated_cost_usd": "0.00614150"
+        },
+        "dataset_selection": {
+          "requests": 2,
+          "input_tokens": 14729,
+          "cached_input_tokens": 0,
+          "output_tokens": 15066,
+          "reasoning_tokens": 0,
+          "total_tokens": 29795,
+          "calculated_cost_usd": "0.00676285"
+        }
+      },
+      "pricing": {
+        "gpt-5-nano": {
+          "input_per_million": "0.05",
+          "cached_input_per_million": "0.005",
+          "output_per_million": "0.40",
+          "effective_date": "2026-08-15",
+          "source": "https://developers.openai.com/api/docs/models/gpt-5-nano"
+        }
+      },
+      "usage_notes": [
+        "The installed Agents SDK reports aggregate input tokens without a cached-token breakdown; those calls are calculated at the standard input rate."
+      ]
+    }
+  },
+  {
+    "job_id": "batch-ex-furniture-classification-graph-1-7118b3d9",
+    "case_id": "ex-furniture-classification",
+    "repetition": 1,
+    "use_graphrag": true,
+    "status": "passed",
+    "stages": {
+      "completeness": "passed",
+      "task_interpretation": "passed",
+      "data_check": "passed",
+      "model_selection": "passed",
+      "dataset_selection": "passed",
+      "hyperparameters": "passed",
+      "configuration_validation": "passed",
+      "training_smoke": "passed"
+    },
+    "planning_warnings": {
+      "dataset": [],
+      "hyperparameters": [
+        {
+          "field": "batch_size",
+          "severity": "preference",
+          "reason": "Current batch_size=4 may be near memory budget on the 6 GB GPU during fine-tuning. Reducing batch size can lower peak memory usage and reduce risk of OOM, at potential cost of longer training time.",
+          "recommended_value": "2",
+          "rule_id": null
+        },
+        {
+          "field": "precision",
+          "severity": "preference",
+          "reason": "AMP/mixed-precision training is supported by the training_hardware. Switching from fp32 to fp16 (or mixed precision) can reduce memory usage and increase throughput without compromising stability on this model.",
+          "recommended_value": "fp16",
+          "rule_id": null
+        },
+        {
+          "field": "learning_rate",
+          "severity": "preference",
+          "reason": "Starting LR of 0.001 is common for fine-tuning convnets, but a smaller LR can improve stability on a small-domain fine-tuning task. Consider 0.0005 for potential smoother convergence.",
+          "recommended_value": "0.0005",
+          "rule_id": null
+        },
+        {
+          "field": "weight_decay",
+          "severity": "preference",
+          "reason": "Weight decay at 0.0 is acceptable for a small domain fine-tune, but a light L2 penalty (e.g., 1e-4) can help generalization in transfer learning contexts.",
+          "recommended_value": "0.0001",
+          "rule_id": null
+        },
+        {
+          "field": "gradient_clip_norm",
+          "severity": "preference",
+          "reason": "Gradient clipping is currently disabled (0.0). Enabling clipping (e.g., 1.0) can mitigate potential gradient explosions in deeper models during fine-tuning.",
+          "recommended_value": "1.0",
+          "rule_id": null
+        },
+        {
+          "field": "random_resized_crop_scale_min",
+          "severity": "preference",
+          "reason": "Current min scale 0.6 provides moderate augmentation. Lowering to 0.5 increases augmentation diversity and may improve robustness for fine-grained categories.",
+          "recommended_value": "0.5",
+          "rule_id": null
+        }
+      ]
+    },
+    "selection": {
+      "task": "classification",
+      "classes": [
+        "chair",
+        "sofa",
+        "table",
+        "cabinet",
+        "lamp"
+      ],
+      "model": null,
+      "datasets": [
+        ""
+      ],
+      "hpo_config": {
+        "classes": [
+          "chair",
+          "sofa",
+          "table",
+          "cabinet",
+          "lamp"
+        ],
+        "selected_data": [
+          {
+            "class_name": "chair",
+            "sources": [
+              {
+                "dataset_name": "SOP_cls_train",
+                "allocations": [
+                  {
+                    "split": "train",
+                    "count": 1200,
+                    "assignment_type": "official_split"
+                  },
+                  {
+                    "split": "validation",
+                    "count": 150,
+                    "assignment_type": "derived_from_train"
+                  }
+                ]
+              },
+              {
+                "dataset_name": "SOP_cls_test",
+                "allocations": [
+                  {
+                    "split": "test",
+                    "count": 150,
+                    "assignment_type": "official_split"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "class_name": "sofa",
+            "sources": [
+              {
+                "dataset_name": "SOP_cls_train",
+                "allocations": [
+                  {
+                    "split": "train",
+                    "count": 1200,
+                    "assignment_type": "official_split"
+                  },
+                  {
+                    "split": "validation",
+                    "count": 150,
+                    "assignment_type": "derived_from_train"
+                  }
+                ]
+              },
+              {
+                "dataset_name": "SOP_cls_test",
+                "allocations": [
+                  {
+                    "split": "test",
+                    "count": 150,
+                    "assignment_type": "official_split"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "class_name": "table",
+            "sources": [
+              {
+                "dataset_name": "SOP_cls_train",
+                "allocations": [
+                  {
+                    "split": "train",
+                    "count": 1200,
+                    "assignment_type": "official_split"
+                  },
+                  {
+                    "split": "validation",
+                    "count": 150,
+                    "assignment_type": "derived_from_train"
+                  }
+                ]
+              },
+              {
+                "dataset_name": "SOP_cls_test",
+                "allocations": [
+                  {
+                    "split": "test",
+                    "count": 150,
+                    "assignment_type": "official_split"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "class_name": "cabinet",
+            "sources": [
+              {
+                "dataset_name": "SOP_cls_train",
+                "allocations": [
+                  {
+                    "split": "train",
+                    "count": 1200,
+                    "assignment_type": "official_split"
+                  },
+                  {
+                    "split": "validation",
+                    "count": 150,
+                    "assignment_type": "derived_from_train"
+                  }
+                ]
+              },
+              {
+                "dataset_name": "SOP_cls_test",
+                "allocations": [
+                  {
+                    "split": "test",
+                    "count": 150,
+                    "assignment_type": "official_split"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "class_name": "lamp",
+            "sources": [
+              {
+                "dataset_name": "SOP_cls_train",
+                "allocations": [
+                  {
+                    "split": "train",
+                    "count": 1200,
+                    "assignment_type": "official_split"
+                  },
+                  {
+                    "split": "validation",
+                    "count": 150,
+                    "assignment_type": "derived_from_train"
+                  }
+                ]
+              },
+              {
+                "dataset_name": "SOP_cls_test",
+                "allocations": [
+                  {
+                    "split": "test",
+                    "count": 150,
+                    "assignment_type": "official_split"
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "train_data_ratio": 0.8,
+        "val_data_ratio": 0.1,
+        "test_data_ratio": 0.1,
+        "num_epochs": 25,
+        "patience": 0,
+        "batch_size": 4,
+        "image_size": 224,
+        "precision": "fp32",
+        "scheduler_name": "step",
+        "scheduler_step_size": 7,
+        "scheduler_gamma": 0.1,
+        "warmup_epochs": 0,
+        "gradient_accumulation_steps": 1,
+        "gradient_clip_norm": 0.0,
+        "freeze_backbone_epochs": 0,
+        "head_learning_rate_multiplier": 1.0,
+        "mixup_alpha": 0.0,
+        "cutmix_alpha": 0.0,
+        "random_erasing": 0.0,
+        "auto_augment_policy": "none",
+        "random_resized_crop_scale_min": 0.6,
+        "horizontal_flip_probability": 0.5,
+        "use_model_ema": false,
+        "repeated_augmentation_repetitions": 1,
+        "use_activation_checkpointing": false,
+        "track_metric": "val_acc",
+        "model_name": "convnext_tiny",
+        "model_weights": "default",
+        "training_mode": "fine_tune_pretrained",
+        "training_recipe_id": "torchvision_convnext_tiny_imagenet_v1_adapted_custom_finetune",
+        "optimizer": {
+          "name": "sgd",
+          "params": {
+            "learning_rate": 0.001,
+            "weight_decay": 0.0,
+            "momentum": 0.9,
+            "nesterov": false
+          }
+        },
+        "criterion": {
+          "name": "cross_entropy",
+          "params": {
+            "label_smoothing": 0.0
+          }
+        }
+      }
+    },
+    "configuration_validation": {
+      "passed": true,
+      "validated_fields": [
+        "auto_augment_policy",
+        "batch_size",
+        "classes",
+        "criterion_name",
+        "cutmix_alpha",
+        "freeze_backbone_epochs",
+        "gradient_accumulation_steps",
+        "gradient_clip_norm",
+        "head_learning_rate_multiplier",
+        "horizontal_flip_probability",
+        "image_size",
+        "label_smoothing",
+        "learning_rate",
+        "mixup_alpha",
+        "model_name",
+        "model_weights",
+        "momentum",
+        "nesterov",
+        "num_epochs",
+        "optimizer_name",
+        "patience",
+        "precision",
+        "random_erasing",
+        "random_resized_crop_scale_min",
+        "repeated_augmentation_repetitions",
+        "scheduler_gamma",
+        "scheduler_name",
+        "scheduler_step_size",
+        "selected_data",
+        "test_data_ratio",
+        "track_metric",
+        "train_data_ratio",
+        "training_mode",
+        "training_recipe_id",
+        "use_activation_checkpointing",
+        "use_model_ema",
+        "val_data_ratio",
+        "warmup_epochs",
+        "weight_decay"
+      ]
+    },
+    "training_smoke": {
+      "status": "passed",
+      "stages": {
+        "data_materialized": "passed",
+        "data_prepared": "passed",
+        "execution_readiness": "passed",
+        "training_batch": "passed",
+        "model_initialized": "passed",
+        "forward_pass": "passed",
+        "loss_computed": "passed",
+        "backward_pass": "passed",
+        "optimizer_step": "passed",
+        "validation_pass": "passed"
+      },
+      "data_policy": {
+        "source": "normal cache-aware downloader",
+        "train_images_per_allocation_at_most": 4,
+        "validation_and_test_images_per_allocation_at_most": 1,
+        "saved_planning_configuration_changed": false
+      },
+      "runtime_overrides": {
+        "max_epochs": 1,
+        "max_train_batches": 1,
+        "gradient_accumulation_steps": 1
+      },
+      "training_result": {
+        "best_epoch": 1,
+        "best_metric": "val_acc",
+        "best_value": 0.25,
+        "effective_precision": "fp32",
+        "artifacts": {
+          "best_model": "C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\runs\\batch-ex-furniture-classification-graph-1-7118b3d9\\artifacts\\best_model.pth",
+          "metrics_csv": "C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\runs\\batch-ex-furniture-classification-graph-1-7118b3d9\\artifacts\\metrics_log.csv",
+          "data_provenance": "C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\runs\\batch-ex-furniture-classification-graph-1-7118b3d9\\artifacts\\data_provenance.json"
+        },
+        "test_batch_size": 4
+      },
+      "cache": {
+        "cache_hits": 30,
+        "bytes_downloaded": 0
+      },
+      "duration_seconds": 28.143
+    },
+    "duration_seconds": 232.765,
+    "llm_usage": {
+      "schema_version": 1,
+      "job_id": "batch-ex-furniture-classification-graph-1-7118b3d9",
+      "scope": "planning",
+      "currency": "USD",
+      "totals": {
+        "requests": 6,
+        "input_tokens": 136600,
+        "cached_input_tokens": 0,
+        "output_tokens": 34672,
+        "reasoning_tokens": 14144,
+        "total_tokens": 171272,
+        "calculated_cost_usd": "0.02069880"
+      },
+      "models": {
+        "gpt-5-nano": {
+          "requests": 4,
+          "input_tokens": 58122,
+          "cached_input_tokens": 0,
+          "output_tokens": 16914,
+          "reasoning_tokens": 0,
+          "total_tokens": 75036,
+          "calculated_cost_usd": "0.00967170"
+        },
+        "gpt-5-nano-2025-08-07": {
+          "requests": 2,
+          "input_tokens": 78478,
+          "cached_input_tokens": 0,
+          "output_tokens": 17758,
+          "reasoning_tokens": 14144,
+          "total_tokens": 96236,
+          "calculated_cost_usd": "0.01102710"
+        }
+      },
+      "operations": {
+        "completeness_check": {
+          "requests": 1,
+          "input_tokens": 289,
+          "cached_input_tokens": 0,
+          "output_tokens": 557,
+          "reasoning_tokens": 0,
+          "total_tokens": 846,
+          "calculated_cost_usd": "0.00023725"
+        },
+        "task_interpretation": {
+          "requests": 1,
+          "input_tokens": 3205,
+          "cached_input_tokens": 0,
+          "output_tokens": 6452,
+          "reasoning_tokens": 0,
+          "total_tokens": 9657,
+          "calculated_cost_usd": "0.00274105"
+        },
+        "model_selection": {
+          "requests": 1,
+          "input_tokens": 49132,
+          "cached_input_tokens": 0,
+          "output_tokens": 6303,
+          "reasoning_tokens": 0,
+          "total_tokens": 55435,
+          "calculated_cost_usd": "0.00497780"
+        },
+        "dataset_selection": {
+          "requests": 1,
+          "input_tokens": 5496,
+          "cached_input_tokens": 0,
+          "output_tokens": 3602,
+          "reasoning_tokens": 0,
+          "total_tokens": 9098,
+          "calculated_cost_usd": "0.00171560"
+        },
+        "hpo_optimizer": {
+          "requests": 1,
+          "input_tokens": 73068,
+          "cached_input_tokens": 0,
+          "output_tokens": 10723,
+          "reasoning_tokens": 7680,
+          "total_tokens": 83791,
+          "calculated_cost_usd": "0.00794260"
+        },
+        "hpo_evaluator": {
+          "requests": 1,
+          "input_tokens": 5410,
+          "cached_input_tokens": 0,
+          "output_tokens": 7035,
+          "reasoning_tokens": 6464,
+          "total_tokens": 12445,
+          "calculated_cost_usd": "0.00308450"
+        }
+      },
+      "pricing": {
+        "gpt-5-nano": {
+          "input_per_million": "0.05",
+          "cached_input_per_million": "0.005",
+          "output_per_million": "0.40",
+          "effective_date": "2026-08-15",
+          "source": "https://developers.openai.com/api/docs/models/gpt-5-nano"
+        },
+        "gpt-5-nano-2025-08-07": {
+          "input_per_million": "0.05",
+          "cached_input_per_million": "0.005",
+          "output_per_million": "0.40",
+          "effective_date": "2026-08-15",
+          "source": "https://developers.openai.com/api/docs/models/gpt-5-nano"
+        }
+      },
+      "usage_notes": [
+        "The installed Agents SDK reports aggregate input tokens without a cached-token breakdown; those calls are calculated at the standard input rate."
+      ]
+    }
+  }
+]

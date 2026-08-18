@@ -35,6 +35,7 @@ dependencies = [
     "uvicorn>=0.41.0",
     "vision-utils",
     "pytest>=9.1.1",
+    "python-dotenv>=1.2.2",
 ]
 
 # Console entry points (make files callable)
@@ -46,6 +47,8 @@ package = true
 
 [tool.uv.sources]
 vision-utils = { git = "https://github.com/cqels/vision.git" }
+torch = { index = "pytorch-cu126" }
+torchvision = { index = "pytorch-cu126" }
 
 # Tell setuptools to use the src/ layout
 [tool.setuptools]
@@ -61,3 +64,8 @@ cvmodellearning = [
   "datasets/*.json",
   "download_utils/*.json",
 ]
+
+[[tool.uv.index]]
+name = "pytorch-cu126"
+url = "https://download.pytorch.org/whl/cu126"
+explicit = true

@@ -1,0 +1,1117 @@
+[
+  {
+    "job_id": "batch-traffic-lights-signs-graph-1-7e061606",
+    "case_id": "traffic-lights-signs",
+    "repetition": 1,
+    "use_graphrag": true,
+    "status": "passed",
+    "stages": {
+      "completeness": "passed",
+      "task_interpretation": "passed",
+      "data_check": "passed",
+      "model_selection": "passed",
+      "dataset_selection": "passed",
+      "hyperparameters": "passed",
+      "configuration_validation": "passed",
+      "training_smoke": "passed"
+    },
+    "llm_attempts": {
+      "task_interpretation": [
+        {
+          "task": "detection",
+          "application_domain": "traffic",
+          "use_case_description": "Detect traffic lights and traffic signs in dense urban street scenes; objects may be small and far away; runs locally on a MacBook Air with Apple M4 chip and 16 GB unified memory; uses Metal acceleration where supported.",
+          "questions_list": [],
+          "classes": [
+            "traffic light",
+            "traffic sign"
+          ],
+          "performance_requirements": {
+            "primary_metric": "mAP@0.5:0.95",
+            "target_value": 0.3,
+            "target_is_hard": false,
+            "latency_category": "MediumHigh",
+            "accuracy_category": "Medium",
+            "other_constraints": [
+              "Inference time <= 500 ms per frame",
+              "Memory usage <= 6 GB",
+              "mAP >= 0.3"
+            ]
+          },
+          "constraint_strengths": {
+            "accuracy": "unspecified",
+            "latency": "unspecified",
+            "runtime_memory": "unspecified",
+            "model_size": "unspecified",
+            "training_time": "unspecified"
+          },
+          "robustness_requirements": {
+            "lighting": [],
+            "weather": [],
+            "object_scale": [],
+            "scene_density": [],
+            "motion_blur": false,
+            "occlusion": false,
+            "viewpoint": [],
+            "color_semantics": false,
+            "horizontal_flip_safe": null,
+            "text_or_symbols_present": false
+          },
+          "deployment_constraints": {
+            "memory_category": "Low",
+            "max_runtime_memory_mb": null,
+            "max_model_size_mb": null,
+            "max_parameters_m": null,
+            "max_cpu_latency_ms": null,
+            "hard_limits": []
+          },
+          "available_hardware": {
+            "hardware_category": "ConsumerCPU",
+            "cpu_cores": null,
+            "gpu_type": null,
+            "gpu_count": null,
+            "vram_gb": null,
+            "ram_gb": 16.0,
+            "storage_gb": null,
+            "details": "MacBook Air (Apple M4) with Metal acceleration; 16 GB unified memory"
+          },
+          "model_requirements": []
+        }
+      ],
+      "model_selection": [
+        {
+          "selected_candidate_id": "yolo11s",
+          "model": {
+            "model_architecture": "yolov11",
+            "description": "Selected YOLOv11 variant YOLO11s for low memory footprint and strong mAP; suitable for on-device inference with Mac Metal acceleration."
+          },
+          "rationale": "YOLO11s provides the best overall balance for this task: high mAP@0.5:0.95 on 640 COCO data (47.0), small footprint (~0.272 GB), and favorable latency characteristics on CPU-like runtimes. It remains well within the 6 GB memory limit and is likely to meet the ~500 ms per frame target on a MacBook Air M4 with Metal acceleration. If Metal performance on the target device is suboptimal, alternatives such as yolov10s or Faster R-CNN ResNet-50 FPN offer robust performance with a modest trade-off in mAP or latency.",
+          "evaluated_candidates": [
+            {
+              "candidate_id": "yolo11s",
+              "advantages": [
+                "mAP50-95 of 47.0 on COCO (640 input)",
+                "Very small memory footprint (~0.272 GB total VRAM est.)",
+                "Very low latency on representative hardware (2.5 ms on T4 TensorRT; strong baseline for CPU-like runtimes)"
+              ],
+              "risks": [
+                "Small-object performance in traffic lights/signs domain is unverified",
+                "Metal acceleration on Apple M4 is not benchmarked in the data; real-device latency may vary"
+              ],
+              "constraint_status": "feasible"
+            },
+            {
+              "candidate_id": "yolov10s",
+              "advantages": [
+                "mAP50-95 of 46.8 on COCO (640 input)",
+                "Small memory footprint (~0.266 GB)",
+                "Efficient and widely supported across runtimes"
+              ],
+              "risks": [
+                "Slightly lower mAP than yolo11s",
+                "Metal acceleration performance on Mac not benchmarked in the data"
+              ],
+              "constraint_status": "feasible"
+            },
+            {
+              "candidate_id": "fasterrcnn_resnet50_fpn",
+              "advantages": [
+                "Two-stage detector with robust localization",
+                "mAP50-95 around 37.9-40.2 on COCO",
+                "Mature ecosystem and pretrained weights"
+              ],
+              "risks": [
+                "Infer latency may be higher on CPU vs YOLO family; could challenge the 500 ms target on some devices",
+                "Memory footprint about 0.766 GB estimated VRAM; potential CPU bottlenecks",
+                "Metal support on Mac not guaranteed; may rely on CPU/GPU backends"
+              ],
+              "constraint_status": "feasible"
+            },
+            {
+              "candidate_id": "yolo11n",
+              "advantages": [
+                "Very small model (0.256 GB) and nano footprint",
+                "mAP50-95 of 39.5 on COCO; strong baseline"
+              ],
+              "risks": [
+                "Lower accuracy than 11s/10s variants",
+                "Metal acceleration on Mac not benchmarked"
+              ],
+              "constraint_status": "feasible"
+            }
+          ],
+          "uncertainties": [
+            "AP-small verification is unverified for all candidates; small-object performance in traffic-light/traffic-sign contexts should be validated with domain-specific data.",
+            "On-device performance with Metal on Apple M4 is not benchmarked here; actual FPS/latency may vary on the target hardware.",
+            "Domain adaptation data for traffic lights and traffic signs can improve results; current evidence is based on COCO-style benchmarks."
+          ]
+        }
+      ]
+    },
+    "planning_warnings": {
+      "dataset": [],
+      "hyperparameters": [
+        {
+          "field": "num_epochs",
+          "severity": "preference",
+          "reason": "num_epochs=50 is substantially below the GraphRAG reference of 100; consider at least 75 unless the reduction is justified.",
+          "recommended_value": "75",
+          "rule_id": "hpo.recipe_epoch_deviation.v1"
+        },
+        {
+          "field": "batch_size",
+          "severity": "preference",
+          "reason": "Consider batch_size<=2 with input_size>=768 on a <=6 GiB training budget.",
+          "recommended_value": "2",
+          "rule_id": "hpo.small_object_resolution.v1"
+        }
+      ]
+    },
+    "selection": {
+      "task": "detection",
+      "classes": [
+        "traffic light",
+        "traffic sign"
+      ],
+      "model": null,
+      "datasets": [
+        ""
+      ],
+      "hpo_config": {
+        "task_type": "detection",
+        "classes": [
+          "traffic light",
+          "traffic sign"
+        ],
+        "selected_data": [
+          {
+            "class_name": "traffic light",
+            "sources": [
+              {
+                "dataset_name": "bdd_100k_det_train",
+                "allocations": [
+                  {
+                    "split": "train",
+                    "count": 2400,
+                    "assignment_type": "official_split"
+                  },
+                  {
+                    "split": "test",
+                    "count": 300,
+                    "assignment_type": "derived_from_train"
+                  }
+                ]
+              },
+              {
+                "dataset_name": "bdd_100k_det_val",
+                "allocations": [
+                  {
+                    "split": "validation",
+                    "count": 300,
+                    "assignment_type": "official_split"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "class_name": "traffic sign",
+            "sources": [
+              {
+                "dataset_name": "bdd_100k_det_train",
+                "allocations": [
+                  {
+                    "split": "train",
+                    "count": 2400,
+                    "assignment_type": "official_split"
+                  },
+                  {
+                    "split": "test",
+                    "count": 300,
+                    "assignment_type": "derived_from_train"
+                  }
+                ]
+              },
+              {
+                "dataset_name": "bdd_100k_det_val",
+                "allocations": [
+                  {
+                    "split": "validation",
+                    "count": 300,
+                    "assignment_type": "official_split"
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "train_data_ratio": 0.8,
+        "val_data_ratio": 0.1,
+        "test_data_ratio": 0.1,
+        "num_epochs": 50,
+        "patience": 15,
+        "batch_size": 4,
+        "input_size": 768,
+        "track_metric": "val_mAP",
+        "model_name": "yolov11_s",
+        "model_weights": "coco",
+        "training_recipe_id": "ultralytics_yolo_detection_finetune_balanced",
+        "scheduler_name": "linear",
+        "final_learning_rate_factor": 0.01,
+        "data_plan_constraints": {
+          "minimum_unique_pool_images": 0,
+          "preferred_unique_pool_images": 0,
+          "preferred_target_is_strict": false,
+          "group_isolation_keys": []
+        },
+        "warmup_epochs": 3.0,
+        "warmup_momentum": 0.95,
+        "amp": true,
+        "lambda_box": 7.5,
+        "lambda_cls": 0.5,
+        "lambda_dfl": 1.5,
+        "mosaic": 1.0,
+        "mixup": 0.0,
+        "cutmix": 0.0,
+        "copy_paste": 0.0,
+        "degrees": 0.0,
+        "translate": 0.05,
+        "scale": 0.25,
+        "fliplr": 0.5,
+        "hsv_h": 0.03,
+        "hsv_s": 0.6,
+        "hsv_v": 0.5,
+        "close_mosaic": 10,
+        "single_cls": false,
+        "rect": false,
+        "multi_scale": 0.0,
+        "confidence_threshold": 0.25,
+        "nms_iou_threshold": 0.7,
+        "max_detections": 1000,
+        "workers": 4,
+        "seed": 42,
+        "freeze": 0,
+        "optimizer": {
+          "name": "adamw",
+          "params": {
+            "learning_rate": 0.001,
+            "weight_decay": 0.0005,
+            "beta1": 0.9
+          }
+        }
+      }
+    },
+    "configuration_validation": {
+      "passed": true,
+      "validated_fields": [
+        "amp",
+        "batch_size",
+        "beta1",
+        "classes",
+        "close_mosaic",
+        "confidence_threshold",
+        "copy_paste",
+        "cutmix",
+        "data_plan_constraints",
+        "degrees",
+        "final_learning_rate_factor",
+        "fliplr",
+        "freeze",
+        "hsv_h",
+        "hsv_s",
+        "hsv_v",
+        "input_size",
+        "lambda_box",
+        "lambda_cls",
+        "lambda_dfl",
+        "learning_rate",
+        "max_detections",
+        "mixup",
+        "model_name",
+        "model_weights",
+        "mosaic",
+        "multi_scale",
+        "nms_iou_threshold",
+        "num_epochs",
+        "optimizer_name",
+        "patience",
+        "rect",
+        "scale",
+        "scheduler_name",
+        "seed",
+        "selected_data",
+        "single_cls",
+        "task_type",
+        "test_data_ratio",
+        "track_metric",
+        "train_data_ratio",
+        "training_recipe_id",
+        "translate",
+        "val_data_ratio",
+        "warmup_epochs",
+        "warmup_momentum",
+        "weight_decay",
+        "workers"
+      ]
+    },
+    "training_smoke": {
+      "status": "passed",
+      "stages": {
+        "data_materialized": "passed",
+        "data_prepared": "passed",
+        "execution_readiness": "passed",
+        "training_batch": "passed",
+        "model_initialized": "passed",
+        "forward_pass": "passed",
+        "loss_computed": "passed",
+        "backward_pass": "passed",
+        "optimizer_step": "passed",
+        "validation_pass": "not_verified"
+      },
+      "data_policy": {
+        "source": "normal cache-aware downloader",
+        "train_images_per_allocation_at_most": 4,
+        "validation_and_test_images_per_allocation_at_most": 1,
+        "saved_planning_configuration_changed": false
+      },
+      "runtime_overrides": {
+        "max_epochs": 1,
+        "max_train_batches": 1,
+        "gradient_accumulation_steps": 1
+      },
+      "training_result": {
+        "model_name": "yolov11_s",
+        "trainer_type": "yolo",
+        "agent_output_message": "\u2705 Successfully trained yolov11_s (Job ID: batch-traffic-lights-signs-graph-1-7e061606).",
+        "best_model_path": "C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\runs\\batch-traffic-lights-signs-graph-1-7e061606\\artifacts\\best_model.pt",
+        "training_log_path": "C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\runs\\batch-traffic-lights-signs-graph-1-7e061606\\artifacts\\training_log.txt",
+        "data_provenance": "C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\runs\\batch-traffic-lights-signs-graph-1-7e061606\\artifacts\\data_provenance.json"
+      },
+      "cache": {
+        "cache_hits": 12,
+        "bytes_downloaded": 0
+      },
+      "duration_seconds": 19.142
+    },
+    "duration_seconds": 311.158,
+    "llm_usage": {
+      "schema_version": 1,
+      "job_id": "batch-traffic-lights-signs-graph-1-7e061606",
+      "scope": "planning",
+      "currency": "USD",
+      "totals": {
+        "requests": 7,
+        "input_tokens": 158598,
+        "cached_input_tokens": 0,
+        "output_tokens": 47448,
+        "reasoning_tokens": 11968,
+        "total_tokens": 206046,
+        "calculated_cost_usd": "0.02690910"
+      },
+      "models": {
+        "gpt-5-nano": {
+          "requests": 5,
+          "input_tokens": 66945,
+          "cached_input_tokens": 0,
+          "output_tokens": 33445,
+          "reasoning_tokens": 0,
+          "total_tokens": 100390,
+          "calculated_cost_usd": "0.01672525"
+        },
+        "gpt-5-nano-2025-08-07": {
+          "requests": 2,
+          "input_tokens": 91653,
+          "cached_input_tokens": 0,
+          "output_tokens": 14003,
+          "reasoning_tokens": 11968,
+          "total_tokens": 105656,
+          "calculated_cost_usd": "0.01018385"
+        }
+      },
+      "operations": {
+        "completeness_check": {
+          "requests": 1,
+          "input_tokens": 313,
+          "cached_input_tokens": 0,
+          "output_tokens": 730,
+          "reasoning_tokens": 0,
+          "total_tokens": 1043,
+          "calculated_cost_usd": "0.00030765"
+        },
+        "task_interpretation": {
+          "requests": 1,
+          "input_tokens": 3229,
+          "cached_input_tokens": 0,
+          "output_tokens": 6431,
+          "reasoning_tokens": 0,
+          "total_tokens": 9660,
+          "calculated_cost_usd": "0.00273385"
+        },
+        "model_selection": {
+          "requests": 1,
+          "input_tokens": 48299,
+          "cached_input_tokens": 0,
+          "output_tokens": 9579,
+          "reasoning_tokens": 0,
+          "total_tokens": 57878,
+          "calculated_cost_usd": "0.00624655"
+        },
+        "dataset_selection": {
+          "requests": 2,
+          "input_tokens": 15104,
+          "cached_input_tokens": 0,
+          "output_tokens": 16705,
+          "reasoning_tokens": 0,
+          "total_tokens": 31809,
+          "calculated_cost_usd": "0.00743720"
+        },
+        "hpo_optimizer": {
+          "requests": 1,
+          "input_tokens": 87226,
+          "cached_input_tokens": 0,
+          "output_tokens": 10569,
+          "reasoning_tokens": 8768,
+          "total_tokens": 97795,
+          "calculated_cost_usd": "0.00858890"
+        },
+        "hpo_evaluator": {
+          "requests": 1,
+          "input_tokens": 4427,
+          "cached_input_tokens": 0,
+          "output_tokens": 3434,
+          "reasoning_tokens": 3200,
+          "total_tokens": 7861,
+          "calculated_cost_usd": "0.00159495"
+        }
+      },
+      "pricing": {
+        "gpt-5-nano": {
+          "input_per_million": "0.05",
+          "cached_input_per_million": "0.005",
+          "output_per_million": "0.40",
+          "effective_date": "2026-08-15",
+          "source": "https://developers.openai.com/api/docs/models/gpt-5-nano"
+        },
+        "gpt-5-nano-2025-08-07": {
+          "input_per_million": "0.05",
+          "cached_input_per_million": "0.005",
+          "output_per_million": "0.40",
+          "effective_date": "2026-08-15",
+          "source": "https://developers.openai.com/api/docs/models/gpt-5-nano"
+        }
+      },
+      "usage_notes": [
+        "The installed Agents SDK reports aggregate input tokens without a cached-token breakdown; those calls are calculated at the standard input rate."
+      ]
+    }
+  },
+  {
+    "job_id": "batch-lora-dinov2-vits14-graph-1-f1ddb5ad",
+    "case_id": "lora-dinov2-vits14",
+    "repetition": 1,
+    "use_graphrag": true,
+    "status": "passed",
+    "stages": {
+      "completeness": "passed",
+      "task_interpretation": "passed",
+      "data_check": "passed",
+      "model_selection": "passed",
+      "dataset_selection": "passed",
+      "hyperparameters": "passed",
+      "configuration_validation": "passed",
+      "training_smoke": "passed"
+    },
+    "llm_attempts": {
+      "task_interpretation": [
+        {
+          "task": "classification",
+          "application_domain": null,
+          "use_case_description": "Furniture marketplace image classification: categorize the primary product in an uploaded photo as chair, sofa, table, cabinet, or lamp.",
+          "questions_list": null,
+          "classes": [
+            "chair",
+            "sofa",
+            "table",
+            "cabinet",
+            "lamp"
+          ],
+          "performance_requirements": {
+            "primary_metric": "latency",
+            "target_value": null,
+            "target_is_hard": false,
+            "latency_category": "Medium",
+            "accuracy_category": null,
+            "other_constraints": null
+          },
+          "constraint_strengths": {
+            "accuracy": "unspecified",
+            "latency": "unspecified",
+            "runtime_memory": "unspecified",
+            "model_size": "unspecified",
+            "training_time": "unspecified"
+          },
+          "robustness_requirements": {
+            "lighting": [],
+            "weather": [],
+            "object_scale": [],
+            "scene_density": [],
+            "motion_blur": false,
+            "occlusion": false,
+            "viewpoint": [],
+            "color_semantics": false,
+            "horizontal_flip_safe": null,
+            "text_or_symbols_present": false
+          },
+          "deployment_constraints": null,
+          "available_hardware": {
+            "hardware_category": "ConsumerCPU",
+            "cpu_cores": null,
+            "gpu_type": null,
+            "gpu_count": null,
+            "vram_gb": null,
+            "ram_gb": 8.0,
+            "storage_gb": null,
+            "details": null
+          },
+          "model_requirements": [
+            {
+              "name": "dinov2_vits14",
+              "framework": null,
+              "backbone": null,
+              "hyperparameters": null,
+              "description": "LoRA-based fine-tuning for dinov2_vits14 on CPU.",
+              "requirement_strength": "required",
+              "training_mode": "lora",
+              "lora_rank": null,
+              "lora_alpha": null,
+              "lora_dropout": null
+            },
+            {
+              "name": null,
+              "framework": null,
+              "backbone": null,
+              "hyperparameters": null,
+              "description": null,
+              "requirement_strength": "preferred",
+              "training_mode": null,
+              "lora_rank": null,
+              "lora_alpha": null,
+              "lora_dropout": null
+            },
+            {
+              "name": null,
+              "framework": null,
+              "backbone": null,
+              "hyperparameters": null,
+              "description": null,
+              "requirement_strength": "preferred",
+              "training_mode": null,
+              "lora_rank": null,
+              "lora_alpha": null,
+              "lora_dropout": null
+            }
+          ]
+        }
+      ],
+      "model_selection": [
+        {
+          "selected_candidate_id": "dinov2_vits14",
+          "model": {
+            "model_architecture": "dinov2_vits14",
+            "description": "DINOv2 ViT-S/14 with LoRA fine-tuning suitable for CPU deployment"
+          },
+          "rationale": "The GraphRAG shortlist explicitly requires using the dinov2_vits14 model and reports executable LoRA paths for this backbone. dinov2_vits14 is the most favorable CPU-ready option among the candidates because it combines the smallest deployment footprint with LoRA support, and it remains within the 8 GB RAM budget when running on a CPU. It also has documented fine-tuning/LoRA workflow support via the local classification LoRA registry, and its 224 px input footprint yields a very small VRAM requirement (total_estimated_vram_gb ~ 0.137, practical_min_vram_gb ~ 1.0), which is well aligned with a consumer CPU system. Inference latency is categorized as MediumHigh, which is acceptable given a Medium latency preference and CPU-only constraints, and the model has VeryStrong prior evidence for transfer learning capability (DINOv2 family) and LoRA compatibility. The required dinov2_vits14 path is preserved, and the alternative candidates (for example dinov2_vitb14) offer higher accuracy at the cost of higher memory and latency, which is less favorable for a CPU-only 8 GB RAM setup. A fallback plan is provided below to handle cases where CPU latency becomes unacceptable or if the user wants to push for higher accuracy later. ",
+          "evaluated_candidates": [
+            {
+              "candidate_id": "dinov2_vits14",
+              "advantages": [
+                "Lowest deployment memory footprint among the LoRA-enabled candidates (total_estimated_vram_gb ~ 0.137; practical_min_vram_gb ~ 1.0)",
+                "Explicit LoRA support for DINOv2 ViT-S/14 as per the local classification LoRA registry",
+                "CPU-friendly input size (224 px) and small parameter count (roughly 21 M)",
+                "Strong transfer-learning lineage (DINOv2 family) with accessible fine-tuning/LoRA workflows",
+                "EdgeDevice-leaning deployment profile (recommended hardware category: EdgeDevice) and evidence-backed CPU feasibility"
+              ],
+              "risks": [
+                "Latency on CPU is not empirically measured in this context (latency category is MediumHigh); real-world CPU latency may vary by codePath and preprocessing",
+                "Domain shift risk when transferring from ImageNet-style pretraining to SOP-style furniture classification; may require careful data augmentation/regularization and validation on the target dataset",
+                "No evidence-backed training VRAM recommendation is available (soft constraint); you may need to monitor training VRAM if you later extend to fine-tuning on larger data or higher image sizes",
+                "Practical_min_vram_gb is 1.0 (GPU-oriented metric); CPU inference memory will depend on the exact runtime and framework used; ensure the runtime uses FP16/efficient ops to stay within RAM limits"
+              ],
+              "constraint_status": "feasible"
+            },
+            {
+              "candidate_id": "dinov2_vitb14",
+              "advantages": [
+                "Higher accuracy potential on ImageNet-1K linear eval (top1 ~81-84% at 518 px; linear top1 ~84.5) compared to 224 px dinov2_vits14",
+                "LoRA-supported backbone with established PEFT paths (evidence of LoRA execution)",
+                "Reasonable inference memory footprint (total_estimated_vram_gb ~ 0.477; weight ~0.161 GB; activation ~0.284 GB)",
+                "CPU-feasible with LoRA and 8 GB RAM; provides a stronger accuracy option if CPU latency budget allows"
+              ],
+              "risks": [
+                "Higher practical memory footprint than dinov2_vits14 (practical_min_vram_gb ~ 2.0) and potential CPU latency increase (latency category High)",
+                "Requires more RAM than the lighter 224 px model when running at larger input scales or fine-tuning",
+                "Domain-transfer considerations similar to dinov2_vits14; still ImageNet-pretrained lineage but with larger input config and resource needs"
+              ],
+              "constraint_status": "feasible"
+            }
+          ],
+          "uncertainties": [
+            "Exact CPU latency on the target 8 GB RAM machine depends on the software stack, preprocessing, and threading; no measured CPU latency is provided in the graph data",
+            "Dataset shift risk from ImageNet-pretrained evaluation to SOP furniture classes (chair, sofa, table, cabinet, lamp) without domain-specific augmentation/curation currently quantified in this context",
+            "No strong evidence-backed training VRAM recommendation is available for these LoRA-augmented variants; treat memory estimates as deployment-oriented guidance rather than training feasibility guidance"
+          ]
+        }
+      ]
+    },
+    "planning_warnings": {
+      "dataset": [],
+      "hyperparameters": [
+        {
+          "field": "precision",
+          "severity": "preference",
+          "reason": "CUDA-enabled GPU supports mixed precision. Switching from fp32 to fp16 can reduce memory footprint and improve throughput during LoRA-based fine-tuning on a single RTX 2060, with minimal risk when using proper loss scaling.",
+          "recommended_value": "fp16",
+          "rule_id": null
+        },
+        {
+          "field": "gradient_clip_norm",
+          "severity": "preference",
+          "reason": "Current gradient clipping is disabled (0.0). Enabling a small clip (e.g., 1.0) can stabilize updates when training with LoRA adapters on a small dataset and limited VRAM.",
+          "recommended_value": "1.0",
+          "rule_id": null
+        },
+        {
+          "field": "warmup_epochs",
+          "severity": "preference",
+          "reason": "A brief warmup period (e.g., 1 epoch) can help the optimizer stabilize early in training with a small dataset and LoRA adapters, potentially improving convergence reliability.",
+          "recommended_value": "1",
+          "rule_id": null
+        }
+      ]
+    },
+    "selection": {
+      "task": "classification",
+      "classes": [
+        "chair",
+        "sofa",
+        "table",
+        "cabinet",
+        "lamp"
+      ],
+      "model": null,
+      "datasets": [
+        ""
+      ],
+      "hpo_config": {
+        "classes": [
+          "chair",
+          "sofa",
+          "table",
+          "cabinet",
+          "lamp"
+        ],
+        "selected_data": [
+          {
+            "class_name": "chair",
+            "sources": [
+              {
+                "dataset_name": "SOP_cls_train",
+                "allocations": [
+                  {
+                    "split": "train",
+                    "count": 1200,
+                    "assignment_type": "official_split"
+                  },
+                  {
+                    "split": "validation",
+                    "count": 150,
+                    "assignment_type": "derived_from_train"
+                  }
+                ]
+              },
+              {
+                "dataset_name": "SOP_cls_test",
+                "allocations": [
+                  {
+                    "split": "test",
+                    "count": 150,
+                    "assignment_type": "official_split"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "class_name": "sofa",
+            "sources": [
+              {
+                "dataset_name": "SOP_cls_train",
+                "allocations": [
+                  {
+                    "split": "train",
+                    "count": 1200,
+                    "assignment_type": "official_split"
+                  },
+                  {
+                    "split": "validation",
+                    "count": 150,
+                    "assignment_type": "derived_from_train"
+                  }
+                ]
+              },
+              {
+                "dataset_name": "SOP_cls_test",
+                "allocations": [
+                  {
+                    "split": "test",
+                    "count": 150,
+                    "assignment_type": "official_split"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "class_name": "table",
+            "sources": [
+              {
+                "dataset_name": "SOP_cls_train",
+                "allocations": [
+                  {
+                    "split": "train",
+                    "count": 1200,
+                    "assignment_type": "official_split"
+                  },
+                  {
+                    "split": "validation",
+                    "count": 150,
+                    "assignment_type": "derived_from_train"
+                  }
+                ]
+              },
+              {
+                "dataset_name": "SOP_cls_test",
+                "allocations": [
+                  {
+                    "split": "test",
+                    "count": 150,
+                    "assignment_type": "official_split"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "class_name": "cabinet",
+            "sources": [
+              {
+                "dataset_name": "SOP_cls_train",
+                "allocations": [
+                  {
+                    "split": "train",
+                    "count": 1200,
+                    "assignment_type": "official_split"
+                  },
+                  {
+                    "split": "validation",
+                    "count": 150,
+                    "assignment_type": "derived_from_train"
+                  }
+                ]
+              },
+              {
+                "dataset_name": "SOP_cls_test",
+                "allocations": [
+                  {
+                    "split": "test",
+                    "count": 150,
+                    "assignment_type": "official_split"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "class_name": "lamp",
+            "sources": [
+              {
+                "dataset_name": "SOP_cls_train",
+                "allocations": [
+                  {
+                    "split": "train",
+                    "count": 1200,
+                    "assignment_type": "official_split"
+                  },
+                  {
+                    "split": "validation",
+                    "count": 150,
+                    "assignment_type": "derived_from_train"
+                  }
+                ]
+              },
+              {
+                "dataset_name": "SOP_cls_test",
+                "allocations": [
+                  {
+                    "split": "test",
+                    "count": 150,
+                    "assignment_type": "official_split"
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "train_data_ratio": 0.8,
+        "val_data_ratio": 0.1,
+        "test_data_ratio": 0.1,
+        "num_epochs": 3,
+        "patience": 0,
+        "batch_size": 2,
+        "image_size": 224,
+        "precision": "fp32",
+        "scheduler_name": "cosine",
+        "min_learning_rate": 0.0,
+        "warmup_epochs": 0,
+        "gradient_accumulation_steps": 4,
+        "gradient_clip_norm": 0.0,
+        "freeze_backbone_epochs": 0,
+        "head_learning_rate_multiplier": 1.0,
+        "mixup_alpha": 0.0,
+        "cutmix_alpha": 0.0,
+        "random_erasing": 0.0,
+        "auto_augment_policy": "none",
+        "random_resized_crop_scale_min": 0.6,
+        "horizontal_flip_probability": 0.5,
+        "use_model_ema": false,
+        "repeated_augmentation_repetitions": 1,
+        "use_activation_checkpointing": false,
+        "track_metric": "val_loss",
+        "model_name": "dinov2_vits14",
+        "model_weights": "default",
+        "training_mode": "lora",
+        "training_recipe_id": "timm_dinov2_s_b14_adapted_custom_finetune",
+        "lora_rank": 8,
+        "lora_alpha": 16,
+        "lora_dropout": 0.05,
+        "optimizer": {
+          "name": "adamw",
+          "params": {
+            "learning_rate": 5e-05,
+            "weight_decay": 0.01,
+            "eps": 1e-08,
+            "beta1": 0.9,
+            "beta2": 0.999
+          }
+        },
+        "criterion": {
+          "name": "cross_entropy",
+          "params": {
+            "label_smoothing": 0.0
+          }
+        }
+      }
+    },
+    "configuration_validation": {
+      "passed": true,
+      "validated_fields": [
+        "auto_augment_policy",
+        "batch_size",
+        "beta1",
+        "beta2",
+        "classes",
+        "criterion_name",
+        "cutmix_alpha",
+        "eps",
+        "freeze_backbone_epochs",
+        "gradient_accumulation_steps",
+        "gradient_clip_norm",
+        "head_learning_rate_multiplier",
+        "horizontal_flip_probability",
+        "image_size",
+        "label_smoothing",
+        "learning_rate",
+        "lora_alpha",
+        "lora_dropout",
+        "lora_rank",
+        "min_learning_rate",
+        "mixup_alpha",
+        "model_name",
+        "model_weights",
+        "num_epochs",
+        "optimizer_name",
+        "patience",
+        "precision",
+        "random_erasing",
+        "random_resized_crop_scale_min",
+        "repeated_augmentation_repetitions",
+        "scheduler_name",
+        "selected_data",
+        "test_data_ratio",
+        "track_metric",
+        "train_data_ratio",
+        "training_mode",
+        "training_recipe_id",
+        "use_activation_checkpointing",
+        "use_model_ema",
+        "val_data_ratio",
+        "warmup_epochs",
+        "weight_decay"
+      ]
+    },
+    "training_smoke": {
+      "status": "passed",
+      "stages": {
+        "data_materialized": "passed",
+        "data_prepared": "passed",
+        "execution_readiness": "passed",
+        "training_batch": "passed",
+        "model_initialized": "passed",
+        "forward_pass": "passed",
+        "loss_computed": "passed",
+        "backward_pass": "passed",
+        "optimizer_step": "passed",
+        "validation_pass": "passed"
+      },
+      "data_policy": {
+        "source": "normal cache-aware downloader",
+        "train_images_per_allocation_at_most": 2,
+        "validation_and_test_images_per_allocation_at_most": 1,
+        "saved_planning_configuration_changed": false
+      },
+      "runtime_overrides": {
+        "max_epochs": 1,
+        "max_train_batches": 1,
+        "gradient_accumulation_steps": 1
+      },
+      "training_result": {
+        "best_epoch": 1,
+        "best_metric": "val_loss",
+        "best_value": 1.3278816938400269,
+        "effective_precision": "fp32",
+        "artifacts": {
+          "best_model": "C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\runs\\batch-lora-dinov2-vits14-graph-1-f1ddb5ad\\artifacts\\best_model.pth",
+          "metrics_csv": "C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\runs\\batch-lora-dinov2-vits14-graph-1-f1ddb5ad\\artifacts\\metrics_log.csv",
+          "data_provenance": "C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\runs\\batch-lora-dinov2-vits14-graph-1-f1ddb5ad\\artifacts\\data_provenance.json"
+        },
+        "test_batch_size": 2
+      },
+      "cache": {
+        "cache_hits": 20,
+        "bytes_downloaded": 0
+      },
+      "duration_seconds": 26.677
+    },
+    "duration_seconds": 228.694,
+    "llm_usage": {
+      "schema_version": 1,
+      "job_id": "batch-lora-dinov2-vits14-graph-1-f1ddb5ad",
+      "scope": "planning",
+      "currency": "USD",
+      "totals": {
+        "requests": 6,
+        "input_tokens": 131420,
+        "cached_input_tokens": 2688,
+        "output_tokens": 32404,
+        "reasoning_tokens": 11264,
+        "total_tokens": 163824,
+        "calculated_cost_usd": "0.01941164"
+      },
+      "models": {
+        "gpt-5-nano": {
+          "requests": 4,
+          "input_tokens": 55300,
+          "cached_input_tokens": 0,
+          "output_tokens": 18912,
+          "reasoning_tokens": 0,
+          "total_tokens": 74212,
+          "calculated_cost_usd": "0.01032980"
+        },
+        "gpt-5-nano-2025-08-07": {
+          "requests": 2,
+          "input_tokens": 76120,
+          "cached_input_tokens": 2688,
+          "output_tokens": 13492,
+          "reasoning_tokens": 11264,
+          "total_tokens": 89612,
+          "calculated_cost_usd": "0.00908184"
+        }
+      },
+      "operations": {
+        "completeness_check": {
+          "requests": 1,
+          "input_tokens": 247,
+          "cached_input_tokens": 0,
+          "output_tokens": 1024,
+          "reasoning_tokens": 0,
+          "total_tokens": 1271,
+          "calculated_cost_usd": "0.00042195"
+        },
+        "task_interpretation": {
+          "requests": 1,
+          "input_tokens": 3163,
+          "cached_input_tokens": 0,
+          "output_tokens": 6212,
+          "reasoning_tokens": 0,
+          "total_tokens": 9375,
+          "calculated_cost_usd": "0.00264295"
+        },
+        "model_selection": {
+          "requests": 1,
+          "input_tokens": 46553,
+          "cached_input_tokens": 0,
+          "output_tokens": 7960,
+          "reasoning_tokens": 0,
+          "total_tokens": 54513,
+          "calculated_cost_usd": "0.00551165"
+        },
+        "dataset_selection": {
+          "requests": 1,
+          "input_tokens": 5337,
+          "cached_input_tokens": 0,
+          "output_tokens": 3716,
+          "reasoning_tokens": 0,
+          "total_tokens": 9053,
+          "calculated_cost_usd": "0.00175325"
+        },
+        "hpo_optimizer": {
+          "requests": 1,
+          "input_tokens": 71726,
+          "cached_input_tokens": 1664,
+          "output_tokens": 8465,
+          "reasoning_tokens": 6656,
+          "total_tokens": 80191,
+          "calculated_cost_usd": "0.00689742"
+        },
+        "hpo_evaluator": {
+          "requests": 1,
+          "input_tokens": 4394,
+          "cached_input_tokens": 1024,
+          "output_tokens": 5027,
+          "reasoning_tokens": 4608,
+          "total_tokens": 9421,
+          "calculated_cost_usd": "0.00218442"
+        }
+      },
+      "pricing": {
+        "gpt-5-nano": {
+          "input_per_million": "0.05",
+          "cached_input_per_million": "0.005",
+          "output_per_million": "0.40",
+          "effective_date": "2026-08-15",
+          "source": "https://developers.openai.com/api/docs/models/gpt-5-nano"
+        },
+        "gpt-5-nano-2025-08-07": {
+          "input_per_million": "0.05",
+          "cached_input_per_million": "0.005",
+          "output_per_million": "0.40",
+          "effective_date": "2026-08-15",
+          "source": "https://developers.openai.com/api/docs/models/gpt-5-nano"
+        }
+      },
+      "usage_notes": [
+        "The installed Agents SDK reports aggregate input tokens without a cached-token breakdown; those calls are calculated at the standard input rate."
+      ]
+    }
+  }
+]

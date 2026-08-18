@@ -17,8 +17,57 @@ class DatasetInfo:
     dataset_id: str
     task: str
     role: DatasetRole
+    display_name: str = ""
+    aliases: tuple[str, ...] = ()
     domains: tuple[str, ...] = ()
     description: str = ""
+    canonical_family: str | None = None
+    derived_from: str | None = None
+    synthetic: bool = False
+    paired_sample_ids_available: bool = False
+
+
+_DATASET_LINEAGE: dict[str, dict[str, object]] = {
+    "bdd100k_unit_day2night_det_train": {
+        "canonical_family": "bdd_100k",
+        "derived_from": "bdd_100k_det_train",
+        "synthetic": True,
+    },
+    "bdd100k_fda_day2night_det_train": {
+        "canonical_family": "bdd_100k",
+        "derived_from": "bdd_100k_det_train",
+        "synthetic": True,
+    },
+    "bdd100k_cyclegan_day2night_det_train": {
+        "canonical_family": "bdd_100k",
+        "derived_from": "bdd_100k_det_train",
+        "synthetic": True,
+    },
+    "acdc_fda_day2night_det_train": {
+        "canonical_family": "acdc",
+        "derived_from": "ACDC_det_train",
+        "synthetic": True,
+    },
+}
+
+
+def _with_lineage(info: DatasetInfo) -> DatasetInfo:
+    lineage = _DATASET_LINEAGE.get(info.dataset_id.lower())
+    if not lineage:
+        return info
+    return DatasetInfo(
+        dataset_id=info.dataset_id,
+        task=info.task,
+        role=info.role,
+        display_name=info.display_name,
+        aliases=info.aliases,
+        domains=info.domains,
+        description=info.description,
+        canonical_family=str(lineage["canonical_family"]),
+        derived_from=str(lineage["derived_from"]),
+        synthetic=bool(lineage["synthetic"]),
+        paired_sample_ids_available=False,
+    )
 
 
 def _dataset(
@@ -28,7 +77,13 @@ def _dataset(
     *domains: str,
     description: str = "",
 ) -> DatasetInfo:
-    return DatasetInfo(dataset_id, task, role, tuple(domains), description)
+    return DatasetInfo(
+        dataset_id=dataset_id,
+        task=task,
+        role=role,
+        domains=tuple(domains),
+        description=description,
+    )
 
 
 # Runtime correctness must not depend on GraphRAG or on a graph being available.
@@ -37,6 +92,7 @@ def _dataset(
 _FALLBACK_DATASET_REGISTRY: dict[str, DatasetInfo] = {
     item.dataset_id: item
     for item in (
+        _dataset("ACDC_det_train", "detection", DatasetRole.TRAIN, "street", "adverse_weather", "night"),
         _dataset("ACDC_det_val_night", "detection", DatasetRole.VALIDATION, "street", "adverse_weather", "night"),
         _dataset("CUB-200-2011_cls_test", "classification", DatasetRole.TEST, "birds", "fine_grained"),
         _dataset("CUB-200-2011_cls_train", "classification", DatasetRole.TRAIN, "birds", "fine_grained"),
@@ -113,6 +169,12 @@ def _build_registry_from_ontology() -> dict[str, DatasetInfo]:
                 dataset_id=dataset_id,
                 task=task,
                 role=role,
+                display_name=row.get("dataset_name", "").strip(),
+                aliases=tuple(
+                    alias.strip()
+                    for alias in row.get("aliases", "").split("|")
+                    if alias.strip()
+                ),
                 description=row.get("description", ""),
             )
     return registry
@@ -130,6 +192,8 @@ for dataset_id, fallback_info in _FALLBACK_DATASET_REGISTRY.items():
             dataset_id=dataset_id,
             task=ontology_info.task or fallback_info.task,
             role=ontology_info.role or fallback_info.role,
+            display_name=ontology_info.display_name or fallback_info.display_name,
+            aliases=ontology_info.aliases or fallback_info.aliases,
             domains=fallback_info.domains or ontology_info.domains,
             description=(ontology_info.description or fallback_info.description),
         )
@@ -162,24 +226,30 @@ def infer_dataset_info(dataset_id: str) -> DatasetInfo | None:
     else:
         role = DatasetRole.BENCHMARK
 
-    return DatasetInfo(
+    return _with_lineage(DatasetInfo(
         dataset_id=dataset_id,
         task=task,
         role=role,
         description="Inferred from dataset identifier.",
-    )
+    ))
 
 
 def get_dataset_info(dataset_id: str) -> DatasetInfo | None:
-    return DATASET_REGISTRY.get(dataset_id)
+    info = DATASET_REGISTRY.get(dataset_id)
+    return _with_lineage(info) if info is not None else None
 
 
 def resolve_dataset_info(dataset_id: str) -> DatasetInfo | None:
-    return DATASET_REGISTRY.get(dataset_id) or infer_dataset_info(dataset_id)
+    info = DATASET_REGISTRY.get(dataset_id) or infer_dataset_info(dataset_id)
+    return _with_lineage(info) if info is not None else None
 
 
 def dataset_family(dataset_id: str) -> str:
     """Return the stable family shared by a dataset's official split IDs."""
+
+    info = resolve_dataset_info(dataset_id)
+    if info is not None and info.canonical_family:
+        return info.canonical_family
 
     return re.sub(
         r"_(?:det|cls|inseg)_(?:train|val|validation|test)(?:_[a-z0-9]+)*$",

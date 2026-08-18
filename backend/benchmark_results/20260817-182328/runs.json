@@ -1,0 +1,2799 @@
+[
+  {
+    "job_id": "batch-traffic-participants-graph-1-aa321aa1",
+    "case_id": "traffic-participants",
+    "repetition": 1,
+    "use_graphrag": true,
+    "status": "failed",
+    "stages": {
+      "completeness": "passed",
+      "task_interpretation": "passed",
+      "data_check": "passed",
+      "model_selection": "passed",
+      "dataset_selection": "failed"
+    },
+    "failure_category": "infeasible_dataset_selection",
+    "error": {
+      "job_id": "batch-traffic-participants-graph-1-aa321aa1",
+      "message": "Dataset selection remained invalid after two scoped LLM attempts.",
+      "proposed_selection": [
+        {
+          "class_name": "car",
+          "sources": [
+            {
+              "dataset_name": "bdd_100k_det_train",
+              "count": 2000
+            },
+            {
+              "dataset_name": "openimages_challenge_2019_det_train",
+              "count": 500
+            }
+          ]
+        },
+        {
+          "class_name": "truck",
+          "sources": [
+            {
+              "dataset_name": "bdd_100k_det_train",
+              "count": 2000
+            },
+            {
+              "dataset_name": "LVIS_det_train",
+              "count": 500
+            }
+          ]
+        },
+        {
+          "class_name": "bus",
+          "sources": [
+            {
+              "dataset_name": "bdd_100k_det_train",
+              "count": 2000
+            },
+            {
+              "dataset_name": "LVIS_det_train",
+              "count": 500
+            }
+          ]
+        },
+        {
+          "class_name": "motorcycle",
+          "sources": [
+            {
+              "dataset_name": "bdd_100k_det_train",
+              "count": 2000
+            },
+            {
+              "dataset_name": "LVIS_det_train",
+              "count": 500
+            }
+          ]
+        },
+        {
+          "class_name": "bicycle",
+          "sources": [
+            {
+              "dataset_name": "bdd_100k_det_train",
+              "count": 2000
+            },
+            {
+              "dataset_name": "LVIS_det_train",
+              "count": 500
+            }
+          ]
+        },
+        {
+          "class_name": "pedestrian",
+          "sources": [
+            {
+              "dataset_name": "bdd_100k_det_train",
+              "count": 2000
+            },
+            {
+              "dataset_name": "LVIS_det_train",
+              "count": 500
+            }
+          ]
+        }
+      ],
+      "validation_findings": [
+        {
+          "field": "dataset_name",
+          "class_name": "car",
+          "dataset_name": "openimages_challenge_2019_det_train",
+          "reason": "Dataset is not an eligible available source for this class."
+        },
+        {
+          "field": "dataset_name",
+          "class_name": "bus",
+          "dataset_name": "LVIS_det_train",
+          "reason": "Dataset is not an eligible available source for this class."
+        },
+        {
+          "field": "dataset_name",
+          "class_name": "pedestrian",
+          "dataset_name": "LVIS_det_train",
+          "reason": "Dataset is not an eligible available source for this class."
+        }
+      ],
+      "data_selection_policy": {
+        "policy_ids": [
+          "data.detection.robust_pool.v1",
+          "data.detection.source_sufficiency.v1",
+          "data.detection.lineage_safety.v1",
+          "data.detection.domain_mix.v1"
+        ],
+        "target_images_per_class": 2500,
+        "min_mixed_source_count": 500,
+        "min_mixed_source_share": 0.1,
+        "reject_unpaired_original_derived_mix": true,
+        "requested_robustness_dimensions": [],
+        "policy_id": "data.detection.domain_mix.v1",
+        "preferred_primary_domain_share": 0.8,
+        "minimum_primary_domain_share": 0.7,
+        "maximum_generalization_sources": 1,
+        "domain_share_severity": "warning",
+        "domain_share_instruction": "Prefer primary real target-domain data, but a lower share may be used when the rationale explains domain, availability, or transfer evidence.",
+        "dataset_sizing": {
+          "target_images_per_class": 2500,
+          "minimum_images_per_class": 2000,
+          "maximum_images_per_class": 3000,
+          "confidence": "high",
+          "facts": {
+            "pretrained_class_coverage": "partial",
+            "domain_shift": "moderate",
+            "accuracy_demand": "high",
+            "robustness_dimensions": [],
+            "object_size_risk": "low",
+            "object_size_evidence": "unknown",
+            "small_object_fraction": null,
+            "median_short_side_px_at_640": null,
+            "previous_run_failed": false
+          },
+          "adjustments": [
+            {
+              "rule": "partial_pretrained_class_coverage",
+              "value": 500,
+              "reason": "Some requested classes require adaptation of the pretrained detector."
+            },
+            {
+              "rule": "moderate_domain_shift",
+              "value": 500,
+              "reason": "The deployment domain is moderately different or could not be verified."
+            },
+            {
+              "rule": "high_accuracy_demand",
+              "value": 500,
+              "reason": "The requested accuracy or per-class recall is demanding."
+            }
+          ],
+          "config": {
+            "base_images_per_class": 1000,
+            "full_pretrained_coverage_adjustment": -250,
+            "partial_pretrained_coverage_adjustment": 500,
+            "no_pretrained_coverage_adjustment": 1000,
+            "moderate_domain_shift_adjustment": 500,
+            "strong_domain_shift_adjustment": 1000,
+            "robustness_adjustment_per_dimension": 250,
+            "robustness_adjustment_maximum": 500,
+            "high_accuracy_adjustment": 500,
+            "explicit_small_object_adjustment": 750,
+            "observed_small_object_adjustment": 1250,
+            "normal_minimum": 750,
+            "normal_maximum": 3000,
+            "evidence_backed_expansion_maximum": 5000
+          },
+          "expansion_requires_evidence": true,
+          "calculated_target_images_per_class": 2500,
+          "effective_target_images_per_class": 2500,
+          "explicit_user_override": false,
+          "calculation_stage": "select_datasets_prerequisite"
+        }
+      }
+    },
+    "traceback": "Traceback (most recent call last):\n  File \"C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\src\\cvmodellearning\\benchmarks\\batch_eval.py\", line 214, in evaluate\n    response = await operation(planning.StateRequest(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n        context=context, job_id=job_id, use_graphrag=use_graphrag\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    ))\n    ^^\n  File \"C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\src\\routers\\planning.py\", line 1875, in select_datasets\n    raise HTTPException(status_code=422, detail=failure)\nfastapi.exceptions.HTTPException: 422: {'job_id': 'batch-traffic-participants-graph-1-aa321aa1', 'message': 'Dataset selection remained invalid after two scoped LLM attempts.', 'proposed_selection': [{'class_name': 'car', 'sources': [{'dataset_name': 'bdd_100k_det_train', 'count': 2000}, {'dataset_name': 'openimages_challenge_2019_det_train', 'count': 500}]}, {'class_name': 'truck', 'sources': [{'dataset_name': 'bdd_100k_det_train', 'count': 2000}, {'dataset_name': 'LVIS_det_train', 'count': 500}]}, {'class_name': 'bus', 'sources': [{'dataset_name': 'bdd_100k_det_train', 'count': 2000}, {'dataset_name': 'LVIS_det_train', 'count': 500}]}, {'class_name': 'motorcycle', 'sources': [{'dataset_name': 'bdd_100k_det_train', 'count': 2000}, {'dataset_name': 'LVIS_det_train', 'count': 500}]}, {'class_name': 'bicycle', 'sources': [{'dataset_name': 'bdd_100k_det_train', 'count': 2000}, {'dataset_name': 'LVIS_det_train', 'count': 500}]}, {'class_name': 'pedestrian', 'sources': [{'dataset_name': 'bdd_100k_det_train', 'count': 2000}, {'dataset_name': 'LVIS_det_train', 'count': 500}]}], 'validation_findings': [{'field': 'dataset_name', 'class_name': 'car', 'dataset_name': 'openimages_challenge_2019_det_train', 'reason': 'Dataset is not an eligible available source for this class.'}, {'field': 'dataset_name', 'class_name': 'bus', 'dataset_name': 'LVIS_det_train', 'reason': 'Dataset is not an eligible available source for this class.'}, {'field': 'dataset_name', 'class_name': 'pedestrian', 'dataset_name': 'LVIS_det_train', 'reason': 'Dataset is not an eligible available source for this class.'}], 'data_selection_policy': {'policy_ids': ['data.detection.robust_pool.v1', 'data.detection.source_sufficiency.v1', 'data.detection.lineage_safety.v1', 'data.detection.domain_mix.v1'], 'target_images_per_class': 2500, 'min_mixed_source_count': 500, 'min_mixed_source_share': 0.1, 'reject_unpaired_original_derived_mix': True, 'requested_robustness_dimensions': [], 'policy_id': 'data.detection.domain_mix.v1', 'preferred_primary_domain_share': 0.8, 'minimum_primary_domain_share': 0.7, 'maximum_generalization_sources': 1, 'domain_share_severity': 'warning', 'domain_share_instruction': 'Prefer primary real target-domain data, but a lower share may be used when the rationale explains domain, availability, or transfer evidence.', 'dataset_sizing': {'target_images_per_class': 2500, 'minimum_images_per_class': 2000, 'maximum_images_per_class': 3000, 'confidence': 'high', 'facts': {'pretrained_class_coverage': 'partial', 'domain_shift': 'moderate', 'accuracy_demand': 'high', 'robustness_dimensions': (), 'object_size_risk': 'low', 'object_size_evidence': 'unknown', 'small_object_fraction': None, 'median_short_side_px_at_640': None, 'previous_run_failed': False}, 'adjustments': ({'rule': 'partial_pretrained_class_coverage', 'value': 500, 'reason': 'Some requested classes require adaptation of the pretrained detector.'}, {'rule': 'moderate_domain_shift', 'value': 500, 'reason': 'The deployment domain is moderately different or could not be verified.'}, {'rule': 'high_accuracy_demand', 'value': 500, 'reason': 'The requested accuracy or per-class recall is demanding.'}), 'config': {'base_images_per_class': 1000, 'full_pretrained_coverage_adjustment': -250, 'partial_pretrained_coverage_adjustment': 500, 'no_pretrained_coverage_adjustment': 1000, 'moderate_domain_shift_adjustment': 500, 'strong_domain_shift_adjustment': 1000, 'robustness_adjustment_per_dimension': 250, 'robustness_adjustment_maximum': 500, 'high_accuracy_adjustment': 500, 'explicit_small_object_adjustment': 750, 'observed_small_object_adjustment': 1250, 'normal_minimum': 750, 'normal_maximum': 3000, 'evidence_backed_expansion_maximum': 5000}, 'expansion_requires_evidence': True, 'calculated_target_images_per_class': 2500, 'effective_target_images_per_class': 2500, 'explicit_user_override': False, 'calculation_stage': 'select_datasets_prerequisite'}}}\n",
+    "duration_seconds": 242.243,
+    "llm_usage": {
+      "schema_version": 1,
+      "job_id": "batch-traffic-participants-graph-1-aa321aa1",
+      "scope": "planning",
+      "currency": "USD",
+      "totals": {
+        "requests": 5,
+        "input_tokens": 94991,
+        "cached_input_tokens": 0,
+        "output_tokens": 39194,
+        "reasoning_tokens": 0,
+        "total_tokens": 134185,
+        "calculated_cost_usd": "0.02042715"
+      },
+      "models": {
+        "gpt-5-nano": {
+          "requests": 5,
+          "input_tokens": 94991,
+          "cached_input_tokens": 0,
+          "output_tokens": 39194,
+          "reasoning_tokens": 0,
+          "total_tokens": 134185,
+          "calculated_cost_usd": "0.02042715"
+        }
+      },
+      "operations": {
+        "completeness_check": {
+          "requests": 1,
+          "input_tokens": 258,
+          "cached_input_tokens": 0,
+          "output_tokens": 1285,
+          "reasoning_tokens": 0,
+          "total_tokens": 1543,
+          "calculated_cost_usd": "0.00052690"
+        },
+        "task_interpretation": {
+          "requests": 1,
+          "input_tokens": 3168,
+          "cached_input_tokens": 0,
+          "output_tokens": 5168,
+          "reasoning_tokens": 0,
+          "total_tokens": 8336,
+          "calculated_cost_usd": "0.00222560"
+        },
+        "model_selection": {
+          "requests": 1,
+          "input_tokens": 50281,
+          "cached_input_tokens": 0,
+          "output_tokens": 7990,
+          "reasoning_tokens": 0,
+          "total_tokens": 58271,
+          "calculated_cost_usd": "0.00571005"
+        },
+        "dataset_selection": {
+          "requests": 2,
+          "input_tokens": 41284,
+          "cached_input_tokens": 0,
+          "output_tokens": 24751,
+          "reasoning_tokens": 0,
+          "total_tokens": 66035,
+          "calculated_cost_usd": "0.01196460"
+        }
+      },
+      "pricing": {
+        "gpt-5-nano": {
+          "input_per_million": "0.05",
+          "cached_input_per_million": "0.005",
+          "output_per_million": "0.40",
+          "effective_date": "2026-08-15",
+          "source": "https://developers.openai.com/api/docs/models/gpt-5-nano"
+        }
+      },
+      "usage_notes": [
+        "The installed Agents SDK reports aggregate input tokens without a cached-token breakdown; those calls are calculated at the standard input rate."
+      ]
+    }
+  },
+  {
+    "job_id": "batch-car-conditions-graph-1-a2cce863",
+    "case_id": "car-conditions",
+    "repetition": 1,
+    "use_graphrag": true,
+    "status": "passed",
+    "stages": {
+      "completeness": "passed",
+      "task_interpretation": "passed",
+      "data_check": "passed",
+      "model_selection": "passed",
+      "dataset_selection": "passed",
+      "hyperparameters": "passed",
+      "configuration_validation": "passed",
+      "training_smoke": "passed"
+    },
+    "semantic": {
+      "passed": false,
+      "checks": {
+        "correct_task": true,
+        "classes_preserved": true,
+        "model_selected": true,
+        "datasets_selected": true,
+        "requirements_preserved": false
+      },
+      "requirement_terms": {
+        "map": true,
+        "500": true,
+        "viewpoint": false,
+        "lighting": false,
+        "weather": false,
+        "occlusion": false
+      },
+      "expected_classes": [
+        "car"
+      ],
+      "actual_classes": [
+        "car"
+      ]
+    },
+    "planning_warnings": {
+      "dataset": [],
+      "hyperparameters": [
+        {
+          "field": "batch_size",
+          "severity": "preference",
+          "reason": "Batch size is constrained to 4 by a vRAM rule for <=8 GB memory (rule_yolo_low_vram_batch); this aligns with the 4 GB-scale hardware policy and conserves memory during CPU/Metal execution.",
+          "recommended_value": null,
+          "rule_id": "rule_yolo_low_vram_batch"
+        },
+        {
+          "field": "hsv_h",
+          "severity": "preference",
+          "reason": "HSV hue adjusted to 0.03 to better handle outdoor lighting variation (rule_yolo_outdoor_lighting_hsv_example).",
+          "recommended_value": "hsv_h=0.03",
+          "rule_id": "rule_yolo_outdoor_lighting_hsv_example"
+        },
+        {
+          "field": "hsv_s",
+          "severity": "preference",
+          "reason": "HSV saturation adjusted to 0.6 to enhance robustness under color shifts in varying lighting (rule_yolo_outdoor_lighting_hsv_example).",
+          "recommended_value": "hsv_s=0.6",
+          "rule_id": "rule_yolo_outdoor_lighting_hsv_example"
+        },
+        {
+          "field": "hsv_v",
+          "severity": "preference",
+          "reason": "HSV value (brightness) adjusted to 0.5 to accommodate scene brightness variations (rule_yolo_outdoor_lighting_hsv_example).",
+          "recommended_value": "hsv_v=0.5",
+          "rule_id": "rule_yolo_outdoor_lighting_hsv_example"
+        },
+        {
+          "field": "scale",
+          "severity": "preference",
+          "reason": "Scale set to 0.5 to capture object distance/size variation in street scenes (rule_yolo_scale_variation_scale_05).",
+          "recommended_value": "scale=0.5",
+          "rule_id": "rule_yolo_scale_variation_scale_05"
+        },
+        {
+          "field": "multi_scale",
+          "severity": "preference",
+          "reason": "Multi-scale training enabled with 0.25 to expose model to size variation (rule_yolo_multiscale_025).",
+          "recommended_value": "multi_scale=0.25",
+          "rule_id": "rule_yolo_multiscale_025"
+        },
+        {
+          "field": "num_epochs",
+          "severity": "preference",
+          "reason": "num_epochs=50 is substantially below the GraphRAG reference of 100; consider at least 75 unless the reduction is justified.",
+          "recommended_value": "75",
+          "rule_id": "hpo.recipe_epoch_deviation.v1"
+        }
+      ]
+    },
+    "selection": {
+      "task": "detection",
+      "classes": [
+        "car"
+      ],
+      "model": null,
+      "datasets": [
+        ""
+      ],
+      "hpo_config": {
+        "task_type": "detection",
+        "classes": [
+          "car"
+        ],
+        "selected_data": [
+          {
+            "class_name": "car",
+            "sources": [
+              {
+                "dataset_name": "bdd_100k_det_train",
+                "allocations": [
+                  {
+                    "split": "train",
+                    "count": 964,
+                    "assignment_type": "official_split"
+                  },
+                  {
+                    "split": "validation",
+                    "count": 143,
+                    "assignment_type": "derived_from_train"
+                  },
+                  {
+                    "split": "test",
+                    "count": 143,
+                    "assignment_type": "derived_from_train"
+                  }
+                ]
+              },
+              {
+                "dataset_name": "coco2017_det_train",
+                "allocations": [
+                  {
+                    "split": "train",
+                    "count": 386,
+                    "assignment_type": "official_split"
+                  },
+                  {
+                    "split": "validation",
+                    "count": 57,
+                    "assignment_type": "derived_from_train"
+                  },
+                  {
+                    "split": "test",
+                    "count": 57,
+                    "assignment_type": "derived_from_train"
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "train_data_ratio": 0.7714285714285715,
+        "val_data_ratio": 0.11428571428571428,
+        "test_data_ratio": 0.11428571428571428,
+        "num_epochs": 50,
+        "patience": 20,
+        "batch_size": 4,
+        "input_size": 640,
+        "track_metric": "val_mAP",
+        "model_name": "yolov11_s",
+        "model_weights": "default",
+        "training_recipe_id": "ultralytics_yolo_detection_finetune_balanced",
+        "scheduler_name": "linear",
+        "final_learning_rate_factor": 0.01,
+        "warmup_epochs": 3.0,
+        "warmup_momentum": 0.8,
+        "amp": true,
+        "lambda_box": 7.5,
+        "lambda_cls": 0.5,
+        "lambda_dfl": 1.5,
+        "mosaic": 1.0,
+        "mixup": 0.0,
+        "cutmix": 0.0,
+        "copy_paste": 0.0,
+        "degrees": 0.0,
+        "translate": 0.0,
+        "scale": 0.5,
+        "fliplr": 0.0,
+        "hsv_h": 0.03,
+        "hsv_s": 0.6,
+        "hsv_v": 0.5,
+        "close_mosaic": 10,
+        "single_cls": true,
+        "rect": false,
+        "multi_scale": 0.25,
+        "confidence_threshold": 0.25,
+        "nms_iou_threshold": 0.7,
+        "max_detections": 1000,
+        "workers": 4,
+        "seed": 42,
+        "freeze": 0,
+        "optimizer": {
+          "name": "sgd",
+          "params": {
+            "learning_rate": 0.001,
+            "weight_decay": 0.0005,
+            "momentum": 0.9
+          }
+        }
+      }
+    },
+    "configuration_validation": {
+      "passed": true,
+      "validated_fields": [
+        "amp",
+        "batch_size",
+        "classes",
+        "close_mosaic",
+        "confidence_threshold",
+        "copy_paste",
+        "cutmix",
+        "degrees",
+        "final_learning_rate_factor",
+        "fliplr",
+        "freeze",
+        "hsv_h",
+        "hsv_s",
+        "hsv_v",
+        "input_size",
+        "lambda_box",
+        "lambda_cls",
+        "lambda_dfl",
+        "learning_rate",
+        "max_detections",
+        "mixup",
+        "model_name",
+        "model_weights",
+        "momentum",
+        "mosaic",
+        "multi_scale",
+        "nms_iou_threshold",
+        "num_epochs",
+        "optimizer_name",
+        "patience",
+        "rect",
+        "scale",
+        "scheduler_name",
+        "seed",
+        "selected_data",
+        "single_cls",
+        "task_type",
+        "test_data_ratio",
+        "track_metric",
+        "train_data_ratio",
+        "training_recipe_id",
+        "translate",
+        "val_data_ratio",
+        "warmup_epochs",
+        "warmup_momentum",
+        "weight_decay",
+        "workers"
+      ]
+    },
+    "training_smoke": {
+      "status": "passed",
+      "stages": {
+        "data_materialized": "passed",
+        "data_prepared": "passed",
+        "execution_readiness": "passed",
+        "training_batch": "passed",
+        "model_initialized": "passed",
+        "forward_pass": "passed",
+        "loss_computed": "passed",
+        "backward_pass": "passed",
+        "optimizer_step": "passed",
+        "validation_pass": "not_verified"
+      },
+      "data_policy": {
+        "source": "normal cache-aware downloader",
+        "train_images_per_allocation_at_most": 4,
+        "validation_and_test_images_per_allocation_at_most": 1,
+        "saved_planning_configuration_changed": false
+      },
+      "runtime_overrides": {
+        "max_epochs": 1,
+        "max_train_batches": 1,
+        "gradient_accumulation_steps": 1
+      },
+      "training_result": {
+        "model_name": "yolov11_s",
+        "trainer_type": "yolo",
+        "agent_output_message": "\u2705 Successfully trained yolov11_s (Job ID: batch-car-conditions-graph-1-a2cce863).",
+        "best_model_path": "C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\runs\\batch-car-conditions-graph-1-a2cce863\\artifacts\\best_model.pt",
+        "training_log_path": "C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\runs\\batch-car-conditions-graph-1-a2cce863\\artifacts\\training_log.txt",
+        "data_provenance": "C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\runs\\batch-car-conditions-graph-1-a2cce863\\artifacts\\data_provenance.json"
+      },
+      "cache": {
+        "cache_hits": 12,
+        "bytes_downloaded": 0
+      },
+      "duration_seconds": 32.556
+    },
+    "duration_seconds": 304.357,
+    "llm_usage": {
+      "schema_version": 1,
+      "job_id": "batch-car-conditions-graph-1-a2cce863",
+      "scope": "planning",
+      "currency": "USD",
+      "totals": {
+        "requests": 6,
+        "input_tokens": 154015,
+        "cached_input_tokens": 0,
+        "output_tokens": 38370,
+        "reasoning_tokens": 14208,
+        "total_tokens": 192385,
+        "calculated_cost_usd": "0.02304875"
+      },
+      "models": {
+        "gpt-5-nano": {
+          "requests": 4,
+          "input_tokens": 61722,
+          "cached_input_tokens": 0,
+          "output_tokens": 21819,
+          "reasoning_tokens": 0,
+          "total_tokens": 83541,
+          "calculated_cost_usd": "0.01181370"
+        },
+        "gpt-5-nano-2025-08-07": {
+          "requests": 2,
+          "input_tokens": 92293,
+          "cached_input_tokens": 0,
+          "output_tokens": 16551,
+          "reasoning_tokens": 14208,
+          "total_tokens": 108844,
+          "calculated_cost_usd": "0.01123505"
+        }
+      },
+      "operations": {
+        "completeness_check": {
+          "requests": 1,
+          "input_tokens": 292,
+          "cached_input_tokens": 0,
+          "output_tokens": 639,
+          "reasoning_tokens": 0,
+          "total_tokens": 931,
+          "calculated_cost_usd": "0.00027020"
+        },
+        "task_interpretation": {
+          "requests": 1,
+          "input_tokens": 3202,
+          "cached_input_tokens": 0,
+          "output_tokens": 6116,
+          "reasoning_tokens": 0,
+          "total_tokens": 9318,
+          "calculated_cost_usd": "0.00260650"
+        },
+        "model_selection": {
+          "requests": 1,
+          "input_tokens": 48047,
+          "cached_input_tokens": 0,
+          "output_tokens": 7978,
+          "reasoning_tokens": 0,
+          "total_tokens": 56025,
+          "calculated_cost_usd": "0.00559355"
+        },
+        "dataset_selection": {
+          "requests": 1,
+          "input_tokens": 10181,
+          "cached_input_tokens": 0,
+          "output_tokens": 7086,
+          "reasoning_tokens": 0,
+          "total_tokens": 17267,
+          "calculated_cost_usd": "0.00334345"
+        },
+        "hpo_optimizer": {
+          "requests": 1,
+          "input_tokens": 87324,
+          "cached_input_tokens": 0,
+          "output_tokens": 9972,
+          "reasoning_tokens": 8320,
+          "total_tokens": 97296,
+          "calculated_cost_usd": "0.00835500"
+        },
+        "hpo_evaluator": {
+          "requests": 1,
+          "input_tokens": 4969,
+          "cached_input_tokens": 0,
+          "output_tokens": 6579,
+          "reasoning_tokens": 5888,
+          "total_tokens": 11548,
+          "calculated_cost_usd": "0.00288005"
+        }
+      },
+      "pricing": {
+        "gpt-5-nano": {
+          "input_per_million": "0.05",
+          "cached_input_per_million": "0.005",
+          "output_per_million": "0.40",
+          "effective_date": "2026-08-15",
+          "source": "https://developers.openai.com/api/docs/models/gpt-5-nano"
+        },
+        "gpt-5-nano-2025-08-07": {
+          "input_per_million": "0.05",
+          "cached_input_per_million": "0.005",
+          "output_per_million": "0.40",
+          "effective_date": "2026-08-15",
+          "source": "https://developers.openai.com/api/docs/models/gpt-5-nano"
+        }
+      },
+      "usage_notes": [
+        "The installed Agents SDK reports aggregate input tokens without a cached-token breakdown; those calls are calculated at the standard input rate."
+      ]
+    }
+  },
+  {
+    "job_id": "batch-traffic-lights-signs-graph-1-0fb55dba",
+    "case_id": "traffic-lights-signs",
+    "repetition": 1,
+    "use_graphrag": true,
+    "status": "failed",
+    "stages": {
+      "completeness": "passed",
+      "task_interpretation": "passed",
+      "data_check": "passed",
+      "model_selection": "failed"
+    },
+    "failure_category": "unsupported_model",
+    "error": "No registered architecture family for model 'faster_rcnn_r50'.",
+    "traceback": "Traceback (most recent call last):\n  File \"C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\src\\cvmodellearning\\benchmarks\\batch_eval.py\", line 214, in evaluate\n    response = await operation(planning.StateRequest(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n        context=context, job_id=job_id, use_graphrag=use_graphrag\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    ))\n    ^^\n  File \"C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\src\\routers\\planning.py\", line 1374, in select_model\n    raise HTTPException(\n    ...<2 lines>...\n    )\nfastapi.exceptions.HTTPException: 422: No registered architecture family for model 'faster_rcnn_r50'.\n",
+    "duration_seconds": 158.426,
+    "llm_usage": {
+      "schema_version": 1,
+      "job_id": "batch-traffic-lights-signs-graph-1-0fb55dba",
+      "scope": "planning",
+      "currency": "USD",
+      "totals": {
+        "requests": 4,
+        "input_tokens": 106748,
+        "cached_input_tokens": 0,
+        "output_tokens": 20996,
+        "reasoning_tokens": 0,
+        "total_tokens": 127744,
+        "calculated_cost_usd": "0.01373580"
+      },
+      "models": {
+        "gpt-5-nano": {
+          "requests": 4,
+          "input_tokens": 106748,
+          "cached_input_tokens": 0,
+          "output_tokens": 20996,
+          "reasoning_tokens": 0,
+          "total_tokens": 127744,
+          "calculated_cost_usd": "0.01373580"
+        }
+      },
+      "operations": {
+        "completeness_check": {
+          "requests": 1,
+          "input_tokens": 313,
+          "cached_input_tokens": 0,
+          "output_tokens": 679,
+          "reasoning_tokens": 0,
+          "total_tokens": 992,
+          "calculated_cost_usd": "0.00028725"
+        },
+        "task_interpretation": {
+          "requests": 1,
+          "input_tokens": 3223,
+          "cached_input_tokens": 0,
+          "output_tokens": 6081,
+          "reasoning_tokens": 0,
+          "total_tokens": 9304,
+          "calculated_cost_usd": "0.00259355"
+        },
+        "model_selection": {
+          "requests": 2,
+          "input_tokens": 103212,
+          "cached_input_tokens": 0,
+          "output_tokens": 14236,
+          "reasoning_tokens": 0,
+          "total_tokens": 117448,
+          "calculated_cost_usd": "0.01085500"
+        }
+      },
+      "pricing": {
+        "gpt-5-nano": {
+          "input_per_million": "0.05",
+          "cached_input_per_million": "0.005",
+          "output_per_million": "0.40",
+          "effective_date": "2026-08-15",
+          "source": "https://developers.openai.com/api/docs/models/gpt-5-nano"
+        }
+      },
+      "usage_notes": [
+        "The installed Agents SDK reports aggregate input tokens without a cached-token breakdown; those calls are calculated at the standard input rate."
+      ]
+    }
+  },
+  {
+    "job_id": "batch-traffic-lights-signs-slow-graph-1-73892067",
+    "case_id": "traffic-lights-signs-slow",
+    "repetition": 1,
+    "use_graphrag": true,
+    "status": "passed",
+    "stages": {
+      "completeness": "passed",
+      "task_interpretation": "passed",
+      "data_check": "passed",
+      "model_selection": "passed",
+      "dataset_selection": "passed",
+      "hyperparameters": "passed",
+      "configuration_validation": "passed",
+      "training_smoke": "passed"
+    },
+    "semantic": {
+      "passed": false,
+      "checks": {
+        "correct_task": true,
+        "classes_preserved": true,
+        "model_selected": true,
+        "datasets_selected": true,
+        "requirements_preserved": false
+      },
+      "requirement_terms": {
+        "map": true,
+        "rtx2060|rtx 2060": true,
+        "6": true,
+        "small": false
+      },
+      "expected_classes": [
+        "traffic light",
+        "traffic sign"
+      ],
+      "actual_classes": [
+        "traffic light",
+        "traffic sign"
+      ]
+    },
+    "planning_warnings": {
+      "dataset": [],
+      "hyperparameters": [
+        {
+          "field": "num_epochs",
+          "severity": "preference",
+          "reason": "num_epochs=50 is substantially below the GraphRAG reference of 100; consider at least 75 unless the reduction is justified.",
+          "recommended_value": "75",
+          "rule_id": "hpo.recipe_epoch_deviation.v1"
+        },
+        {
+          "field": "translate",
+          "severity": "preference",
+          "reason": "Small-object detection requires bounded geometric variation; do not disable both translate and scale without measured dataset evidence.",
+          "recommended_value": "0.05",
+          "rule_id": "hpo.small_object_augmentation.v1"
+        },
+        {
+          "field": "batch_size",
+          "severity": "preference",
+          "reason": "Consider batch_size<=2 with input_size>=768 on a <=6 GiB training budget.",
+          "recommended_value": "2",
+          "rule_id": "hpo.small_object_resolution.v1"
+        }
+      ]
+    },
+    "selection": {
+      "task": "detection",
+      "classes": [
+        "traffic light",
+        "traffic sign"
+      ],
+      "model": null,
+      "datasets": [
+        ""
+      ],
+      "hpo_config": {
+        "task_type": "detection",
+        "classes": [
+          "traffic light",
+          "traffic sign"
+        ],
+        "selected_data": [
+          {
+            "class_name": "traffic light",
+            "sources": [
+              {
+                "dataset_name": "bdd_100k_det_train",
+                "allocations": [
+                  {
+                    "split": "train",
+                    "count": 2400,
+                    "assignment_type": "official_split"
+                  },
+                  {
+                    "split": "test",
+                    "count": 300,
+                    "assignment_type": "derived_from_train"
+                  }
+                ]
+              },
+              {
+                "dataset_name": "bdd_100k_det_val",
+                "allocations": [
+                  {
+                    "split": "validation",
+                    "count": 300,
+                    "assignment_type": "official_split"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "class_name": "traffic sign",
+            "sources": [
+              {
+                "dataset_name": "bdd_100k_det_train",
+                "allocations": [
+                  {
+                    "split": "train",
+                    "count": 2400,
+                    "assignment_type": "official_split"
+                  },
+                  {
+                    "split": "test",
+                    "count": 300,
+                    "assignment_type": "derived_from_train"
+                  }
+                ]
+              },
+              {
+                "dataset_name": "bdd_100k_det_val",
+                "allocations": [
+                  {
+                    "split": "validation",
+                    "count": 300,
+                    "assignment_type": "official_split"
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "train_data_ratio": 0.8,
+        "val_data_ratio": 0.1,
+        "test_data_ratio": 0.1,
+        "num_epochs": 50,
+        "patience": 20,
+        "batch_size": 4,
+        "input_size": 768,
+        "track_metric": "val_mAP",
+        "model_name": "yolov11_s",
+        "model_weights": "coco",
+        "training_recipe_id": "ultralytics_yolo_detection_finetune_balanced",
+        "scheduler_name": "linear",
+        "final_learning_rate_factor": 0.01,
+        "warmup_epochs": 3.0,
+        "warmup_momentum": 0.0,
+        "amp": true,
+        "lambda_box": 7.5,
+        "lambda_cls": 0.5,
+        "lambda_dfl": 1.5,
+        "mosaic": 1.0,
+        "mixup": 0.0,
+        "cutmix": 0.0,
+        "copy_paste": 0.0,
+        "degrees": 0.0,
+        "translate": 0.0,
+        "scale": 0.0,
+        "fliplr": 0.0,
+        "hsv_h": 0.03,
+        "hsv_s": 0.6,
+        "hsv_v": 0.5,
+        "close_mosaic": 10,
+        "single_cls": false,
+        "rect": false,
+        "multi_scale": 0.0,
+        "confidence_threshold": 0.25,
+        "nms_iou_threshold": 0.7,
+        "max_detections": 1000,
+        "workers": 4,
+        "seed": 42,
+        "freeze": 0,
+        "optimizer": {
+          "name": "adamw",
+          "params": {
+            "learning_rate": 0.001,
+            "weight_decay": 0.0005,
+            "beta1": 0.001
+          }
+        }
+      }
+    },
+    "configuration_validation": {
+      "passed": true,
+      "validated_fields": [
+        "amp",
+        "batch_size",
+        "beta1",
+        "classes",
+        "close_mosaic",
+        "confidence_threshold",
+        "copy_paste",
+        "cutmix",
+        "degrees",
+        "final_learning_rate_factor",
+        "fliplr",
+        "freeze",
+        "hsv_h",
+        "hsv_s",
+        "hsv_v",
+        "input_size",
+        "lambda_box",
+        "lambda_cls",
+        "lambda_dfl",
+        "learning_rate",
+        "max_detections",
+        "mixup",
+        "model_name",
+        "model_weights",
+        "mosaic",
+        "multi_scale",
+        "nms_iou_threshold",
+        "num_epochs",
+        "optimizer_name",
+        "patience",
+        "rect",
+        "scale",
+        "scheduler_name",
+        "seed",
+        "selected_data",
+        "single_cls",
+        "task_type",
+        "test_data_ratio",
+        "track_metric",
+        "train_data_ratio",
+        "training_recipe_id",
+        "translate",
+        "val_data_ratio",
+        "warmup_epochs",
+        "warmup_momentum",
+        "weight_decay",
+        "workers"
+      ]
+    },
+    "training_smoke": {
+      "status": "passed",
+      "stages": {
+        "data_materialized": "passed",
+        "data_prepared": "passed",
+        "execution_readiness": "passed",
+        "training_batch": "passed",
+        "model_initialized": "passed",
+        "forward_pass": "passed",
+        "loss_computed": "passed",
+        "backward_pass": "passed",
+        "optimizer_step": "passed",
+        "validation_pass": "not_verified"
+      },
+      "data_policy": {
+        "source": "normal cache-aware downloader",
+        "train_images_per_allocation_at_most": 4,
+        "validation_and_test_images_per_allocation_at_most": 1,
+        "saved_planning_configuration_changed": false
+      },
+      "runtime_overrides": {
+        "max_epochs": 1,
+        "max_train_batches": 1,
+        "gradient_accumulation_steps": 1
+      },
+      "training_result": {
+        "model_name": "yolov11_s",
+        "trainer_type": "yolo",
+        "agent_output_message": "\u2705 Successfully trained yolov11_s (Job ID: batch-traffic-lights-signs-slow-graph-1-73892067).",
+        "best_model_path": "C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\runs\\batch-traffic-lights-signs-slow-graph-1-73892067\\artifacts\\best_model.pt",
+        "training_log_path": "C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\runs\\batch-traffic-lights-signs-slow-graph-1-73892067\\artifacts\\training_log.txt",
+        "data_provenance": "C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\runs\\batch-traffic-lights-signs-slow-graph-1-73892067\\artifacts\\data_provenance.json"
+      },
+      "cache": {
+        "cache_hits": 12,
+        "bytes_downloaded": 0
+      },
+      "duration_seconds": 26.54
+    },
+    "duration_seconds": 260.239,
+    "llm_usage": {
+      "schema_version": 1,
+      "job_id": "batch-traffic-lights-signs-slow-graph-1-73892067",
+      "scope": "planning",
+      "currency": "USD",
+      "totals": {
+        "requests": 6,
+        "input_tokens": 156827,
+        "cached_input_tokens": 0,
+        "output_tokens": 33999,
+        "reasoning_tokens": 11200,
+        "total_tokens": 190826,
+        "calculated_cost_usd": "0.02144095"
+      },
+      "models": {
+        "gpt-5-nano": {
+          "requests": 4,
+          "input_tokens": 62735,
+          "cached_input_tokens": 0,
+          "output_tokens": 21316,
+          "reasoning_tokens": 0,
+          "total_tokens": 84051,
+          "calculated_cost_usd": "0.01166315"
+        },
+        "gpt-5-nano-2025-08-07": {
+          "requests": 2,
+          "input_tokens": 94092,
+          "cached_input_tokens": 0,
+          "output_tokens": 12683,
+          "reasoning_tokens": 11200,
+          "total_tokens": 106775,
+          "calculated_cost_usd": "0.00977780"
+        }
+      },
+      "operations": {
+        "completeness_check": {
+          "requests": 1,
+          "input_tokens": 280,
+          "cached_input_tokens": 0,
+          "output_tokens": 739,
+          "reasoning_tokens": 0,
+          "total_tokens": 1019,
+          "calculated_cost_usd": "0.00030960"
+        },
+        "task_interpretation": {
+          "requests": 1,
+          "input_tokens": 3190,
+          "cached_input_tokens": 0,
+          "output_tokens": 5516,
+          "reasoning_tokens": 0,
+          "total_tokens": 8706,
+          "calculated_cost_usd": "0.00236590"
+        },
+        "model_selection": {
+          "requests": 1,
+          "input_tokens": 49797,
+          "cached_input_tokens": 0,
+          "output_tokens": 9860,
+          "reasoning_tokens": 0,
+          "total_tokens": 59657,
+          "calculated_cost_usd": "0.00643385"
+        },
+        "dataset_selection": {
+          "requests": 1,
+          "input_tokens": 9468,
+          "cached_input_tokens": 0,
+          "output_tokens": 5201,
+          "reasoning_tokens": 0,
+          "total_tokens": 14669,
+          "calculated_cost_usd": "0.00255380"
+        },
+        "hpo_optimizer": {
+          "requests": 1,
+          "input_tokens": 89478,
+          "cached_input_tokens": 0,
+          "output_tokens": 7912,
+          "reasoning_tokens": 6592,
+          "total_tokens": 97390,
+          "calculated_cost_usd": "0.00763870"
+        },
+        "hpo_evaluator": {
+          "requests": 1,
+          "input_tokens": 4614,
+          "cached_input_tokens": 0,
+          "output_tokens": 4771,
+          "reasoning_tokens": 4608,
+          "total_tokens": 9385,
+          "calculated_cost_usd": "0.00213910"
+        }
+      },
+      "pricing": {
+        "gpt-5-nano": {
+          "input_per_million": "0.05",
+          "cached_input_per_million": "0.005",
+          "output_per_million": "0.40",
+          "effective_date": "2026-08-15",
+          "source": "https://developers.openai.com/api/docs/models/gpt-5-nano"
+        },
+        "gpt-5-nano-2025-08-07": {
+          "input_per_million": "0.05",
+          "cached_input_per_million": "0.005",
+          "output_per_million": "0.40",
+          "effective_date": "2026-08-15",
+          "source": "https://developers.openai.com/api/docs/models/gpt-5-nano"
+        }
+      },
+      "usage_notes": [
+        "The installed Agents SDK reports aggregate input tokens without a cached-token breakdown; those calls are calculated at the standard input rate."
+      ]
+    }
+  },
+  {
+    "job_id": "batch-ex-pets-and-people-graph-1-11f5b201",
+    "case_id": "ex-pets-and-people",
+    "repetition": 1,
+    "use_graphrag": true,
+    "status": "passed",
+    "stages": {
+      "completeness": "passed",
+      "task_interpretation": "passed",
+      "data_check": "passed",
+      "model_selection": "passed",
+      "dataset_selection": "passed",
+      "hyperparameters": "passed",
+      "configuration_validation": "passed",
+      "training_smoke": "passed"
+    },
+    "semantic": {
+      "passed": false,
+      "checks": {
+        "correct_task": true,
+        "classes_preserved": true,
+        "model_selected": true,
+        "datasets_selected": true,
+        "requirements_preserved": false
+      },
+      "requirement_terms": {
+        "map": true,
+        "recall": true,
+        "500": true,
+        "indoor": false,
+        "outdoor": false,
+        "occlusion": false
+      },
+      "expected_classes": [
+        "cat",
+        "dog",
+        "person"
+      ],
+      "actual_classes": [
+        "cat",
+        "dog",
+        "person"
+      ]
+    },
+    "planning_warnings": {
+      "dataset": [],
+      "hyperparameters": [
+        {
+          "field": "num_epochs",
+          "severity": "preference",
+          "reason": "num_epochs=60 is substantially below the GraphRAG reference of 100; consider at least 75 unless the reduction is justified.",
+          "recommended_value": "75",
+          "rule_id": "hpo.recipe_epoch_deviation.v1"
+        }
+      ]
+    },
+    "selection": {
+      "task": "detection",
+      "classes": [
+        "person",
+        "dog",
+        "cat"
+      ],
+      "model": null,
+      "datasets": [
+        ""
+      ],
+      "hpo_config": {
+        "task_type": "detection",
+        "classes": [
+          "person",
+          "dog",
+          "cat"
+        ],
+        "selected_data": [
+          {
+            "class_name": "person",
+            "sources": [
+              {
+                "dataset_name": "coco2017_det_train",
+                "allocations": [
+                  {
+                    "split": "train",
+                    "count": 1400,
+                    "assignment_type": "official_split"
+                  },
+                  {
+                    "split": "test",
+                    "count": 175,
+                    "assignment_type": "derived_from_train"
+                  }
+                ]
+              },
+              {
+                "dataset_name": "coco2017_det_val",
+                "allocations": [
+                  {
+                    "split": "validation",
+                    "count": 175,
+                    "assignment_type": "official_split"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "class_name": "dog",
+            "sources": [
+              {
+                "dataset_name": "coco2017_det_train",
+                "allocations": [
+                  {
+                    "split": "train",
+                    "count": 1400,
+                    "assignment_type": "official_split"
+                  },
+                  {
+                    "split": "test",
+                    "count": 175,
+                    "assignment_type": "derived_from_train"
+                  }
+                ]
+              },
+              {
+                "dataset_name": "coco2017_det_val",
+                "allocations": [
+                  {
+                    "split": "validation",
+                    "count": 175,
+                    "assignment_type": "official_split"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "class_name": "cat",
+            "sources": [
+              {
+                "dataset_name": "coco2017_det_train",
+                "allocations": [
+                  {
+                    "split": "train",
+                    "count": 1400,
+                    "assignment_type": "official_split"
+                  },
+                  {
+                    "split": "test",
+                    "count": 175,
+                    "assignment_type": "derived_from_train"
+                  }
+                ]
+              },
+              {
+                "dataset_name": "coco2017_det_val",
+                "allocations": [
+                  {
+                    "split": "validation",
+                    "count": 175,
+                    "assignment_type": "official_split"
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "train_data_ratio": 0.8,
+        "val_data_ratio": 0.1,
+        "test_data_ratio": 0.1,
+        "num_epochs": 60,
+        "patience": 20,
+        "batch_size": 4,
+        "input_size": 640,
+        "track_metric": "val_mAP",
+        "model_name": "yolov11_s",
+        "model_weights": "coco",
+        "training_recipe_id": "ultralytics_yolo_detection_finetune_balanced",
+        "scheduler_name": "linear",
+        "final_learning_rate_factor": 0.01,
+        "warmup_epochs": 3.0,
+        "warmup_momentum": 0.9,
+        "amp": true,
+        "lambda_box": 7.5,
+        "lambda_cls": 0.5,
+        "lambda_dfl": 1.5,
+        "mosaic": 1.0,
+        "mixup": 0.0,
+        "cutmix": 0.0,
+        "copy_paste": 0.0,
+        "degrees": 0.0,
+        "translate": 0.0,
+        "scale": 0.0,
+        "fliplr": 0.0,
+        "hsv_h": 0.015,
+        "hsv_s": 0.7,
+        "hsv_v": 0.4,
+        "close_mosaic": 10,
+        "single_cls": false,
+        "rect": false,
+        "multi_scale": 0.0,
+        "confidence_threshold": 0.25,
+        "nms_iou_threshold": 0.7,
+        "max_detections": 1000,
+        "workers": 4,
+        "seed": 0,
+        "freeze": 0,
+        "optimizer": {
+          "name": "adamw",
+          "params": {
+            "learning_rate": 0.001,
+            "weight_decay": 0.0005,
+            "beta1": 0.9
+          }
+        }
+      }
+    },
+    "configuration_validation": {
+      "passed": true,
+      "validated_fields": [
+        "amp",
+        "batch_size",
+        "beta1",
+        "classes",
+        "close_mosaic",
+        "confidence_threshold",
+        "copy_paste",
+        "cutmix",
+        "degrees",
+        "final_learning_rate_factor",
+        "fliplr",
+        "freeze",
+        "hsv_h",
+        "hsv_s",
+        "hsv_v",
+        "input_size",
+        "lambda_box",
+        "lambda_cls",
+        "lambda_dfl",
+        "learning_rate",
+        "max_detections",
+        "mixup",
+        "model_name",
+        "model_weights",
+        "mosaic",
+        "multi_scale",
+        "nms_iou_threshold",
+        "num_epochs",
+        "optimizer_name",
+        "patience",
+        "rect",
+        "scale",
+        "scheduler_name",
+        "seed",
+        "selected_data",
+        "single_cls",
+        "task_type",
+        "test_data_ratio",
+        "track_metric",
+        "train_data_ratio",
+        "training_recipe_id",
+        "translate",
+        "val_data_ratio",
+        "warmup_epochs",
+        "warmup_momentum",
+        "weight_decay",
+        "workers"
+      ]
+    },
+    "training_smoke": {
+      "status": "passed",
+      "stages": {
+        "data_materialized": "passed",
+        "data_prepared": "passed",
+        "execution_readiness": "passed",
+        "training_batch": "passed",
+        "model_initialized": "passed",
+        "forward_pass": "passed",
+        "loss_computed": "passed",
+        "backward_pass": "passed",
+        "optimizer_step": "passed",
+        "validation_pass": "not_verified"
+      },
+      "data_policy": {
+        "source": "normal cache-aware downloader",
+        "train_images_per_allocation_at_most": 4,
+        "validation_and_test_images_per_allocation_at_most": 1,
+        "saved_planning_configuration_changed": false
+      },
+      "runtime_overrides": {
+        "max_epochs": 1,
+        "max_train_batches": 1,
+        "gradient_accumulation_steps": 1
+      },
+      "training_result": {
+        "model_name": "yolov11_s",
+        "trainer_type": "yolo",
+        "agent_output_message": "\u2705 Successfully trained yolov11_s (Job ID: batch-ex-pets-and-people-graph-1-11f5b201).",
+        "best_model_path": "C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\runs\\batch-ex-pets-and-people-graph-1-11f5b201\\artifacts\\best_model.pt",
+        "training_log_path": "C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\runs\\batch-ex-pets-and-people-graph-1-11f5b201\\artifacts\\training_log.txt",
+        "data_provenance": "C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\runs\\batch-ex-pets-and-people-graph-1-11f5b201\\artifacts\\data_provenance.json"
+      },
+      "cache": {
+        "cache_hits": 18,
+        "bytes_downloaded": 0
+      },
+      "duration_seconds": 16.004
+    },
+    "duration_seconds": 337.407,
+    "llm_usage": {
+      "schema_version": 1,
+      "job_id": "batch-ex-pets-and-people-graph-1-11f5b201",
+      "scope": "planning",
+      "currency": "USD",
+      "totals": {
+        "requests": 8,
+        "input_tokens": 224134,
+        "cached_input_tokens": 0,
+        "output_tokens": 50114,
+        "reasoning_tokens": 11072,
+        "total_tokens": 274248,
+        "calculated_cost_usd": "0.03125230"
+      },
+      "models": {
+        "gpt-5-nano": {
+          "requests": 6,
+          "input_tokens": 132551,
+          "cached_input_tokens": 0,
+          "output_tokens": 36801,
+          "reasoning_tokens": 0,
+          "total_tokens": 169352,
+          "calculated_cost_usd": "0.02134795"
+        },
+        "gpt-5-nano-2025-08-07": {
+          "requests": 2,
+          "input_tokens": 91583,
+          "cached_input_tokens": 0,
+          "output_tokens": 13313,
+          "reasoning_tokens": 11072,
+          "total_tokens": 104896,
+          "calculated_cost_usd": "0.00990435"
+        }
+      },
+      "operations": {
+        "completeness_check": {
+          "requests": 1,
+          "input_tokens": 307,
+          "cached_input_tokens": 0,
+          "output_tokens": 625,
+          "reasoning_tokens": 0,
+          "total_tokens": 932,
+          "calculated_cost_usd": "0.00026535"
+        },
+        "task_interpretation": {
+          "requests": 1,
+          "input_tokens": 3217,
+          "cached_input_tokens": 0,
+          "output_tokens": 5905,
+          "reasoning_tokens": 0,
+          "total_tokens": 9122,
+          "calculated_cost_usd": "0.00252285"
+        },
+        "model_selection": {
+          "requests": 2,
+          "input_tokens": 103484,
+          "cached_input_tokens": 0,
+          "output_tokens": 12092,
+          "reasoning_tokens": 0,
+          "total_tokens": 115576,
+          "calculated_cost_usd": "0.01001100"
+        },
+        "dataset_selection": {
+          "requests": 2,
+          "input_tokens": 25543,
+          "cached_input_tokens": 0,
+          "output_tokens": 18179,
+          "reasoning_tokens": 0,
+          "total_tokens": 43722,
+          "calculated_cost_usd": "0.00854875"
+        },
+        "hpo_optimizer": {
+          "requests": 1,
+          "input_tokens": 87006,
+          "cached_input_tokens": 0,
+          "output_tokens": 8924,
+          "reasoning_tokens": 6976,
+          "total_tokens": 95930,
+          "calculated_cost_usd": "0.00791990"
+        },
+        "hpo_evaluator": {
+          "requests": 1,
+          "input_tokens": 4577,
+          "cached_input_tokens": 0,
+          "output_tokens": 4389,
+          "reasoning_tokens": 4096,
+          "total_tokens": 8966,
+          "calculated_cost_usd": "0.00198445"
+        }
+      },
+      "pricing": {
+        "gpt-5-nano": {
+          "input_per_million": "0.05",
+          "cached_input_per_million": "0.005",
+          "output_per_million": "0.40",
+          "effective_date": "2026-08-15",
+          "source": "https://developers.openai.com/api/docs/models/gpt-5-nano"
+        },
+        "gpt-5-nano-2025-08-07": {
+          "input_per_million": "0.05",
+          "cached_input_per_million": "0.005",
+          "output_per_million": "0.40",
+          "effective_date": "2026-08-15",
+          "source": "https://developers.openai.com/api/docs/models/gpt-5-nano"
+        }
+      },
+      "usage_notes": [
+        "The installed Agents SDK reports aggregate input tokens without a cached-token breakdown; those calls are calculated at the standard input rate."
+      ]
+    }
+  },
+  {
+    "job_id": "batch-indoor-furniture-graph-1-71fe6aab",
+    "case_id": "indoor-furniture",
+    "repetition": 1,
+    "use_graphrag": true,
+    "status": "passed",
+    "stages": {
+      "completeness": "passed",
+      "task_interpretation": "passed",
+      "data_check": "passed",
+      "model_selection": "passed",
+      "dataset_selection": "passed",
+      "hyperparameters": "passed",
+      "configuration_validation": "passed",
+      "training_smoke": "passed"
+    },
+    "semantic": {
+      "passed": false,
+      "checks": {
+        "correct_task": true,
+        "classes_preserved": true,
+        "model_selected": true,
+        "datasets_selected": true,
+        "requirements_preserved": false
+      },
+      "requirement_terms": {
+        "map": true,
+        "cpu": true,
+        "16": true,
+        "occlusion": false,
+        "lighting": false
+      },
+      "expected_classes": [
+        "coffee table",
+        "desk",
+        "nightstand"
+      ],
+      "actual_classes": [
+        "coffee table",
+        "desk",
+        "nightstand"
+      ]
+    },
+    "planning_warnings": {
+      "dataset": [],
+      "hyperparameters": [
+        {
+          "field": "batch_size",
+          "severity": "preference",
+          "reason": "A batch_size of 4 adheres to the training memory budget (training_memory_budget_gb=5.0) and matches the executed adjustment rule for low-VRAM scenarios. This is a safe, memory-conscious choice.",
+          "recommended_value": "4",
+          "rule_id": "rule_yolo_low_vram_batch"
+        },
+        {
+          "field": "final_learning_rate_factor",
+          "severity": "preference",
+          "reason": "final_learning_rate_factor is set to 0.01 in the base recipe and is appropriate for linear warmup/scheduler usage with the chosen optimizer. This matches the standard default.",
+          "recommended_value": "0.01",
+          "rule_id": null
+        },
+        {
+          "field": "input_size",
+          "severity": "preference",
+          "reason": "Input size 640 is CPU-friendly and consistent with the training recipe; it preserves detail for small furniture objects while maintaining throughput.",
+          "recommended_value": "640",
+          "rule_id": null
+        },
+        {
+          "field": "workers",
+          "severity": "preference",
+          "reason": "workers=4 aligns with 8-core CPUs and is consistent with the configured data loader settings; this can be tuned if I/O becomes a bottleneck.",
+          "recommended_value": "4",
+          "rule_id": null
+        },
+        {
+          "field": "amp",
+          "severity": "preference",
+          "reason": "AMP is supported by the training hardware and is enabled; on CPU-only inference AMP may have limited effect, but retaining it is acceptable within the given training setup.",
+          "recommended_value": "true",
+          "rule_id": null
+        },
+        {
+          "field": "mosaic",
+          "severity": "preference",
+          "reason": "Mosaic augmentation is enabled to improve small-object robustness in cluttered indoor scenes; if memory pressure arises, consider reducing mosaic or disabling it.",
+          "recommended_value": "1.0",
+          "rule_id": null
+        },
+        {
+          "field": "translate",
+          "severity": "preference",
+          "reason": "Small-object detection requires bounded geometric variation; do not disable both translate and scale without measured dataset evidence.",
+          "recommended_value": "0.05",
+          "rule_id": "hpo.small_object_augmentation.v1"
+        },
+        {
+          "field": "input_size",
+          "severity": "preference",
+          "reason": "Consider input_size=768 for small objects on the low-memory profile; resource validation remains authoritative.",
+          "recommended_value": "768",
+          "rule_id": "hpo.small_object_resolution.v1"
+        }
+      ]
+    },
+    "selection": {
+      "task": "detection",
+      "classes": [
+        "nightstand",
+        "coffee table",
+        "desk"
+      ],
+      "model": null,
+      "datasets": [
+        ""
+      ],
+      "hpo_config": {
+        "task_type": "detection",
+        "classes": [
+          "nightstand",
+          "coffee table",
+          "desk"
+        ],
+        "selected_data": [
+          {
+            "class_name": "nightstand",
+            "sources": [
+              {
+                "dataset_name": "objects365_det_train",
+                "allocations": [
+                  {
+                    "split": "train",
+                    "count": 2400,
+                    "assignment_type": "official_split"
+                  },
+                  {
+                    "split": "test",
+                    "count": 300,
+                    "assignment_type": "derived_from_train"
+                  }
+                ]
+              },
+              {
+                "dataset_name": "objects365_det_val",
+                "allocations": [
+                  {
+                    "split": "validation",
+                    "count": 300,
+                    "assignment_type": "official_split"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "class_name": "coffee table",
+            "sources": [
+              {
+                "dataset_name": "objects365_det_train",
+                "allocations": [
+                  {
+                    "split": "train",
+                    "count": 2400,
+                    "assignment_type": "official_split"
+                  },
+                  {
+                    "split": "test",
+                    "count": 300,
+                    "assignment_type": "derived_from_train"
+                  }
+                ]
+              },
+              {
+                "dataset_name": "objects365_det_val",
+                "allocations": [
+                  {
+                    "split": "validation",
+                    "count": 300,
+                    "assignment_type": "official_split"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "class_name": "desk",
+            "sources": [
+              {
+                "dataset_name": "objects365_det_train",
+                "allocations": [
+                  {
+                    "split": "train",
+                    "count": 2400,
+                    "assignment_type": "official_split"
+                  },
+                  {
+                    "split": "test",
+                    "count": 300,
+                    "assignment_type": "derived_from_train"
+                  }
+                ]
+              },
+              {
+                "dataset_name": "objects365_det_val",
+                "allocations": [
+                  {
+                    "split": "validation",
+                    "count": 300,
+                    "assignment_type": "official_split"
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "train_data_ratio": 0.8,
+        "val_data_ratio": 0.1,
+        "test_data_ratio": 0.1,
+        "num_epochs": 100,
+        "patience": 20,
+        "batch_size": 4,
+        "input_size": 640,
+        "track_metric": "val_mAP",
+        "model_name": "yolov11_s",
+        "model_weights": "coco",
+        "training_recipe_id": "ultralytics_yolo_detection_finetune_balanced",
+        "scheduler_name": "linear",
+        "final_learning_rate_factor": 0.01,
+        "warmup_epochs": 3.0,
+        "warmup_momentum": 0.8,
+        "amp": true,
+        "lambda_box": 7.5,
+        "lambda_cls": 0.5,
+        "lambda_dfl": 1.5,
+        "mosaic": 1.0,
+        "mixup": 0.0,
+        "cutmix": 0.0,
+        "copy_paste": 0.0,
+        "degrees": 0.0,
+        "translate": 0.0,
+        "scale": 0.0,
+        "fliplr": 0.5,
+        "hsv_h": 0.015,
+        "hsv_s": 0.7,
+        "hsv_v": 0.4,
+        "close_mosaic": 10,
+        "single_cls": false,
+        "rect": false,
+        "multi_scale": 0.0,
+        "confidence_threshold": 0.25,
+        "nms_iou_threshold": 0.7,
+        "max_detections": 300,
+        "workers": 4,
+        "seed": 0,
+        "freeze": 0,
+        "optimizer": {
+          "name": "auto",
+          "params": {}
+        }
+      }
+    },
+    "configuration_validation": {
+      "passed": true,
+      "validated_fields": [
+        "amp",
+        "batch_size",
+        "classes",
+        "close_mosaic",
+        "confidence_threshold",
+        "copy_paste",
+        "cutmix",
+        "degrees",
+        "final_learning_rate_factor",
+        "fliplr",
+        "freeze",
+        "hsv_h",
+        "hsv_s",
+        "hsv_v",
+        "input_size",
+        "lambda_box",
+        "lambda_cls",
+        "lambda_dfl",
+        "max_detections",
+        "mixup",
+        "model_name",
+        "model_weights",
+        "mosaic",
+        "multi_scale",
+        "nms_iou_threshold",
+        "num_epochs",
+        "optimizer_name",
+        "patience",
+        "rect",
+        "scale",
+        "scheduler_name",
+        "seed",
+        "selected_data",
+        "single_cls",
+        "task_type",
+        "test_data_ratio",
+        "track_metric",
+        "train_data_ratio",
+        "training_recipe_id",
+        "translate",
+        "val_data_ratio",
+        "warmup_epochs",
+        "warmup_momentum",
+        "workers"
+      ]
+    },
+    "training_smoke": {
+      "status": "passed",
+      "stages": {
+        "data_materialized": "passed",
+        "data_prepared": "passed",
+        "execution_readiness": "passed",
+        "training_batch": "passed",
+        "model_initialized": "passed",
+        "forward_pass": "passed",
+        "loss_computed": "passed",
+        "backward_pass": "passed",
+        "optimizer_step": "passed",
+        "validation_pass": "not_verified"
+      },
+      "data_policy": {
+        "source": "normal cache-aware downloader",
+        "train_images_per_allocation_at_most": 4,
+        "validation_and_test_images_per_allocation_at_most": 1,
+        "saved_planning_configuration_changed": false
+      },
+      "runtime_overrides": {
+        "max_epochs": 1,
+        "max_train_batches": 1,
+        "gradient_accumulation_steps": 1
+      },
+      "training_result": {
+        "model_name": "yolov11_s",
+        "trainer_type": "yolo",
+        "agent_output_message": "\u2705 Successfully trained yolov11_s (Job ID: batch-indoor-furniture-graph-1-71fe6aab).",
+        "best_model_path": "C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\runs\\batch-indoor-furniture-graph-1-71fe6aab\\artifacts\\best_model.pt",
+        "training_log_path": "C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\runs\\batch-indoor-furniture-graph-1-71fe6aab\\artifacts\\training_log.txt",
+        "data_provenance": "C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\runs\\batch-indoor-furniture-graph-1-71fe6aab\\artifacts\\data_provenance.json"
+      },
+      "cache": {
+        "cache_hits": 18,
+        "bytes_downloaded": 0
+      },
+      "duration_seconds": 9.625
+    },
+    "duration_seconds": 264.09,
+    "llm_usage": {
+      "schema_version": 1,
+      "job_id": "batch-indoor-furniture-graph-1-71fe6aab",
+      "scope": "planning",
+      "currency": "USD",
+      "totals": {
+        "requests": 6,
+        "input_tokens": 148160,
+        "cached_input_tokens": 3968,
+        "output_tokens": 37596,
+        "reasoning_tokens": 14464,
+        "total_tokens": 185756,
+        "calculated_cost_usd": "0.02226784"
+      },
+      "models": {
+        "gpt-5-nano": {
+          "requests": 4,
+          "input_tokens": 59316,
+          "cached_input_tokens": 0,
+          "output_tokens": 21086,
+          "reasoning_tokens": 0,
+          "total_tokens": 80402,
+          "calculated_cost_usd": "0.01140020"
+        },
+        "gpt-5-nano-2025-08-07": {
+          "requests": 2,
+          "input_tokens": 88844,
+          "cached_input_tokens": 3968,
+          "output_tokens": 16510,
+          "reasoning_tokens": 14464,
+          "total_tokens": 105354,
+          "calculated_cost_usd": "0.01086764"
+        }
+      },
+      "operations": {
+        "completeness_check": {
+          "requests": 1,
+          "input_tokens": 272,
+          "cached_input_tokens": 0,
+          "output_tokens": 2078,
+          "reasoning_tokens": 0,
+          "total_tokens": 2350,
+          "calculated_cost_usd": "0.00084480"
+        },
+        "task_interpretation": {
+          "requests": 1,
+          "input_tokens": 3182,
+          "cached_input_tokens": 0,
+          "output_tokens": 5526,
+          "reasoning_tokens": 0,
+          "total_tokens": 8708,
+          "calculated_cost_usd": "0.00236950"
+        },
+        "model_selection": {
+          "requests": 1,
+          "input_tokens": 49159,
+          "cached_input_tokens": 0,
+          "output_tokens": 7652,
+          "reasoning_tokens": 0,
+          "total_tokens": 56811,
+          "calculated_cost_usd": "0.00551875"
+        },
+        "dataset_selection": {
+          "requests": 1,
+          "input_tokens": 6703,
+          "cached_input_tokens": 0,
+          "output_tokens": 5830,
+          "reasoning_tokens": 0,
+          "total_tokens": 12533,
+          "calculated_cost_usd": "0.00266715"
+        },
+        "hpo_optimizer": {
+          "requests": 1,
+          "input_tokens": 84244,
+          "cached_input_tokens": 3968,
+          "output_tokens": 11417,
+          "reasoning_tokens": 9920,
+          "total_tokens": 95661,
+          "calculated_cost_usd": "0.00860044"
+        },
+        "hpo_evaluator": {
+          "requests": 1,
+          "input_tokens": 4600,
+          "cached_input_tokens": 0,
+          "output_tokens": 5093,
+          "reasoning_tokens": 4544,
+          "total_tokens": 9693,
+          "calculated_cost_usd": "0.00226720"
+        }
+      },
+      "pricing": {
+        "gpt-5-nano": {
+          "input_per_million": "0.05",
+          "cached_input_per_million": "0.005",
+          "output_per_million": "0.40",
+          "effective_date": "2026-08-15",
+          "source": "https://developers.openai.com/api/docs/models/gpt-5-nano"
+        },
+        "gpt-5-nano-2025-08-07": {
+          "input_per_million": "0.05",
+          "cached_input_per_million": "0.005",
+          "output_per_million": "0.40",
+          "effective_date": "2026-08-15",
+          "source": "https://developers.openai.com/api/docs/models/gpt-5-nano"
+        }
+      },
+      "usage_notes": [
+        "The installed Agents SDK reports aggregate input tokens without a cached-token breakdown; those calls are calculated at the standard input rate."
+      ]
+    }
+  },
+  {
+    "job_id": "batch-ex-furniture-classification-graph-1-66995e15",
+    "case_id": "ex-furniture-classification",
+    "repetition": 1,
+    "use_graphrag": true,
+    "status": "failed",
+    "stages": {
+      "completeness": "passed",
+      "task_interpretation": "passed",
+      "data_check": "passed",
+      "model_selection": "passed",
+      "dataset_selection": "passed",
+      "hyperparameters": "failed"
+    },
+    "failure_category": "external_service_error",
+    "error": {
+      "message": "A hyperparameter model call timed out.",
+      "phase": "optimizer",
+      "round": 1,
+      "timeout_seconds": 180,
+      "reason": "The individual optimizer/evaluator request did not return in time; earlier successful phases are not evidence of a general API outage."
+    },
+    "traceback": "Traceback (most recent call last):\n  File \"C:\\Users\\Viet Long\\AppData\\Roaming\\uv\\python\\cpython-3.14-windows-x86_64-none\\Lib\\asyncio\\tasks.py\", line 488, in wait_for\n    return await fut\n           ^^^^^^^^^\n  File \"C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\src\\cvmodellearning\\observability\\planning_usage.py\", line 206, in run_planning_completion\n    response = await awaitable\n               ^^^^^^^^^^^^^^^\n  File \"C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\.venv\\Lib\\site-packages\\openai\\resources\\chat\\completions\\completions.py\", line 1670, in parse\n    return await self._post(\n           ^^^^^^^^^^^^^^^^^\n    ...<52 lines>...\n    )\n    ^\n  File \"C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\.venv\\Lib\\site-packages\\openai\\_base_client.py\", line 1794, in post\n    return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\.venv\\Lib\\site-packages\\openai\\_base_client.py\", line 1529, in request\n    response = await self._client.send(\n               ^^^^^^^^^^^^^^^^^^^^^^^^\n    ...<3 lines>...\n    )\n    ^\n  File \"C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\.venv\\Lib\\site-packages\\httpx\\_client.py\", line 1629, in send\n    response = await self._send_handling_auth(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    ...<4 lines>...\n    )\n    ^\n  File \"C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\.venv\\Lib\\site-packages\\httpx\\_client.py\", line 1657, in _send_handling_auth\n    response = await self._send_handling_redirects(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    ...<3 lines>...\n    )\n    ^\n  File \"C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\.venv\\Lib\\site-packages\\httpx\\_client.py\", line 1694, in _send_handling_redirects\n    response = await self._send_single_request(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\.venv\\Lib\\site-packages\\httpx\\_client.py\", line 1730, in _send_single_request\n    response = await transport.handle_async_request(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\.venv\\Lib\\site-packages\\httpx\\_transports\\default.py\", line 394, in handle_async_request\n    resp = await self._pool.handle_async_request(req)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\.venv\\Lib\\site-packages\\httpcore\\_async\\connection_pool.py\", line 256, in handle_async_request\n    raise exc from None\n  File \"C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\.venv\\Lib\\site-packages\\httpcore\\_async\\connection_pool.py\", line 236, in handle_async_request\n    response = await connection.handle_async_request(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n        pool_request.request\n        ^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\.venv\\Lib\\site-packages\\httpcore\\_async\\connection.py\", line 103, in handle_async_request\n    return await self._connection.handle_async_request(request)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\.venv\\Lib\\site-packages\\httpcore\\_async\\http11.py\", line 136, in handle_async_request\n    raise exc\n  File \"C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\.venv\\Lib\\site-packages\\httpcore\\_async\\http11.py\", line 106, in handle_async_request\n    ) = await self._receive_response_headers(**kwargs)\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\.venv\\Lib\\site-packages\\httpcore\\_async\\http11.py\", line 177, in _receive_response_headers\n    event = await self._receive_event(timeout=timeout)\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\.venv\\Lib\\site-packages\\httpcore\\_async\\http11.py\", line 217, in _receive_event\n    data = await self._network_stream.read(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n        self.READ_NUM_BYTES, timeout=timeout\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\.venv\\Lib\\site-packages\\httpcore\\_backends\\anyio.py\", line 35, in read\n    return await self._stream.receive(max_bytes=max_bytes)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\.venv\\Lib\\site-packages\\anyio\\streams\\tls.py\", line 244, in receive\n    data = await self._call_sslobject_method(self._ssl_object.read, max_bytes)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\.venv\\Lib\\site-packages\\anyio\\streams\\tls.py\", line 187, in _call_sslobject_method\n    data = await self.transport_stream.receive()\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\.venv\\Lib\\site-packages\\anyio\\_backends\\_asyncio.py\", line 1292, in receive\n    await self._protocol.read_event.wait()\n  File \"C:\\Users\\Viet Long\\AppData\\Roaming\\uv\\python\\cpython-3.14-windows-x86_64-none\\Lib\\asyncio\\locks.py\", line 213, in wait\n    await fut\nasyncio.exceptions.CancelledError\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\src\\cvmodellearning\\agents\\hyperparameter_agents.py\", line 61, in _hpo_model_call\n    return await asyncio.wait_for(awaitable, timeout=timeout_seconds)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\Viet Long\\AppData\\Roaming\\uv\\python\\cpython-3.14-windows-x86_64-none\\Lib\\asyncio\\tasks.py\", line 487, in wait_for\n    async with timeouts.timeout(timeout):\n               ~~~~~~~~~~~~~~~~^^^^^^^^^\n  File \"C:\\Users\\Viet Long\\AppData\\Roaming\\uv\\python\\cpython-3.14-windows-x86_64-none\\Lib\\asyncio\\timeouts.py\", line 115, in __aexit__\n    raise TimeoutError from exc_val\nTimeoutError\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\src\\routers\\planning.py\", line 2027, in choose_hyperparameters\n    candidate, decision = await asyncio.wait_for(\n                          ^^^^^^^^^^^^^^^^^^^^^^^\n    ...<2 lines>...\n    )\n    ^\n  File \"C:\\Users\\Viet Long\\AppData\\Roaming\\uv\\python\\cpython-3.14-windows-x86_64-none\\Lib\\asyncio\\tasks.py\", line 488, in wait_for\n    return await fut\n           ^^^^^^^^^\n  File \"C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\src\\cvmodellearning\\agents\\hyperparameter_agents.py\", line 848, in generate_and_evaluate_hpo\n    optimizer_response = await _hpo_model_call(\n                         ^^^^^^^^^^^^^^^^^^^^^^\n    ...<12 lines>...\n    )\n    ^\n  File \"C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\src\\cvmodellearning\\agents\\hyperparameter_agents.py\", line 63, in _hpo_model_call\n    raise HpoPhaseTimeout(phase, round_idx, timeout_seconds) from exc\ncvmodellearning.agents.hyperparameter_agents.HpoPhaseTimeout: optimizer timed out after 180 seconds in round 1\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\src\\cvmodellearning\\benchmarks\\batch_eval.py\", line 214, in evaluate\n    response = await operation(planning.StateRequest(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n        context=context, job_id=job_id, use_graphrag=use_graphrag\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    ))\n    ^^\n  File \"C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\src\\routers\\planning.py\", line 2032, in choose_hyperparameters\n    raise HTTPException(\n    ...<11 lines>...\n    ) from exc\nfastapi.exceptions.HTTPException: 504: {'message': 'A hyperparameter model call timed out.', 'phase': 'optimizer', 'round': 1, 'timeout_seconds': 180, 'reason': 'The individual optimizer/evaluator request did not return in time; earlier successful phases are not evidence of a general API outage.'}\n",
+    "duration_seconds": 305.553,
+    "llm_usage": {
+      "schema_version": 1,
+      "job_id": "batch-ex-furniture-classification-graph-1-66995e15",
+      "scope": "planning",
+      "currency": "USD",
+      "totals": {
+        "requests": 4,
+        "input_tokens": 58165,
+        "cached_input_tokens": 0,
+        "output_tokens": 18716,
+        "reasoning_tokens": 0,
+        "total_tokens": 76881,
+        "calculated_cost_usd": "0.01039465"
+      },
+      "models": {
+        "gpt-5-nano": {
+          "requests": 4,
+          "input_tokens": 58165,
+          "cached_input_tokens": 0,
+          "output_tokens": 18716,
+          "reasoning_tokens": 0,
+          "total_tokens": 76881,
+          "calculated_cost_usd": "0.01039465"
+        }
+      },
+      "operations": {
+        "completeness_check": {
+          "requests": 1,
+          "input_tokens": 289,
+          "cached_input_tokens": 0,
+          "output_tokens": 944,
+          "reasoning_tokens": 0,
+          "total_tokens": 1233,
+          "calculated_cost_usd": "0.00039205"
+        },
+        "task_interpretation": {
+          "requests": 1,
+          "input_tokens": 3199,
+          "cached_input_tokens": 0,
+          "output_tokens": 6736,
+          "reasoning_tokens": 0,
+          "total_tokens": 9935,
+          "calculated_cost_usd": "0.00285435"
+        },
+        "model_selection": {
+          "requests": 1,
+          "input_tokens": 49221,
+          "cached_input_tokens": 0,
+          "output_tokens": 5646,
+          "reasoning_tokens": 0,
+          "total_tokens": 54867,
+          "calculated_cost_usd": "0.00471945"
+        },
+        "dataset_selection": {
+          "requests": 1,
+          "input_tokens": 5456,
+          "cached_input_tokens": 0,
+          "output_tokens": 5390,
+          "reasoning_tokens": 0,
+          "total_tokens": 10846,
+          "calculated_cost_usd": "0.00242880"
+        }
+      },
+      "pricing": {
+        "gpt-5-nano": {
+          "input_per_million": "0.05",
+          "cached_input_per_million": "0.005",
+          "output_per_million": "0.40",
+          "effective_date": "2026-08-15",
+          "source": "https://developers.openai.com/api/docs/models/gpt-5-nano"
+        }
+      },
+      "usage_notes": [
+        "The installed Agents SDK reports aggregate input tokens without a cached-token breakdown; those calls are calculated at the standard input rate."
+      ]
+    }
+  },
+  {
+    "job_id": "batch-ex-handwritten-numbers-graph-1-b9d677b1",
+    "case_id": "ex-handwritten-numbers",
+    "repetition": 1,
+    "use_graphrag": true,
+    "status": "passed",
+    "stages": {
+      "completeness": "passed",
+      "task_interpretation": "passed",
+      "data_check": "passed",
+      "model_selection": "passed",
+      "dataset_selection": "passed",
+      "hyperparameters": "passed",
+      "configuration_validation": "passed",
+      "training_smoke": "passed"
+    },
+    "semantic": {
+      "passed": true,
+      "checks": {
+        "correct_task": true,
+        "classes_preserved": true,
+        "model_selected": true,
+        "datasets_selected": true,
+        "requirements_preserved": true
+      },
+      "requirement_terms": {
+        "accuracy": true,
+        "95": true,
+        "500": true,
+        "200": true,
+        "cpu": true
+      },
+      "expected_classes": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9"
+      ],
+      "actual_classes": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9"
+      ]
+    },
+    "planning_warnings": {
+      "dataset": [],
+      "hyperparameters": []
+    },
+    "selection": {
+      "task": "classification",
+      "classes": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9"
+      ],
+      "model": null,
+      "datasets": [
+        ""
+      ],
+      "hpo_config": {
+        "classes": [
+          "0",
+          "1",
+          "2",
+          "3",
+          "4",
+          "5",
+          "6",
+          "7",
+          "8",
+          "9"
+        ],
+        "selected_data": [
+          {
+            "class_name": "0",
+            "sources": [
+              {
+                "dataset_name": "mnist_cls_train",
+                "allocations": [
+                  {
+                    "split": "train",
+                    "count": 1200,
+                    "assignment_type": "official_split"
+                  },
+                  {
+                    "split": "validation",
+                    "count": 150,
+                    "assignment_type": "derived_from_train"
+                  }
+                ]
+              },
+              {
+                "dataset_name": "mnist_cls_test",
+                "allocations": [
+                  {
+                    "split": "test",
+                    "count": 150,
+                    "assignment_type": "official_split"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "class_name": "1",
+            "sources": [
+              {
+                "dataset_name": "mnist_cls_train",
+                "allocations": [
+                  {
+                    "split": "train",
+                    "count": 1200,
+                    "assignment_type": "official_split"
+                  },
+                  {
+                    "split": "validation",
+                    "count": 150,
+                    "assignment_type": "derived_from_train"
+                  }
+                ]
+              },
+              {
+                "dataset_name": "mnist_cls_test",
+                "allocations": [
+                  {
+                    "split": "test",
+                    "count": 150,
+                    "assignment_type": "official_split"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "class_name": "2",
+            "sources": [
+              {
+                "dataset_name": "mnist_cls_train",
+                "allocations": [
+                  {
+                    "split": "train",
+                    "count": 1200,
+                    "assignment_type": "official_split"
+                  },
+                  {
+                    "split": "validation",
+                    "count": 150,
+                    "assignment_type": "derived_from_train"
+                  }
+                ]
+              },
+              {
+                "dataset_name": "mnist_cls_test",
+                "allocations": [
+                  {
+                    "split": "test",
+                    "count": 150,
+                    "assignment_type": "official_split"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "class_name": "3",
+            "sources": [
+              {
+                "dataset_name": "mnist_cls_train",
+                "allocations": [
+                  {
+                    "split": "train",
+                    "count": 1200,
+                    "assignment_type": "official_split"
+                  },
+                  {
+                    "split": "validation",
+                    "count": 150,
+                    "assignment_type": "derived_from_train"
+                  }
+                ]
+              },
+              {
+                "dataset_name": "mnist_cls_test",
+                "allocations": [
+                  {
+                    "split": "test",
+                    "count": 150,
+                    "assignment_type": "official_split"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "class_name": "4",
+            "sources": [
+              {
+                "dataset_name": "mnist_cls_train",
+                "allocations": [
+                  {
+                    "split": "train",
+                    "count": 1200,
+                    "assignment_type": "official_split"
+                  },
+                  {
+                    "split": "validation",
+                    "count": 150,
+                    "assignment_type": "derived_from_train"
+                  }
+                ]
+              },
+              {
+                "dataset_name": "mnist_cls_test",
+                "allocations": [
+                  {
+                    "split": "test",
+                    "count": 150,
+                    "assignment_type": "official_split"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "class_name": "5",
+            "sources": [
+              {
+                "dataset_name": "mnist_cls_train",
+                "allocations": [
+                  {
+                    "split": "train",
+                    "count": 1200,
+                    "assignment_type": "official_split"
+                  },
+                  {
+                    "split": "validation",
+                    "count": 150,
+                    "assignment_type": "derived_from_train"
+                  }
+                ]
+              },
+              {
+                "dataset_name": "mnist_cls_test",
+                "allocations": [
+                  {
+                    "split": "test",
+                    "count": 150,
+                    "assignment_type": "official_split"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "class_name": "6",
+            "sources": [
+              {
+                "dataset_name": "mnist_cls_train",
+                "allocations": [
+                  {
+                    "split": "train",
+                    "count": 1200,
+                    "assignment_type": "official_split"
+                  },
+                  {
+                    "split": "validation",
+                    "count": 150,
+                    "assignment_type": "derived_from_train"
+                  }
+                ]
+              },
+              {
+                "dataset_name": "mnist_cls_test",
+                "allocations": [
+                  {
+                    "split": "test",
+                    "count": 150,
+                    "assignment_type": "official_split"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "class_name": "7",
+            "sources": [
+              {
+                "dataset_name": "mnist_cls_train",
+                "allocations": [
+                  {
+                    "split": "train",
+                    "count": 1200,
+                    "assignment_type": "official_split"
+                  },
+                  {
+                    "split": "validation",
+                    "count": 150,
+                    "assignment_type": "derived_from_train"
+                  }
+                ]
+              },
+              {
+                "dataset_name": "mnist_cls_test",
+                "allocations": [
+                  {
+                    "split": "test",
+                    "count": 150,
+                    "assignment_type": "official_split"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "class_name": "8",
+            "sources": [
+              {
+                "dataset_name": "mnist_cls_train",
+                "allocations": [
+                  {
+                    "split": "train",
+                    "count": 1200,
+                    "assignment_type": "official_split"
+                  },
+                  {
+                    "split": "validation",
+                    "count": 150,
+                    "assignment_type": "derived_from_train"
+                  }
+                ]
+              },
+              {
+                "dataset_name": "mnist_cls_test",
+                "allocations": [
+                  {
+                    "split": "test",
+                    "count": 150,
+                    "assignment_type": "official_split"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "class_name": "9",
+            "sources": [
+              {
+                "dataset_name": "mnist_cls_train",
+                "allocations": [
+                  {
+                    "split": "train",
+                    "count": 1200,
+                    "assignment_type": "official_split"
+                  },
+                  {
+                    "split": "validation",
+                    "count": 150,
+                    "assignment_type": "derived_from_train"
+                  }
+                ]
+              },
+              {
+                "dataset_name": "mnist_cls_test",
+                "allocations": [
+                  {
+                    "split": "test",
+                    "count": 150,
+                    "assignment_type": "official_split"
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "train_data_ratio": 0.8,
+        "val_data_ratio": 0.1,
+        "test_data_ratio": 0.1,
+        "num_epochs": 15,
+        "patience": 5,
+        "batch_size": 2,
+        "image_size": 224,
+        "precision": "mixed",
+        "scheduler_name": "cosine",
+        "min_learning_rate": 1e-06,
+        "warmup_epochs": 3,
+        "warmup_start_factor": 0.1,
+        "gradient_accumulation_steps": 4,
+        "gradient_clip_norm": 0.0,
+        "freeze_backbone_epochs": 0,
+        "head_learning_rate_multiplier": 1.0,
+        "mixup_alpha": 0.0,
+        "cutmix_alpha": 0.0,
+        "random_erasing": 0.25,
+        "auto_augment_policy": "none",
+        "random_resized_crop_scale_min": 0.6,
+        "horizontal_flip_probability": 0.0,
+        "use_model_ema": false,
+        "repeated_augmentation_repetitions": 1,
+        "use_activation_checkpointing": false,
+        "track_metric": "val_acc",
+        "model_name": "clip_vit_b16",
+        "model_weights": "default",
+        "training_mode": "lora",
+        "training_recipe_id": "",
+        "lora_rank": 8,
+        "lora_alpha": 16,
+        "lora_dropout": 0.05,
+        "optimizer": {
+          "name": "adamw",
+          "params": {
+            "learning_rate": 5e-05,
+            "weight_decay": 0.05,
+            "eps": 1e-08,
+            "beta1": 0.9,
+            "beta2": 0.999
+          }
+        },
+        "criterion": {
+          "name": "cross_entropy",
+          "params": {
+            "label_smoothing": 0.1
+          }
+        }
+      }
+    },
+    "configuration_validation": {
+      "passed": true,
+      "validated_fields": [
+        "auto_augment_policy",
+        "batch_size",
+        "beta1",
+        "beta2",
+        "classes",
+        "criterion_name",
+        "cutmix_alpha",
+        "eps",
+        "freeze_backbone_epochs",
+        "gradient_accumulation_steps",
+        "gradient_clip_norm",
+        "head_learning_rate_multiplier",
+        "horizontal_flip_probability",
+        "image_size",
+        "label_smoothing",
+        "learning_rate",
+        "lora_alpha",
+        "lora_dropout",
+        "lora_rank",
+        "min_learning_rate",
+        "mixup_alpha",
+        "model_name",
+        "model_weights",
+        "num_epochs",
+        "optimizer_name",
+        "patience",
+        "precision",
+        "random_erasing",
+        "random_resized_crop_scale_min",
+        "repeated_augmentation_repetitions",
+        "scheduler_name",
+        "selected_data",
+        "test_data_ratio",
+        "track_metric",
+        "train_data_ratio",
+        "training_mode",
+        "training_recipe_id",
+        "use_activation_checkpointing",
+        "use_model_ema",
+        "val_data_ratio",
+        "warmup_epochs",
+        "warmup_start_factor",
+        "weight_decay"
+      ]
+    },
+    "training_smoke": {
+      "status": "passed",
+      "stages": {
+        "data_materialized": "passed",
+        "data_prepared": "passed",
+        "execution_readiness": "passed",
+        "training_batch": "passed",
+        "model_initialized": "passed",
+        "forward_pass": "passed",
+        "loss_computed": "passed",
+        "backward_pass": "passed",
+        "optimizer_step": "passed",
+        "validation_pass": "passed"
+      },
+      "data_policy": {
+        "source": "normal cache-aware downloader",
+        "train_images_per_allocation_at_most": 2,
+        "validation_and_test_images_per_allocation_at_most": 1,
+        "saved_planning_configuration_changed": false
+      },
+      "runtime_overrides": {
+        "max_epochs": 1,
+        "max_train_batches": 1,
+        "gradient_accumulation_steps": 1
+      },
+      "training_result": {
+        "best_epoch": 1,
+        "best_metric": "val_acc",
+        "best_value": 0.0,
+        "effective_precision": "mixed",
+        "artifacts": {
+          "best_model": "C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\runs\\batch-ex-handwritten-numbers-graph-1-b9d677b1\\artifacts\\best_model.pth",
+          "metrics_csv": "C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\runs\\batch-ex-handwritten-numbers-graph-1-b9d677b1\\artifacts\\metrics_log.csv",
+          "data_provenance": "C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\runs\\batch-ex-handwritten-numbers-graph-1-b9d677b1\\artifacts\\data_provenance.json"
+        },
+        "test_batch_size": 2
+      },
+      "cache": {
+        "cache_hits": 40,
+        "bytes_downloaded": 0
+      },
+      "duration_seconds": 51.265
+    },
+    "duration_seconds": 453.796,
+    "llm_usage": {
+      "schema_version": 1,
+      "job_id": "batch-ex-handwritten-numbers-graph-1-b9d677b1",
+      "scope": "planning",
+      "currency": "USD",
+      "totals": {
+        "requests": 18,
+        "input_tokens": 327097,
+        "cached_input_tokens": 84864,
+        "output_tokens": 54894,
+        "reasoning_tokens": 23808,
+        "total_tokens": 381991,
+        "calculated_cost_usd": "0.03449357"
+      },
+      "models": {
+        "gpt-5-nano": {
+          "requests": 14,
+          "input_tokens": 153155,
+          "cached_input_tokens": 0,
+          "output_tokens": 26774,
+          "reasoning_tokens": 0,
+          "total_tokens": 179929,
+          "calculated_cost_usd": "0.01836735"
+        },
+        "gpt-5-nano-2025-08-07": {
+          "requests": 4,
+          "input_tokens": 173942,
+          "cached_input_tokens": 84864,
+          "output_tokens": 28120,
+          "reasoning_tokens": 23808,
+          "total_tokens": 202062,
+          "calculated_cost_usd": "0.01612622"
+        }
+      },
+      "operations": {
+        "completeness_check": {
+          "requests": 1,
+          "input_tokens": 244,
+          "cached_input_tokens": 0,
+          "output_tokens": 690,
+          "reasoning_tokens": 0,
+          "total_tokens": 934,
+          "calculated_cost_usd": "0.00028820"
+        },
+        "task_interpretation": {
+          "requests": 1,
+          "input_tokens": 3154,
+          "cached_input_tokens": 0,
+          "output_tokens": 5722,
+          "reasoning_tokens": 0,
+          "total_tokens": 8876,
+          "calculated_cost_usd": "0.00244650"
+        },
+        "synonym_check": {
+          "requests": 10,
+          "input_tokens": 93670,
+          "cached_input_tokens": 0,
+          "output_tokens": 8577,
+          "reasoning_tokens": 0,
+          "total_tokens": 102247,
+          "calculated_cost_usd": "0.00811430"
+        },
+        "model_selection": {
+          "requests": 1,
+          "input_tokens": 50554,
+          "cached_input_tokens": 0,
+          "output_tokens": 6352,
+          "reasoning_tokens": 0,
+          "total_tokens": 56906,
+          "calculated_cost_usd": "0.00506850"
+        },
+        "dataset_selection": {
+          "requests": 1,
+          "input_tokens": 5533,
+          "cached_input_tokens": 0,
+          "output_tokens": 5433,
+          "reasoning_tokens": 0,
+          "total_tokens": 10966,
+          "calculated_cost_usd": "0.00244985"
+        },
+        "hpo_optimizer": {
+          "requests": 2,
+          "input_tokens": 156852,
+          "cached_input_tokens": 81280,
+          "output_tokens": 15092,
+          "reasoning_tokens": 11328,
+          "total_tokens": 171944,
+          "calculated_cost_usd": "0.01022180"
+        },
+        "hpo_evaluator": {
+          "requests": 2,
+          "input_tokens": 17090,
+          "cached_input_tokens": 3584,
+          "output_tokens": 13028,
+          "reasoning_tokens": 12480,
+          "total_tokens": 30118,
+          "calculated_cost_usd": "0.00590442"
+        }
+      },
+      "pricing": {
+        "gpt-5-nano": {
+          "input_per_million": "0.05",
+          "cached_input_per_million": "0.005",
+          "output_per_million": "0.40",
+          "effective_date": "2026-08-15",
+          "source": "https://developers.openai.com/api/docs/models/gpt-5-nano"
+        },
+        "gpt-5-nano-2025-08-07": {
+          "input_per_million": "0.05",
+          "cached_input_per_million": "0.005",
+          "output_per_million": "0.40",
+          "effective_date": "2026-08-15",
+          "source": "https://developers.openai.com/api/docs/models/gpt-5-nano"
+        }
+      },
+      "usage_notes": [
+        "The installed Agents SDK reports aggregate input tokens without a cached-token breakdown; those calls are calculated at the standard input rate."
+      ]
+    }
+  }
+]

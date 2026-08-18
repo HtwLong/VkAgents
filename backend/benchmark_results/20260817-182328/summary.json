@@ -1,0 +1,18 @@
+{
+  "total_runs": 8,
+  "technical_successes": 5,
+  "semantic_successes": 1,
+  "technical_success_rate": 0.625,
+  "semantic_success_rate": 0.125,
+  "training_smoke_successes": 5,
+  "total_cost_usd": "0.17706101",
+  "mean_cost_usd": "0.02213262625",
+  "mean_duration_seconds": 290.763875,
+  "mean_input_tokens": 158767.125,
+  "mean_output_tokens": 36734.875,
+  "failures_by_category": {
+    "external_service_error": 1,
+    "infeasible_dataset_selection": 1,
+    "unsupported_model": 1
+  }
+}

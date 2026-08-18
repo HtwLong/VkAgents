@@ -1,0 +1,3 @@
+job_id,case_id,repetition,use_graphrag,status,failure_category,duration_seconds,training_smoke,warning_count,warning_codes,task,model,classes,datasets,requests,input_tokens,cached_input_tokens,output_tokens,reasoning_tokens,total_tokens,calculated_cost_usd,error
+batch-traffic-lights-signs-graph-1-7e061606,traffic-lights-signs,1,True,passed,,311.158,passed,2,"[""hpo.recipe_epoch_deviation.v1"", ""hpo.small_object_resolution.v1""]",detection,,"[""traffic light"", ""traffic sign""]","[""""]",7,158598,0,47448,11968,206046,0.02690910,
+batch-lora-dinov2-vits14-graph-1-f1ddb5ad,lora-dinov2-vits14,1,True,passed,,228.694,passed,3,"[null, null, null]",classification,,"[""chair"", ""sofa"", ""table"", ""cabinet"", ""lamp""]","[""""]",6,131420,2688,32404,11264,163824,0.01941164,

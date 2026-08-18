@@ -1,0 +1,14 @@
+{
+  "total_runs": 3,
+  "technical_successes": 1,
+  "technical_success_rate": 0.3333333333333333,
+  "training_smoke_successes": 1,
+  "total_cost_usd": "0.05472525",
+  "mean_cost_usd": "0.01824175",
+  "mean_duration_seconds": 220.72,
+  "mean_input_tokens": 97920.33333333333,
+  "mean_output_tokens": 33364.333333333336,
+  "failures_by_category": {
+    "infeasible_dataset_selection": 2
+  }
+}

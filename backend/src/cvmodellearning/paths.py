@@ -56,6 +56,10 @@ def rationales_path(job_id: str) -> Path:
     """Path to the text file logging planning rationales."""
     return planning_artifacts_dir(job_id) / "planning_rationales.txt"
 
+def planning_usage_path(job_id: str) -> Path:
+    """Run-local aggregate of planning LLM tokens and calculated cost."""
+    return planning_artifacts_dir(job_id) / "planning_llm_usage.json"
+
 def interpretation_path(job_id: str) -> Path:
     planning_dir = planning_artifacts_dir(job_id)
     current = planning_dir / "STATE_01_INTERPRETATION.json"
@@ -138,6 +142,9 @@ def lora_adapter_bundle_path(job_id: str) -> Path:
 def merged_model_path(job_id: str) -> Path:
     return artifacts_dir(job_id) / "best_merged_model.pth"
 
+def merged_detection_model_path(job_id: str) -> Path:
+    return artifacts_dir(job_id) / "best_merged_model.pt"
+
 def metrics_csv_path(job_id: str) -> Path:
     return artifacts_dir(job_id) / "metrics_log.csv"
 
@@ -200,4 +207,5 @@ __all__ = [
     "interpretation_path",
     "hpo_config_path",
     "rationales_path",
+    "planning_usage_path",
 ]

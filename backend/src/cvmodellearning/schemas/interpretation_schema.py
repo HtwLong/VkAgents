@@ -6,6 +6,7 @@ from cvmodellearning.schemas.dataset_assignment import (
     DatasetSourceCount,
     DatasetSplitCounts,
 )
+from cvmodellearning.schemas.revision import RevisionState
 
 HardwareCategory = Literal[
     "ConsumerCPU",
@@ -16,6 +17,7 @@ HardwareCategory = Literal[
 ]
 TrainingAccelerator = Literal["cpu", "mps", "cuda"]
 PerformanceCategory = Literal["VeryLow", "Low", "Medium", "MediumHigh", "High"]
+ConstraintStrength = Literal["hard", "soft", "preference", "unspecified"]
 DeploymentLimit = Literal[
     "max_runtime_memory_mb",
     "max_model_size_mb",
@@ -53,6 +55,44 @@ class DatasetProfile(BaseModel):
         default_factory=dict,
         description="Selected-allocation support ratio for each active characteristic.",
     )
+    target_unique_images: int = Field(
+        0,
+        ge=0,
+        description=(
+            "Required number of distinct images after multi-label deduplication."
+        ),
+    )
+    verified_unique_images: Optional[int] = Field(
+        None,
+        ge=0,
+        description="Distinct images measured from the downloaded manifest, when available.",
+    )
+    minimum_images_by_class: Dict[str, int] = Field(
+        default_factory=dict,
+        description="Independent minimum number of distinct images containing each class.",
+    )
+    verified_images_by_class: Dict[str, int] = Field(
+        default_factory=dict,
+        description="Manifest/annotation-derived image counts by class, when available.",
+    )
+    small_object_fraction: Optional[float] = Field(
+        None,
+        ge=0.0,
+        le=1.0,
+        description=(
+            "Observed fraction of annotated boxes classified as small. It remains "
+            "unknown until annotation statistics have actually been measured."
+        ),
+    )
+    median_short_side_px_at_640: Optional[float] = Field(
+        None,
+        ge=0.0,
+        description=(
+            "Observed median bounding-box short side after projection to a 640px "
+            "training canvas; used for resolution-aware small-object policy activation."
+        ),
+    )
+    fraction_below_8px_at_640: Optional[float] = Field(None, ge=0.0, le=1.0)
     planned_counts: DatasetSplitCounts = Field(default_factory=DatasetSplitCounts)
     official_counts: DatasetSplitCounts = Field(default_factory=DatasetSplitCounts)
     derived_counts: DatasetSplitCounts = Field(default_factory=DatasetSplitCounts)
@@ -170,6 +210,45 @@ class PerformanceSpecModel(BaseModel):
         return category_map.get(normalized, value)
 
 
+class ConstraintStrengths(BaseModel):
+    """How strongly the user stated each planning objective."""
+
+    model_config = ConfigDict(extra="forbid")
+    accuracy: ConstraintStrength = "unspecified"
+    latency: ConstraintStrength = "unspecified"
+    runtime_memory: ConstraintStrength = "unspecified"
+    model_size: ConstraintStrength = "unspecified"
+    training_time: ConstraintStrength = "unspecified"
+
+
+class RobustnessRequirements(BaseModel):
+    """Normalized, policy-consumable robustness dimensions."""
+
+    model_config = ConfigDict(extra="forbid")
+    lighting: List[str] = Field(default_factory=list)
+    weather: List[str] = Field(default_factory=list)
+    object_scale: List[str] = Field(default_factory=list)
+    scene_density: List[str] = Field(default_factory=list)
+    motion_blur: bool = False
+    occlusion: bool = False
+    viewpoint: List[str] = Field(default_factory=list)
+    color_semantics: bool = Field(
+        False,
+        description="Whether color changes could alter the target label or meaning.",
+    )
+    horizontal_flip_safe: Optional[bool] = Field(
+        None,
+        description=(
+            "Whether horizontally mirrored examples preserve label meaning; unknown when "
+            "the prompt and grounded metadata provide no evidence."
+        ),
+    )
+    text_or_symbols_present: bool = Field(
+        False,
+        description="Whether readable text or directional symbols must be preserved.",
+    )
+
+
 class DeploymentConstraints(BaseModel):
     """Structured inference limits; distinct from the hardware that is available."""
 
@@ -212,6 +291,23 @@ class ModelSpecModel(BaseModel):
     backbone: Optional[str] = Field(None, description="Specific backbone.")
     hyperparameters: Optional[Dict[str, Union[str, float, int, bool]]] = Field(default=None)
     description: Optional[str] = Field(None, description="Rationale for choosing this model.")
+    requirement_strength: Literal["required", "preferred"] = Field(
+        "required",
+        description=(
+            "Use required for explicit directives such as must/use exactly/please use; "
+            "use preferred only for wording such as prefer/ideally/if possible."
+        ),
+    )
+    training_mode: Optional[Literal[
+        "fine_tune_pretrained",
+        "staged_fine_tune",
+        "head_only",
+        "lora",
+        "train_from_scratch",
+    ]] = Field(None, description="Explicitly requested training mode, if any.")
+    lora_rank: Optional[int] = Field(None, ge=1, le=256)
+    lora_alpha: Optional[int] = Field(None, ge=1, le=1024)
+    lora_dropout: Optional[float] = Field(None, ge=0.0, lt=1.0)
 
 class InterpretationRequirements(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -227,6 +323,8 @@ class InterpretationRequirements(BaseModel):
     selected_data: Optional[List[ClassDataAssignment]] = None
     
     performance_requirements: Optional[PerformanceSpecModel] = None
+    constraint_strengths: ConstraintStrengths = Field(default_factory=ConstraintStrengths)
+    robustness_requirements: RobustnessRequirements = Field(default_factory=RobustnessRequirements)
     deployment_constraints: Optional[DeploymentConstraints] = None
     available_hardware: Optional[HardwareSpecModel] = Field(
         None,
@@ -268,9 +366,7 @@ class PipelineState(InterpretationRequirements):
     model_selection_graph_context: Optional[Dict[str, Any]] = None
     dataset_selection_graph_context: Optional[Dict[str, Any]] = None
     hyperparameter_graph_context: Optional[Dict[str, Any]] = None
-    hyperparameter_policy_context: Optional[Dict[str, Any]] = None
     use_graphrag: bool = True
-    use_policy_registry: bool = True
     selected_model_info: Optional[Dict[str, Any]] = None
     hpo_config: Optional[Dict[str, Any]] = None
     hpo_decision: Optional[Dict[str, Any]] = None
@@ -278,5 +374,7 @@ class PipelineState(InterpretationRequirements):
     dataset_selection_decision_evidence: Optional[Dict[str, Any]] = None
     hyperparameter_decision_evidence: Optional[Dict[str, Any]] = None
     dataset_profile: Optional[DatasetProfile] = None
+    data_plan_constraints: Optional[Dict[str, Any]] = None
     step_history: List[str] = Field(default_factory=list)
     last_updated: Optional[str] = None
+    revision: RevisionState = Field(default_factory=RevisionState)
