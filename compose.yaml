@@ -21,7 +21,7 @@ services:
       - "${BACKEND_PORT:-8000}:8000"
     volumes:
       - ./backend/runs:/app/runs
-      - backend-dataset-cache:/app/dataset_cache
+      - ./backend/dataset_cache:/app/dataset_cache
 
   frontend:
     build:
@@ -34,6 +34,3 @@ services:
       - backend
     ports:
       - "${FRONTEND_PORT:-3000}:3000"
-
-volumes:
-  backend-dataset-cache:
