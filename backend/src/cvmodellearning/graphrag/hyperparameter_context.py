@@ -61,6 +61,24 @@ RECIPE_MODEL_ID_CONSTRAINTS = {
     "ultralytics_rtdetr_l_coco_pretrained_custom_finetune": {
         "rtdetr_hgnetv2_l"
     },
+    "ultralytics_rtdetr_l_coco_pretrained_custom_finetune_high_throughput": {
+        "rtdetr_hgnetv2_l"
+    },
+}
+
+# Hardware recommendations are deliberately scoped to the exact graph model
+# whose executable recipe and memory metadata justify the suggested values.
+# Family edges keep the recommendations discoverable, while this constraint
+# prevents a future larger backbone from inheriting an unsafe batch size.
+RULE_MODEL_ID_CONSTRAINTS = {
+    "rule_fasterrcnn_low_memory_batch_lr": {"fasterrcnn_resnet50_fpn"},
+    "rule_fasterrcnn_high_memory_batch_lr": {"fasterrcnn_resnet50_fpn"},
+    "rule_retinanet_low_memory_batch_lr": {"retinanet_resnet50_fpn"},
+    "rule_retinanet_high_memory_batch_lr": {"retinanet_resnet50_fpn"},
+    "rule_rtdetr_l_low_memory_batch": {"rtdetr_hgnetv2_l"},
+    "rule_rtdetr_l_high_memory_batch": {"rtdetr_hgnetv2_l"},
+    "rule_ssd300_low_memory_batch": {"ssd300_vgg16"},
+    "rule_ssd300_high_memory_batch": {"ssd300_vgg16"},
 }
 
 RECIPE_ALLOWED_TRAINING_MODES = {
@@ -952,8 +970,9 @@ def build_field_provenance(
     return provenance
 
 
-_VRAM_THRESHOLD = re.compile(
-    r"vram_gb\s*<=\s*(\d+(?:\.\d+)?)(?:\s*;\s*training_mode\s*!=\s*head_only)?",
+_MEMORY_BUDGET_THRESHOLD = re.compile(
+    r"(?:vram_gb|training_memory_budget_gb)\s*(<=|>=)\s*(\d+(?:\.\d+)?)"
+    r"(?:\s*;\s*training_mode\s*!=\s*head_only)?",
     re.IGNORECASE,
 )
 _MAX_MIN_IMAGES_PER_CLASS = re.compile(
@@ -1014,15 +1033,19 @@ def _materialize_matched_rule(
     condition_type = rule.get("condition_type")
 
     if condition_type == "HardwareConstraint":
-        threshold_match = _VRAM_THRESHOLD.fullmatch(condition)
+        threshold_match = _MEMORY_BUDGET_THRESHOLD.fullmatch(condition)
         hardware = state.training_hardware
-        vram_gb = hardware.training_memory_budget_gb if hardware else None
+        memory_budget_gb = hardware.training_memory_budget_gb if hardware else None
         if (
             not threshold_match
-            or vram_gb is None
+            or memory_budget_gb is None
             or hardware.hardware_category not in {"ConsumerGPU", "DataCenterGPU"}
-            or float(vram_gb) > float(threshold_match.group(1))
         ):
+            return None
+        operator, threshold = threshold_match.groups()
+        if operator == "<=" and float(memory_budget_gb) > float(threshold):
+            return None
+        if operator == ">=" and float(memory_budget_gb) < float(threshold):
             return None
     elif condition_type == "DatasetProperty":
         images_per_class = _minimum_selected_images_per_class(state)
@@ -1378,6 +1401,20 @@ def _recipe_score(recipe: dict[str, Any], state: PipelineState) -> tuple[int, in
         score += 2
     if priority == "Balanced":
         score += 1
+    if state.training_hardware:
+        try:
+            default_batch = int(recipe.get("batch_size_default") or 0)
+        except (TypeError, ValueError):
+            default_batch = 0
+        if (
+            default_batch > 0
+            and default_batch <= state.training_hardware.max_batch_size
+            and default_batch >= max(8, state.training_hardware.max_batch_size // 2)
+        ):
+            # Prefer an explicitly executable high-throughput recipe when the
+            # selected server profile can support its micro-batch. Memory
+            # estimation and the runtime resource guard remain authoritative.
+            score += 2
     return score, len(str(recipe.get("evidence_ids", ""))), str(recipe.get("id", ""))
 
 
@@ -1441,6 +1478,9 @@ def build_hyperparameter_context(state: PipelineState) -> dict[str, Any]:
             for _, target, edge in graph.out_edges(node_id, data=True)
         )
         if applies:
+            permitted_models = RULE_MODEL_ID_CONSTRAINTS.get(node_id)
+            if permitted_models is not None and model_id not in permitted_models:
+                continue
             rules.append({"id": node_id, **attrs})
 
     evidence_ids: set[str] = set()
@@ -1480,8 +1520,10 @@ def build_hyperparameter_context(state: PipelineState) -> dict[str, Any]:
         "instructions_for_generator": (
             "Treat reference_configuration as an evidence-backed starting point. Preserve or adapt its "
             "schema-configurable values for the selected model, data, task, and hardware, explaining each "
-            "choice. Only apply a rule when it appears in matched_adjustment_rules. Runtime constraints "
-            "and schema validation remain authoritative."
+            "choice. Treat matched_adjustment_rules as evidence-backed recommendations, not mandatory "
+            "overrides: follow or adapt them using the retrieved recipe, hardware-safe candidates, and "
+            "task requirements, and explain the decision. Rules absent from matched_adjustment_rules are "
+            "informational only. Runtime constraints and schema validation remain authoritative."
         ),
     }
     if state.task == "detection":
@@ -1617,14 +1659,32 @@ def build_hyperparameter_context(state: PipelineState) -> dict[str, Any]:
     )
     context["training_hardware_adjustments"] = hardware_adjustments
     if state.task == "detection":
+        selected_identity = resolve_detection_model_identity(
+            _selected_model_id(state) or model_id
+        )
+        memory_model_id = (
+            selected_identity.executable_id if selected_identity is not None else model_id
+        )
+        reference_input_size = context["reference_configuration"].get("input_size")
+        recipe_min_size = recipe.get("image_size_min") if recipe else None
+        recipe_max_size = recipe.get("image_size_max") if recipe else None
+        minimum_size = int(recipe_min_size) if str(recipe_min_size).isdigit() else None
+        maximum_size = int(recipe_max_size) if str(recipe_max_size).isdigit() else None
+        candidate_image_sizes = tuple(dict.fromkeys(
+            int(value)
+            for value in (reference_input_size, 640, 768)
+            if isinstance(value, (int, float)) and value > 0
+            and (minimum_size is None or int(value) >= minimum_size)
+            and (maximum_size is None or int(value) <= maximum_size)
+        ))
         context["hardware_safe_resolution_candidates"] = rank_training_shape_candidates(
             {
                 **context["reference_configuration"],
                 **rule_adjustments,
                 **hardware_adjustments,
-                "model_name": _selected_model_id(state) or model_id,
+                "model_name": memory_model_id,
             },
-            image_sizes=(640, 768),
+            image_sizes=candidate_image_sizes,
         )
     return context
 
@@ -1702,11 +1762,11 @@ def format_hyperparameter_context(context: dict[str, Any]) -> str:
             f"(support is weighted by selected class-image allocations): "
             f"{context['selected_dataset_characteristics']}"
         )
-    lines.append("Matched executable rules (the condition is proven by PipelineState):")
+    lines.append("Matched evidence-backed recommendations (the condition is proven by PipelineState):")
     for rule in context.get("matched_adjustment_rules", []):
         lines.append(
             f"- {rule.get('id')}: IF {rule.get('condition_type')}={rule.get('condition_value')} "
-            f"THEN {rule.get('executable_adjustments')} "
+            f"CONSIDER {rule.get('executable_adjustments')} "
             f"(confidence={rule.get('confidence')})"
         )
     lines.append(f"Fields the generator may adjust from the base: {context.get('allowed_adjustment_fields', [])}")

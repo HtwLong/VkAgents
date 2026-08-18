@@ -35,9 +35,13 @@ from cvmodellearning.schemas.detection_hpo import (
 from cvmodellearning.schemas.hpo_runtime import training_compatible_hpo_config
 from cvmodellearning.schemas.interpretation_schema import PipelineState
 from cvmodellearning.schemas.revision import initial_hpo_override_values
+from cvmodellearning.training.hardware_profiles import get_training_hardware_profile
 
 
 RECIPE_ID = "ultralytics_rtdetr_l_coco_pretrained_custom_finetune"
+HIGH_THROUGHPUT_RECIPE_ID = (
+    "ultralytics_rtdetr_l_coco_pretrained_custom_finetune_high_throughput"
+)
 
 
 def _config(**overrides):
@@ -135,18 +139,20 @@ def test_rtdetr_runtime_contains_only_active_backend_fields():
     assert validated.runtime_config() == runtime
 
 
-def test_rtdetr_graphrag_materializes_only_the_executable_recipe():
-    context = build_hyperparameter_context(_state())
+def test_rtdetr_graphrag_selects_high_throughput_recipe_on_rtx6000():
+    state = _state()
+    state.training_hardware = get_training_hardware_profile("rtx6000_48gb")
+    context = build_hyperparameter_context(state)
 
     assert context["selected_model_id"] == "rtdetr_hgnetv2_l"
-    assert context["base_recipe"]["id"] == RECIPE_ID
+    assert context["base_recipe"]["id"] == HIGH_THROUGHPUT_RECIPE_ID
     assert context["reference_configuration"] == {
-        "training_recipe_id": RECIPE_ID,
+        "training_recipe_id": HIGH_THROUGHPUT_RECIPE_ID,
         "model_weights": "coco",
         "optimizer_name": "adamw",
         "scheduler_name": "linear",
         "learning_rate": 0.001,
-        "batch_size": 1,
+        "batch_size": 16,
         "num_epochs": 100,
         "weight_decay": 0.0005,
         "input_size": 640,
@@ -191,10 +197,36 @@ def test_rtdetr_graphrag_materializes_only_the_executable_recipe():
         "matching_iou_threshold": 0.5,
     }
     assert not context["critical_materialization_errors"]
-    assert context["applicable_rules"] == []
+    assert {
+        rule["id"] for rule in context["applicable_rules"]
+    } == {
+        "rule_rtdetr_l_low_memory_batch",
+        "rule_rtdetr_l_high_memory_batch",
+    }
+    assert {
+        rule["id"] for rule in context["matched_adjustment_rules"]
+    } == {"rule_rtdetr_l_high_memory_batch"}
 
-    candidate = _config().model_dump(mode="json")
+    candidate = _config(
+        batch_size=16,
+        training_recipe_id=HIGH_THROUGHPUT_RECIPE_ID,
+    ).model_dump(mode="json")
     validate_detection_graph_grounded_config(candidate, context)
+
+
+def test_rtdetr_high_throughput_recipe_requires_batch_8_to_16():
+    _config(batch_size=8, training_recipe_id=HIGH_THROUGHPUT_RECIPE_ID)
+    _config(batch_size=16, training_recipe_id=HIGH_THROUGHPUT_RECIPE_ID)
+
+    state = _state()
+    state.training_hardware = get_training_hardware_profile("rtx6000_48gb")
+    context = build_hyperparameter_context(state)
+    candidate = _config(
+        batch_size=1,
+        training_recipe_id=HIGH_THROUGHPUT_RECIPE_ID,
+    ).model_dump(mode="json")
+    with pytest.raises(ValueError, match="requires batch_size >= 8"):
+        validate_detection_graph_grounded_config(candidate, context)
 
 
 def test_detection_lora_request_shortlists_only_executable_rtdetr():

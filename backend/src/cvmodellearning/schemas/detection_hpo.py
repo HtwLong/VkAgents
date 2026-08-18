@@ -629,6 +629,7 @@ class DetectionConfigDraft(BaseModel):
             if self.training_recipe_id not in {
                 "",
                 "ultralytics_rtdetr_l_coco_pretrained_custom_finetune",
+                "ultralytics_rtdetr_l_coco_pretrained_custom_finetune_high_throughput",
             }:
                 raise ValueError("RT-DETR-L requires its executable Ultralytics fine-tuning recipe.")
             if self.optimizer_name != "adamw" or self.scheduler_name != "linear":

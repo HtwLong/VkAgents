@@ -168,7 +168,7 @@ def rank_training_shape_candidates(
     config: dict,
     *,
     image_sizes: tuple[int, ...] = (640, 768, 896, 960),
-    batch_sizes: tuple[int, ...] = (4, 2, 1),
+    batch_sizes: tuple[int, ...] = (16, 8, 4, 2, 1),
 ) -> list[dict]:
     """Return analytically safe image/batch pairs, highest resolution first.
 

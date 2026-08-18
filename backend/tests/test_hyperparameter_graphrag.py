@@ -899,6 +899,134 @@ def test_low_vram_small_object_yolo_context_uses_bounded_high_resolution_profile
 
 
 @pytest.mark.parametrize(
+    (
+        "model_architecture",
+        "profile_id",
+        "expected_rule_id",
+        "expected_adjustments",
+        "expected_input_size",
+    ),
+    [
+        (
+            "faster-rcnn_r50_fpn_1x_coco",
+            "rtx2060_6gb_ryzen5600x_16gb",
+            "rule_fasterrcnn_low_memory_batch_lr",
+            {"batch_size": 1, "learning_rate": 0.00125},
+            800,
+        ),
+        (
+            "faster-rcnn_r50_fpn_1x_coco",
+            "rtx6000_48gb",
+            "rule_fasterrcnn_high_memory_batch_lr",
+            {"batch_size": 8, "learning_rate": 0.01},
+            800,
+        ),
+        (
+            "retinanet_r50_fpn_1x_coco",
+            "rtx2060_6gb_ryzen5600x_16gb",
+            "rule_retinanet_low_memory_batch_lr",
+            {"batch_size": 1, "learning_rate": 0.000625},
+            800,
+        ),
+        (
+            "retinanet_r50_fpn_1x_coco",
+            "rtx6000_48gb",
+            "rule_retinanet_high_memory_batch_lr",
+            {"batch_size": 8, "learning_rate": 0.005},
+            800,
+        ),
+        (
+            "rtdetr_hgnetv2_l",
+            "rtx2060_6gb_ryzen5600x_16gb",
+            "rule_rtdetr_l_low_memory_batch",
+            {"batch_size": 1, "learning_rate": 0.001, "warmup_epochs": 3.0},
+            640,
+        ),
+        (
+            "rtdetr_hgnetv2_l",
+            "rtx6000_48gb",
+            "rule_rtdetr_l_high_memory_batch",
+            {"batch_size": 16, "learning_rate": 0.001, "warmup_epochs": 3.0},
+            640,
+        ),
+        (
+            "ssd300_coco",
+            "rtx2060_6gb_ryzen5600x_16gb",
+            "rule_ssd300_low_memory_batch",
+            {"batch_size": 1, "learning_rate": 0.002},
+            300,
+        ),
+        (
+            "ssd300_coco",
+            "rtx6000_48gb",
+            "rule_ssd300_high_memory_batch",
+            {"batch_size": 8, "learning_rate": 0.002},
+            300,
+        ),
+    ],
+)
+def test_detection_hardware_recommendations_are_retrieved_for_exact_model(
+    model_architecture,
+    profile_id,
+    expected_rule_id,
+    expected_adjustments,
+    expected_input_size,
+):
+    state = PipelineState(
+        task="detection",
+        classes=["car"],
+        selected_data=[{
+            "class_name": "car",
+            "sources": [{"dataset_name": "demo", "count": 100}],
+        }],
+        training_hardware=get_training_hardware_profile(profile_id),
+        selected_model_info={"model": [{"model_architecture": model_architecture}]},
+    )
+
+    context = build_hyperparameter_context(state)
+    matched = {
+        rule["id"]: rule for rule in context["matched_adjustment_rules"]
+    }
+
+    assert expected_rule_id in matched
+    assert matched[expected_rule_id]["executable_adjustments"] == expected_adjustments
+    assert set(expected_adjustments) <= set(context["allowed_adjustment_fields"])
+    assert context["hardware_safe_resolution_candidates"]
+    assert any(
+        candidate["batch_size"] == expected_adjustments["batch_size"]
+        and candidate["input_size"] == expected_input_size
+        for candidate in context["hardware_safe_resolution_candidates"]
+    )
+    formatted = format_hyperparameter_context(context)
+    assert "Matched evidence-backed recommendations" in formatted
+    assert f"CONSIDER {expected_adjustments}" in formatted
+
+
+def test_detection_hardware_recommendations_do_not_cross_model_boundaries():
+    state = PipelineState(
+        task="detection",
+        classes=["car"],
+        selected_data=[{
+            "class_name": "car",
+            "sources": [{"dataset_name": "demo", "count": 100}],
+        }],
+        training_hardware=get_training_hardware_profile("rtx6000_48gb"),
+        selected_model_info={
+            "model": [{"model_architecture": "faster-rcnn_r50_fpn_1x_coco"}]
+        },
+    )
+
+    context = build_hyperparameter_context(state)
+    applicable_ids = {rule["id"] for rule in context["applicable_rules"]}
+    matched_ids = {rule["id"] for rule in context["matched_adjustment_rules"]}
+
+    assert "rule_fasterrcnn_high_memory_batch_lr" in matched_ids
+    assert "rule_retinanet_high_memory_batch_lr" not in applicable_ids
+    assert "rule_rtdetr_l_high_memory_batch" not in applicable_ids
+    assert "rule_ssd300_high_memory_batch" not in applicable_ids
+
+
+@pytest.mark.parametrize(
     ("images_per_class", "expected_mode", "expected_freeze"),
     [
         (50, "head_only", 30),
@@ -1086,4 +1214,3 @@ def test_added_classification_csv_rows_have_valid_shape_and_references():
         "torchvision_convnext_tiny_imagenet_v1_training"
     )
     assert benchmarks["bench_convnext_tiny_imagenet_top1"]["hardware_profile_id"] == ""
-

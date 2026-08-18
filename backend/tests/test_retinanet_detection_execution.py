@@ -104,7 +104,13 @@ def test_retinanet_registry_id_retrieves_and_validates_executable_recipe():
     assert context["reference_configuration"]["loss_cls"] == "focal"
     assert context["reference_configuration"]["lr_milestones"] == [16, 22]
     assert context["reference_configuration"]["amp"] is False
-    assert not context["applicable_rules"]
+    assert {
+        rule["id"] for rule in context["applicable_rules"]
+    } == {
+        "rule_retinanet_low_memory_batch_lr",
+        "rule_retinanet_high_memory_batch_lr",
+    }
+    assert not context["matched_adjustment_rules"]
 
     candidate = _config(**{
         key: value
@@ -263,4 +269,3 @@ def test_pretrained_retinanet_one_epoch_evaluation_and_inference(tmp_path, monke
         torch.device("cpu"),
     )
     assert isinstance(detections, list)
-

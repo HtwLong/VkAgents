@@ -96,7 +96,13 @@ def test_faster_rcnn_registry_id_retrieves_and_validates_executable_recipe():
     assert context["reference_configuration"]["input_size"] == 800
     assert context["reference_configuration"]["max_detections"] == 100
     assert context["reference_configuration"]["amp"] is False
-    assert not context["applicable_rules"]
+    assert {
+        rule["id"] for rule in context["applicable_rules"]
+    } == {
+        "rule_fasterrcnn_low_memory_batch_lr",
+        "rule_fasterrcnn_high_memory_batch_lr",
+    }
+    assert not context["matched_adjustment_rules"]
 
     candidate = _config(**{
         key: value
@@ -194,4 +200,3 @@ def test_pretrained_faster_rcnn_one_epoch_evaluation_and_inference(tmp_path, mon
         torch.device("cpu"),
     )
     assert isinstance(detections, list)
-
