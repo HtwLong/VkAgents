@@ -1,5 +1,6 @@
 import asyncio
 import csv
+import json
 import re
 from pathlib import Path
 from types import SimpleNamespace
@@ -244,7 +245,26 @@ def test_filter_training_candidates_excludes_validation_test_and_benchmark():
     assert [source.dataset_name for source in filtered[0].sources] == ["bdd_100k_det_train"]
 
 
-def test_filter_excludes_dataset_with_disabled_download():
+@pytest.fixture
+def objects365_unavailable(tmp_path, monkeypatch):
+    status_file = tmp_path / "dataset_availability.json"
+    status_file.write_text(
+        json.dumps({
+            "datasets": {
+                "objects365_det_train": {
+                    "downloadable": False,
+                    "reason": "Explicitly disabled for this test.",
+                    "checked_at": "2026-08-19",
+                }
+            }
+        }),
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("DATASET_AVAILABILITY_FILE", str(status_file))
+    return status_file
+
+
+def test_filter_excludes_explicitly_unavailable_dataset(objects365_unavailable):
     available = [_selection(
         "truck",
         ("objects365_det_train", 1000),
@@ -256,6 +276,19 @@ def test_filter_excludes_dataset_with_disabled_download():
     filtered = filter_training_candidates(available, "detection")
 
     assert filtered[0].sources == []
+
+
+def test_filter_includes_downloadable_objects365(tmp_path, monkeypatch):
+    status_file = tmp_path / "dataset_availability.json"
+    status_file.write_text('{"datasets": {}}', encoding="utf-8")
+    monkeypatch.setenv("DATASET_AVAILABILITY_FILE", str(status_file))
+    available = [_selection("truck", ("objects365_det_train", 100))]
+
+    filtered = filter_training_candidates(available, "detection")
+
+    assert [source.dataset_name for source in filtered[0].sources] == [
+        "objects365_det_train"
+    ]
 
 
 def test_dataset_availability_can_be_updated_without_code_changes(tmp_path, monkeypatch):
@@ -1231,7 +1264,10 @@ def test_imagenet_classification_splits_are_not_downloadable():
         assert "WordNet IDs" in availability.reason
 
 
-def test_select_datasets_does_not_show_unavailable_dataset_to_llm(monkeypatch):
+def test_select_datasets_does_not_show_explicitly_unavailable_dataset_to_llm(
+    objects365_unavailable,
+    monkeypatch,
+):
     async def fake_run(agent, input):
         payload = __import__("json").loads(input)
         candidate_ids = {
