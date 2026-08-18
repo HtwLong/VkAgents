@@ -3,7 +3,7 @@ from sklearn.metrics import precision_recall_fscore_support, classification_repo
 import numpy as np
 
 @torch.inference_mode()
-def evaluate(classes, model, loader, criterion, device):
+def evaluate(classes, model, loader, criterion, device, *, max_batches=None):
     model.eval()
     running_loss = 0.0
     running_correct = 0
@@ -13,7 +13,7 @@ def evaluate(classes, model, loader, criterion, device):
     all_preds = []
     all_targets = []
 
-    for images, targets in loader:
+    for batch_index, (images, targets) in enumerate(loader):
         images = images.to(device)
         targets = targets.to(device)
 
@@ -30,6 +30,8 @@ def evaluate(classes, model, loader, criterion, device):
 
         all_preds.append(preds.cpu().numpy())
         all_targets.append(targets.cpu().numpy())
+        if max_batches is not None and batch_index + 1 >= max_batches:
+            break
 
     epoch_loss = running_loss / total if total > 0 else 0.0
     epoch_acc = running_correct / total if total > 0 else 0.0

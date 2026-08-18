@@ -1,7 +1,12 @@
 "use client"
 
-import { Activity, BarChart3, Database, Target } from "lucide-react"
+import { useEffect, useState } from "react"
+import { createPortal } from "react-dom"
+import { Activity, BarChart3, Database, Maximize2, Target, X } from "lucide-react"
+import Image from "next/image"
 import type { EvaluationReport } from "@/lib/pipeline"
+
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000"
 
 const METRIC_LABELS: Record<string, string> = {
   accuracy: "Accuracy",
@@ -56,9 +61,36 @@ function TrainingChart({ history }: { history: EvaluationReport["training_histor
   )
 }
 
+function CurveChart({ title, curve }: { title: string; curve: { x: number[]; y: number[] } }) {
+  if (curve.x.length < 2 || curve.x.length !== curve.y.length) return null
+  const points = curve.x.map((x, index) => `${12 + x * 276},${108 - curve.y[index] * 96}`).join(" ")
+  return <div className="rounded-lg border p-3">
+    <h4 className="mb-2 text-xs font-medium">{title}</h4>
+    <svg viewBox="0 0 300 120" className="h-36 w-full" role="img" aria-label={title}>
+      <path d="M12 12V108H288" fill="none" stroke="currentColor" className="text-muted-foreground" />
+      <polyline points={points} fill="none" stroke="currentColor" strokeWidth="3" className="text-primary" />
+    </svg>
+  </div>
+}
+
 export function EvaluationResults({ report }: { report: EvaluationReport | null }) {
+  const [selectedVisualization, setSelectedVisualization] = useState<{ name: string; src: string } | null>(null)
+
+  useEffect(() => {
+    if (!selectedVisualization) return
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = "hidden"
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setSelectedVisualization(null)
+    }
+    window.addEventListener("keydown", closeOnEscape)
+    return () => {
+      document.body.style.overflow = previousOverflow
+      window.removeEventListener("keydown", closeOnEscape)
+    }
+  }, [selectedVisualization])
+
   if (!report) return null
-  const maxConfusion = Math.max(...report.confusion_matrix.flat(), 1)
 
   return (
     <section className="surface-card flex flex-col gap-6 rounded-2xl border border-white/80 bg-white/82 p-4 sm:p-6">
@@ -97,12 +129,13 @@ export function EvaluationResults({ report }: { report: EvaluationReport | null 
           <div className="overflow-x-auto rounded-lg border">
             <table className="w-full text-sm">
               <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
-                <tr><th className="p-3">Class</th><th>Precision</th><th>Recall</th><th>F1</th><th>Test examples</th></tr>
+                <tr><th className="p-3">Class</th>{report.task === "detection" && <><th>AP50–95</th><th>AP50</th></>}<th>Precision</th><th>Recall</th><th>F1</th><th>Instances</th></tr>
               </thead>
               <tbody>
                 {report.per_class.map((row) => (
                   <tr key={row.class_name} className="border-t">
                     <td className="p-3 font-medium">{row.class_name}</td>
+                    {report.task === "detection" && <><td>{row.ap == null ? "—" : formatMetric("map", row.ap)}</td><td>{row.ap50 == null ? "—" : formatMetric("map50", row.ap50)}</td></>}
                     <td>{row.precision == null ? "—" : formatMetric("precision", row.precision)}</td>
                     <td>{row.recall == null ? "—" : formatMetric("recall", row.recall)}</td>
                     <td>{row.f1 == null ? "—" : formatMetric("f1", row.f1)}</td>
@@ -115,24 +148,30 @@ export function EvaluationResults({ report }: { report: EvaluationReport | null 
         </div>
       )}
 
-      {!!report.confusion_matrix.length && report.confusion_matrix.length <= 12 && (
-        <div>
-          <h3 className="mb-1 text-sm font-semibold tracking-tight">Confusion matrix</h3>
-          <p className="mb-3 text-xs text-muted-foreground">Rows are actual classes; columns are predictions.</p>
-          <div className="overflow-x-auto">
-            <div className="grid min-w-fit gap-1" style={{ gridTemplateColumns: `7rem repeat(${report.classes.length}, 3rem)` }}>
-              <span />
-              {report.classes.map((name) => <span key={name} className="truncate text-center text-[10px] text-muted-foreground" title={name}>{name}</span>)}
-              {report.confusion_matrix.flatMap((row, rowIndex) => [
-                <span key={`label-${rowIndex}`} className="truncate self-center text-xs" title={report.classes[rowIndex]}>{report.classes[rowIndex]}</span>,
-                ...row.map((value, columnIndex) => (
-                  <span key={`${rowIndex}-${columnIndex}`} className="flex size-12 items-center justify-center rounded text-xs tabular-nums" style={{ backgroundColor: `color-mix(in srgb, var(--primary) ${(value / maxConfusion) * 75}%, transparent)` }}>{value}</span>
-                )),
-              ])}
-            </div>
-          </div>
+      {report.curves && Object.keys(report.curves).length > 0 && <div>
+        <h3 className="mb-3 text-sm font-semibold tracking-tight">Threshold analysis</h3>
+        <div className="grid gap-3 md:grid-cols-2">
+          {Object.entries(report.curves).map(([name, curve]) => <CurveChart key={name} title={name.replaceAll("_", " ")} curve={curve} />)}
         </div>
-      )}
+      </div>}
+
+      {report.size_metrics && Object.keys(report.size_metrics).length > 0 && <div>
+        <h3 className="mb-3 text-sm font-semibold tracking-tight">Performance by object size</h3>
+        <div className="grid gap-3 sm:grid-cols-3">{Object.entries(report.size_metrics).map(([name, value]) =>
+          <div key={name} className="rounded-lg border p-3"><div className="font-semibold">{formatMetric(name, value)}</div><div className="text-xs text-muted-foreground">{name.replaceAll("_", " ")}</div></div>
+        )}</div>
+      </div>}
+
+      {!!report.visualizations?.length && <div>
+        <h3 className="mb-3 text-sm font-semibold tracking-tight">Evaluation visualizations</h3>
+        <div className="grid gap-4 md:grid-cols-2">{report.visualizations.map((item) => {
+          const src = `${API_BASE}${item.url ?? `/${item.path}`}`
+          return <button key={item.path} type="button" onClick={() => setSelectedVisualization({ name: item.name, src })} className="group overflow-hidden rounded-lg border bg-muted/20 text-left transition hover:border-primary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+            <span className="relative block"><Image src={src} alt={item.name} width={1200} height={800} className="h-auto w-full" unoptimized /><span className="absolute right-2 top-2 rounded-md bg-background/85 p-2 opacity-0 shadow-sm transition group-hover:opacity-100 group-focus-visible:opacity-100"><Maximize2 className="size-4" /></span></span>
+            <span className="block p-2 text-xs text-muted-foreground">{item.name} · Click to enlarge</span>
+          </button>
+        })}</div>
+      </div>}
 
       <div className="grid gap-4 border-t pt-5 md:grid-cols-2">
         <div>
@@ -152,6 +191,13 @@ export function EvaluationResults({ report }: { report: EvaluationReport | null 
           </dl>
         </div>
       </div>
+
+      {selectedVisualization && createPortal(<div role="dialog" aria-modal="true" aria-label={selectedVisualization.name} className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-3 sm:p-8" onClick={() => setSelectedVisualization(null)}>
+        <div className="relative flex max-h-full max-w-[96vw] flex-col overflow-hidden rounded-xl bg-background shadow-2xl" onClick={(event) => event.stopPropagation()}>
+          <div className="flex items-center justify-between border-b px-4 py-3"><h3 className="font-semibold">{selectedVisualization.name}</h3><button type="button" onClick={() => setSelectedVisualization(null)} aria-label="Close enlarged image" className="rounded-md p-2 hover:bg-muted"><X className="size-5" /></button></div>
+          <div className="overflow-auto p-2"><Image src={selectedVisualization.src} alt={selectedVisualization.name} width={2400} height={1600} className="h-auto max-h-[82vh] w-auto max-w-none" unoptimized priority /></div>
+        </div>
+      </div>, document.body)}
     </section>
   )
 }

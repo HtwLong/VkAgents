@@ -5,7 +5,11 @@ import json
 from pathlib import Path
 from typing import Any, Mapping
 
-from cvmodellearning.paths import data_provenance_path, evaluation_report_path, metrics_csv_path
+from cvmodellearning.paths import (
+    data_provenance_path,
+    evaluation_report_path,
+    metrics_csv_path,
+)
 
 
 CONFIG_KEYS = (
@@ -13,6 +17,7 @@ CONFIG_KEYS = (
     "num_epochs", "optimizer_name", "learning_rate", "weight_decay", "track_metric",
     "confidence_threshold", "nms_iou_threshold", "precision",
 )
+DETECTION_REPORT_SCHEMA_VERSION = 4
 
 
 def _number(value: Any) -> float | int | None:
@@ -121,11 +126,51 @@ def save_detection_report(
         value = next((_number(metrics.get(key)) for key in candidates if _number(metrics.get(key)) is not None), None)
         if value is not None:
             normalized[name] = value
-    report.update({"metrics": normalized, "per_class": [], "confusion_matrix": []})
+    per_class = metrics.get("per_class")
+    if not isinstance(per_class, list):
+        per_class = []
+    confusion = metrics.get("confusion_matrix")
+    if not isinstance(confusion, list):
+        confusion = []
+    report.update({
+        "schema_version": DETECTION_REPORT_SCHEMA_VERSION,
+        "metrics": normalized,
+        "per_class": per_class,
+        "confusion_matrix": confusion,
+        "confusion_matrix_labels": metrics.get("confusion_matrix_labels", []),
+        "curves": metrics.get("curves", {}),
+        "size_metrics": metrics.get("size_metrics", {}),
+        "evaluation_slices": metrics.get("evaluation_slices", []),
+        "dataset_statistics": metrics.get("dataset_statistics", {}),
+        "visualizations": metrics.get("visualizations", []),
+        "operating_point": metrics.get("operating_point", {}),
+    })
     return _write(job_id, report)
+
+
+def normalize_report(report: Mapping[str, Any]) -> dict[str, Any]:
+    """Upgrade legacy reports in memory without invalidating persisted old runs."""
+    normalized = dict(report)
+    normalized.setdefault("schema_version", 1)
+    normalized.setdefault("metrics", {})
+    normalized.setdefault("per_class", [])
+    normalized.setdefault("confusion_matrix", [])
+    normalized.setdefault("confusion_matrix_labels", normalized.get("classes", []))
+    normalized.setdefault("curves", {})
+    normalized.setdefault("size_metrics", {})
+    normalized.setdefault("evaluation_slices", [])
+    normalized.setdefault("dataset_statistics", {})
+    normalized.setdefault("visualizations", [])
+    normalized.setdefault("operating_point", {})
+    normalized.setdefault("training_history", [])
+    normalized.setdefault("configuration", {})
+    normalized.setdefault("dataset", {"splits": {}})
+    return normalized
 
 
 def _write(job_id: str, report: Mapping[str, Any]) -> Path:
     path = evaluation_report_path(job_id)
-    path.write_text(json.dumps(report, indent=2), encoding="utf-8")
+    temporary = path.with_suffix(path.suffix + ".tmp")
+    temporary.write_text(json.dumps(report, indent=2), encoding="utf-8")
+    temporary.replace(path)
     return path

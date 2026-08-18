@@ -5,7 +5,13 @@ import {
   buildPipeline,
   type DeliverableArtifact,
   type EvaluationReport,
+  type PlanningLLMUsage,
   type PipelineStage,
+  type AssessmentEligibility,
+  type PostTrainingAssessment,
+  type RevisionPlan,
+  type RevisionScope,
+  type RevisionVerification,
   type StepStatus,
 } from "@/lib/pipeline"
 import type { DecisionEvidence } from "@/components/decision-evidence"
@@ -45,6 +51,9 @@ interface RunSnapshotResponse {
   chosen_parameters: unknown
   decision_evidence: Record<string, DecisionEvidence>
   evaluation_report: EvaluationReport | null
+  planning_llm_usage: PlanningLLMUsage | null
+  post_training_assessment: PostTrainingAssessment | null
+  assessment_eligibility: AssessmentEligibility
   artifacts: ArtifactManifestResponse["artifacts"]
   errors?: unknown
   run_state?: {
@@ -58,12 +67,13 @@ const TRAINING_POLL_MS = 10_000
 const DOWNLOAD_POLL_MS = 500
 
 interface DownloadProgress {
-  status: "pending" | "running" | "completed" | "failed"
+  status: "pending" | "running" | "completed" | "failed" | "stopped"
   downloaded: number
   processed: number
   failed?: number
   total?: number
   current_image?: string | null
+  previous_downloaded?: number
   active?: boolean
 }
 
@@ -88,6 +98,13 @@ interface TrainingStatus {
 }
 
 const STEP_ORDER = buildPipeline().flatMap((stage) => stage.steps.map((step) => step.id))
+const REVISION_STEPS = [
+  ["task-interpretation", "/api/v1/planning/task-interpret", "Updated task interpretation"],
+  ["check-data", "/api/v1/planning/check-data", "Updated data check"],
+  ["model-selection", "/api/v1/planning/select-model", "Updated model selection"],
+  ["dataset-selection", "/api/v1/planning/select-datasets", "Updated dataset selection"],
+  ["choose-hyperparameters", "/api/v1/planning/choose-hyperparameters", "Updated hyperparameters"],
+] as const
 
 function createJobId() {
   return `${Date.now().toString(36)}${Math.random().toString(36).slice(2)}`
@@ -172,7 +189,12 @@ export function usePipeline() {
   const [chosenParameters, setChosenParameters] = useState<unknown>(null)
   const [artifacts, setArtifacts] = useState<DeliverableArtifact[]>([])
   const [evaluationReport, setEvaluationReport] = useState<EvaluationReport | null>(null)
+  const [planningLLMUsage, setPlanningLLMUsage] = useState<PlanningLLMUsage | null>(null)
+  const [postTrainingAssessment, setPostTrainingAssessment] = useState<PostTrainingAssessment | null>(null)
+  const [assessmentEligibility, setAssessmentEligibility] = useState<AssessmentEligibility | null>(null)
   const [decisionEvidence, setDecisionEvidence] = useState<Record<string, DecisionEvidence>>({})
+  const [revisionPlan, setRevisionPlan] = useState<RevisionPlan | null>(null)
+  const [revisionVerification, setRevisionVerification] = useState<RevisionVerification | null>(null)
 
   const abortRef = useRef<AbortController | null>(null)
   const contextRef = useRef<PipelineContext | null>(null)
@@ -180,7 +202,6 @@ export function usePipeline() {
   const chosenParametersRef = useRef<unknown>(null)
   const activeStepIdRef = useRef<string | undefined>(undefined)
   const useGraphRagRef = useRef(true)
-  const usePolicyRegistryRef = useRef(true)
   const stepStartedAtRef = useRef<Record<string, number>>({})
   const stepStatusesRef = useRef<Record<string, StepStatus>>({})
 
@@ -229,7 +250,9 @@ export function usePipeline() {
     stepStatusesRef.current = { ...stepStatusesRef.current, [stepId]: nextStatus }
     setStepStatuses((prev) => ({ ...prev, [stepId]: nextStatus }))
     if (nextStatus === "running") {
-      stepStartedAtRef.current[stepId] = Date.now()
+      if (stepStartedAtRef.current[stepId] === undefined) {
+        stepStartedAtRef.current[stepId] = Date.now()
+      }
       activeStepIdRef.current = stepId
       setActiveStepId(stepId)
       return
@@ -324,7 +347,6 @@ export function usePipeline() {
           ...(includeGraphRagOption
             ? {
                 use_graphrag: useGraphRagRef.current,
-                use_policy_registry: usePolicyRegistryRef.current,
               }
             : {}),
         },
@@ -367,7 +389,12 @@ export function usePipeline() {
     setChosenParameters(null)
     setArtifacts([])
     setEvaluationReport(null)
+    setPlanningLLMUsage(null)
+    setPostTrainingAssessment(null)
+    setAssessmentEligibility(null)
     setDecisionEvidence({})
+    setRevisionPlan(null)
+    setRevisionVerification(null)
   }, [])
 
   const stop = useCallback(async () => {
@@ -465,11 +492,14 @@ export function usePipeline() {
         const total = progress.total ?? 0
         const amount = total > 0 ? `${progress.downloaded}/${total}` : `${progress.downloaded}`
         const failures = progress.failed ? `, ${progress.failed} failed` : ""
+        const previous = progress.previous_downloaded
+          ? `; previous attempt reached ${progress.previous_downloaded}`
+          : ""
         const current = progress.current_image ? ` — ${progress.current_image}` : ""
         upsertOutput(
           "download-data",
           "Download progress:",
-          `Download progress: ${amount} images ready${failures}${current}`,
+          `Download progress: ${amount} images ready${failures}${previous}${current}`,
         )
         if (existingDownload.active && !progress.active) {
           if (progress.status !== "completed") {
@@ -605,8 +635,21 @@ export function usePipeline() {
         signal,
       )
       setEvaluationReport(report)
+      setPostTrainingAssessment(null)
+      setAssessmentEligibility({
+        eligible: true,
+        can_create_revision: true,
+        reason: null,
+        revision_reason: null,
+      })
       appendOutput("preparing-results", "Interactive evaluation results are ready.")
       await finishStep("preparing-results", "done")
+      const usageSnapshot = await requestJson<RunSnapshotResponse>(
+        `/api/v1/runs/${encodeURIComponent(currentJobId)}`,
+        undefined,
+        signal,
+      )
+      setPlanningLLMUsage(usageSnapshot.planning_llm_usage)
       }
 
       setStatus("done")
@@ -621,6 +664,7 @@ export function usePipeline() {
       jobIdRef.current = nextJobId
       setJobId(nextJobId)
 
+      markStep("task-interpretation", "running")
       appendOutput("task-interpretation", "POST /api/v1/planning/completenesscheck")
       const completeness = await requestJson<{
         accept: boolean
@@ -629,7 +673,7 @@ export function usePipeline() {
         context?: PipelineContext | null
       }>(
         "/api/v1/planning/completenesscheck",
-        { user_prompt: prompt, user_replies: [] },
+        { job_id: nextJobId, user_prompt: prompt, user_replies: [] },
         signal,
       )
 
@@ -644,6 +688,13 @@ export function usePipeline() {
         )
         setStatus("idle")
         setActiveStepId(undefined)
+        await finishStep("task-interpretation", "failed")
+        const snapshot = await requestJson<RunSnapshotResponse>(
+          `/api/v1/runs/${encodeURIComponent(nextJobId)}`,
+          undefined,
+          signal,
+        )
+        setPlanningLLMUsage(snapshot.planning_llm_usage)
         return
       }
 
@@ -678,18 +729,24 @@ export function usePipeline() {
         true,
       )
 
+      const snapshot = await requestJson<RunSnapshotResponse>(
+        `/api/v1/runs/${encodeURIComponent(nextJobId)}`,
+        undefined,
+        signal,
+      )
+      setPlanningLLMUsage(snapshot.planning_llm_usage)
+
       markStep("ask-change-requests", "running")
       appendOutput("ask-change-requests", "Submit change requests or continue to execution.")
       setStatus("waiting")
     },
-    [appendOutput, markStep, requestJson, runContextStep, setCurrentContext],
+    [appendOutput, finishStep, markStep, requestJson, runContextStep, setCurrentContext],
   )
 
   const start = useCallback(
-    async (prompt: string, useGraphRag = true, usePolicyRegistry = true) => {
+    async (prompt: string, useGraphRag = true) => {
       reset()
       useGraphRagRef.current = useGraphRag
-      usePolicyRegistryRef.current = usePolicyRegistry
       const controller = new AbortController()
       abortRef.current = controller
       setStatus("running")
@@ -732,12 +789,14 @@ export function usePipeline() {
         setContext(snapshot.context)
         if (snapshot.context && typeof snapshot.context !== "string") {
           useGraphRagRef.current = snapshot.context.use_graphrag !== false
-          usePolicyRegistryRef.current = snapshot.context.use_policy_registry !== false
         }
         chosenParametersRef.current = snapshot.chosen_parameters
         setChosenParameters(snapshot.chosen_parameters)
         setDecisionEvidence(snapshot.decision_evidence ?? {})
         setEvaluationReport(snapshot.evaluation_report)
+        setPlanningLLMUsage(snapshot.planning_llm_usage)
+        setPostTrainingAssessment(snapshot.post_training_assessment)
+        setAssessmentEligibility(snapshot.assessment_eligibility)
         setStepStatuses(Object.fromEntries(
           Object.entries(snapshot.steps).map(([id, step]) => [id, step.status]),
         ))
@@ -775,75 +834,215 @@ export function usePipeline() {
     [requestJson, reset],
   )
 
-  const submitChangeRequest = useCallback(
-    async (requestText: string) => {
+  const planRevision = useCallback(
+    async (requiredChanges: string, preferences: string, scope: RevisionScope) => {
       const currentJobId = jobIdRef.current
       const currentContext = contextRef.current
       if (!currentJobId || !currentContext) return
-
       const controller = new AbortController()
       abortRef.current = controller
       setStatus("running")
       setError(null)
-
       try {
-        if (requestText.trim()) {
-          markStep("ask-change-requests", "running")
-          appendOutput("ask-change-requests", `POST /api/v1/planning/add-user-request: ${requestText.trim()}`)
-          const result = await requestJson<{ context: PipelineContext }>(
-            "/api/v1/planning/add-user-request",
-            {
-              context: currentContext,
-              request_text: requestText.trim(),
-              job_id: currentJobId,
-            },
-            controller.signal,
-          )
-          setCurrentContext(result.context)
-          appendOutput("ask-change-requests", "Change request added. Regenerating hyperparameters.")
-          await finishStep("ask-change-requests", "done")
-
-          markStep("choose-hyperparameters", "pending")
-          await runContextStep(
-            "choose-hyperparameters",
-            "/api/v1/planning/choose-hyperparameters",
-            controller.signal,
-            "Updated hyperparameters",
-            true,
-          )
-
-          markStep("ask-change-requests", "running")
-          appendOutput("ask-change-requests", "Submit another request or continue to execution.")
-          setStatus("waiting")
-          return
-        }
-
-        await runExecutionAndEvaluation(controller.signal)
+        const result = await requestJson<{ plan: RevisionPlan }>(
+          "/api/v1/planning/plan-revision",
+          {
+            context: currentContext,
+            job_id: currentJobId,
+            required_changes: requiredChanges.trim(),
+            preferences: preferences.trim(),
+            requested_target: scope,
+          },
+          controller.signal,
+        )
+        setRevisionPlan(result.plan)
+        setRevisionVerification(null)
+        const snapshot = await requestJson<RunSnapshotResponse>(
+          `/api/v1/runs/${encodeURIComponent(currentJobId)}`,
+          undefined,
+          controller.signal,
+        )
+        setPlanningLLMUsage(snapshot.planning_llm_usage)
+        setStatus("waiting")
       } catch (err) {
         if (err instanceof DOMException && err.name === "AbortError") return
-        const message = err instanceof Error ? err.message : String(err)
-        setError(message)
-        setStatus("failed")
-        const failedStepId = activeStepIdRef.current
-        if (failedStepId) {
-          try {
-            await finishStep(failedStepId, "failed")
-          } catch {
-            markStep(failedStepId, "failed")
-          }
-        }
+        setError(err instanceof Error ? err.message : String(err))
+        setStatus("waiting")
       }
+
     },
-    [
-      appendOutput,
-      finishStep,
-      markStep,
-      requestJson,
-      runContextStep,
-      runExecutionAndEvaluation,
-      setCurrentContext,
-    ],
+    [requestJson],
   )
+
+  const applyRevision = useCallback(async () => {
+    const currentJobId = jobIdRef.current
+    const currentContext = contextRef.current
+    if (!currentJobId || !currentContext || !revisionPlan) return
+    const controller = new AbortController()
+    abortRef.current = controller
+    setStatus("running")
+    setError(null)
+    try {
+      const activated = await requestJson<{ context: PipelineContext }>(
+        "/api/v1/planning/activate-revision",
+        { context: currentContext, plan: revisionPlan, job_id: currentJobId },
+        controller.signal,
+      )
+      setCurrentContext(activated.context)
+      const startId = revisionPlan.restart_from
+      const startIndex = REVISION_STEPS.findIndex(([id]) => id === startId)
+      const steps = REVISION_STEPS.slice(startIndex)
+      setStepStatuses((previous) => ({
+        ...previous,
+        ...Object.fromEntries(steps.map(([id]) => [id, "pending" as StepStatus])),
+      }))
+      for (const [id, endpoint, label] of steps) {
+        await runContextStep(id, endpoint, controller.signal, label, true)
+      }
+      const verification = await requestJson<RevisionVerification>(
+        "/api/v1/planning/verify-revision",
+        { context: contextRef.current },
+        controller.signal,
+      )
+      setRevisionVerification(verification)
+      setRevisionPlan(null)
+      const usageSnapshot = await requestJson<RunSnapshotResponse>(
+        `/api/v1/runs/${encodeURIComponent(currentJobId)}`,
+        undefined,
+        controller.signal,
+      )
+      setPlanningLLMUsage(usageSnapshot.planning_llm_usage)
+      markStep("ask-change-requests", "running")
+      appendOutput(
+        "ask-change-requests",
+        verification.satisfied
+          ? "Revision applied and all required changes verified."
+          : "Revision completed, but one or more required changes were not satisfied.",
+      )
+      setStatus("waiting")
+    } catch (err) {
+      if (err instanceof DOMException && err.name === "AbortError") return
+      setError(err instanceof Error ? err.message : String(err))
+      setStatus("waiting")
+    }
+  }, [appendOutput, markStep, requestJson, revisionPlan, runContextStep, setCurrentContext])
+
+  const cancelRevision = useCallback(() => {
+    setRevisionPlan(null)
+    setRevisionVerification(null)
+  }, [])
+
+  const updateRevisionStrength = useCallback(
+    (changeId: string, strength: "required" | "preferred") => {
+      setRevisionPlan((current) => current ? {
+        ...current,
+        changes: current.changes.map((change) =>
+          change.id === changeId ? { ...change, strength } : change,
+        ),
+      } : null)
+    },
+    [],
+  )
+
+  const confirmPlan = useCallback(async () => {
+    const controller = new AbortController()
+    abortRef.current = controller
+    setStatus("running")
+    setError(null)
+    try {
+      await runExecutionAndEvaluation(controller.signal)
+    } catch (err) {
+      if (err instanceof DOMException && err.name === "AbortError") return
+      setError(err instanceof Error ? err.message : String(err))
+      setStatus("failed")
+    }
+  }, [runExecutionAndEvaluation])
+
+  const requestAssessment = useCallback(async () => {
+    const currentJobId = jobIdRef.current
+    if (!currentJobId) return
+    setStatus("running")
+    setError(null)
+    try {
+      const result = await requestJson<{
+        assessment: PostTrainingAssessment
+        eligibility: AssessmentEligibility
+      }>(`/api/v1/runs/${encodeURIComponent(currentJobId)}/assessment`, {}, undefined)
+      setPostTrainingAssessment(result.assessment)
+      setAssessmentEligibility(result.eligibility)
+      setStatus("done")
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+      setStatus("done")
+    }
+  }, [requestJson])
+
+  const redoRecommendation = useCallback(async () => {
+    const currentJobId = jobIdRef.current
+    if (!currentJobId || !postTrainingAssessment) return
+    setStatus("running")
+    setError(null)
+    try {
+      const result = await requestJson<{
+        assessment: PostTrainingAssessment
+        eligibility: AssessmentEligibility
+      }>(`/api/v1/runs/${encodeURIComponent(currentJobId)}/assessment/recommendation`, {}, undefined)
+      setPostTrainingAssessment(result.assessment)
+      setAssessmentEligibility(result.eligibility)
+      setStatus("done")
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+      setStatus("done")
+    }
+  }, [postTrainingAssessment, requestJson])
+
+  const approveAssessment = useCallback(async () => {
+    const parentJobId = jobIdRef.current
+    const plan = postTrainingAssessment?.recommended_plan
+    if (!parentJobId || !postTrainingAssessment || !plan) return
+    const controller = new AbortController()
+    abortRef.current = controller
+    setStatus("running")
+    setError(null)
+    try {
+      const fork = await requestJson<{
+        job_id: string
+        context: PipelineContext
+        plan: RevisionPlan
+        restart_from: RevisionPlan["restart_from"]
+        reused_steps: string[]
+      }>("/api/v1/planning/fork-revision", {
+        parent_job_id: parentJobId,
+        assessment_id: postTrainingAssessment.assessment_id,
+        plan,
+      }, controller.signal)
+      jobIdRef.current = fork.job_id
+      setJobId(fork.job_id)
+      setCurrentContext(fork.context)
+      setIsLoadedRun(false)
+      setArtifacts([])
+      setEvaluationReport(null)
+      setPlanningLLMUsage(null)
+      setPostTrainingAssessment(null)
+      setAssessmentEligibility(null)
+      setDecisionEvidence({})
+      setStepOutputs({})
+      setStepDurations({})
+      const reused = Object.fromEntries(fork.reused_steps.map((id) => [id, "done" as StepStatus]))
+      setStepStatuses(reused)
+      stepStatusesRef.current = reused
+      const startIndex = REVISION_STEPS.findIndex(([id]) => id === fork.restart_from)
+      for (const [id, endpoint, label] of REVISION_STEPS.slice(startIndex)) {
+        await runContextStep(id, endpoint, controller.signal, label, true)
+      }
+      markStep("ask-change-requests", "running")
+      await runExecutionAndEvaluation(controller.signal)
+    } catch (err) {
+      if (err instanceof DOMException && err.name === "AbortError") return
+      setError(err instanceof Error ? err.message : String(err))
+      setStatus("failed")
+    }
+  }, [markStep, postTrainingAssessment, requestJson, runContextStep, runExecutionAndEvaluation, setCurrentContext])
 
   const continueRun = useCallback(
     async () => {
@@ -946,13 +1145,25 @@ export function usePipeline() {
     chosenParameters,
     artifacts,
     evaluationReport,
+    planningLLMUsage,
+    postTrainingAssessment,
+    assessmentEligibility,
     decisionEvidence,
     start,
     loadRun,
     reset,
     stop,
-    submitChangeRequest,
+    revisionPlan,
+    revisionVerification,
+    planRevision,
+    applyRevision,
+    cancelRevision,
+    updateRevisionStrength,
+    confirmPlan,
     continueRun,
+    requestAssessment,
+    redoRecommendation,
+    approveAssessment,
     getStepStatus,
     getRevealed,
     getStepDuration,

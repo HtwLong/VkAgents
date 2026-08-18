@@ -19,6 +19,97 @@ export const DOMAIN_LABELS: Record<DomainType, string> = {
 
 export type StepStatus = "pending" | "running" | "done" | "failed"
 
+export type RevisionTarget =
+  | "task-interpretation"
+  | "model-selection"
+  | "dataset-selection"
+  | "choose-hyperparameters"
+
+export type RevisionScope = RevisionTarget | "automatic"
+export type ChangeStrength = "required" | "preferred"
+
+export interface RevisionChange {
+  id: string
+  target_step: RevisionTarget
+  field: string
+  operation: "set" | "include" | "exclude" | "prefer" | "avoid"
+  value: unknown
+  strength: ChangeStrength
+  summary: string
+}
+
+export interface RevisionPlan {
+  required_text: string
+  preferred_text: string
+  summary: string
+  restart_from: RevisionTarget
+  changes: RevisionChange[]
+}
+
+export interface RevisionVerification {
+  satisfied: boolean
+  checks: Array<{
+    change_id: string
+    field: string
+    strength: ChangeStrength
+    expected: unknown
+    actual: unknown
+    satisfied: boolean
+    summary: string
+  }>
+}
+
+export interface PostTrainingAssessment {
+  assessment_id: string
+  job_id: string
+  created_at: string
+  verdict: "satisfied" | "partially_satisfied" | "not_satisfied" | "unknown"
+  summary: string
+  requirements: Array<{
+    requirement: string
+    status: "satisfied" | "not_satisfied" | "unknown"
+    evidence: string[]
+    explanation: string
+  }>
+  recommended_plan: RevisionPlan | null
+  limitations: string[]
+}
+
+export interface AssessmentEligibility {
+  eligible: boolean
+  reason?: string | null
+  can_create_revision: boolean
+  revision_reason?: string | null
+}
+
+export interface PlanningLLMUsageBucket {
+  requests: number
+  input_tokens: number
+  cached_input_tokens: number
+  output_tokens: number
+  reasoning_tokens: number
+  total_tokens: number
+  calculated_cost_usd: string | null
+}
+
+export interface PlanningLLMUsage {
+  schema_version: number
+  job_id: string
+  scope: "planning"
+  currency: "USD"
+  totals: PlanningLLMUsageBucket
+  models: Record<string, PlanningLLMUsageBucket>
+  operations: Record<string, PlanningLLMUsageBucket>
+  pricing: Record<string, {
+    input_per_million: string
+    cached_input_per_million: string
+    output_per_million: string
+    effective_date: string
+    source: string
+  }>
+  usage_notes: string[]
+}
+
 export interface DeliverableArtifact {
   id: string
   kind: string
@@ -32,6 +123,7 @@ export interface DeliverableArtifact {
 }
 
 export interface EvaluationReport {
+  schema_version?: number
   job_id: string
   task: "classification" | "detection"
   model: { name: string; weights?: string | null; training_mode?: string | null }
@@ -43,8 +135,24 @@ export interface EvaluationReport {
     recall?: number | null
     f1?: number | null
     support?: number | null
+    ap?: number | null
+    ap50?: number | null
+    ap75?: number | null
   }>
   confusion_matrix: number[][]
+  confusion_matrix_labels?: string[]
+  curves?: Record<string, { x: number[]; y: number[]; x_label?: string }>
+  size_metrics?: Record<string, number>
+  evaluation_slices?: Array<{ name: string; metrics: Record<string, number> }>
+  dataset_statistics?: {
+    images?: number
+    instances?: number
+    images_without_annotations?: number
+    mean_box_area_pixels?: number
+    per_class?: Array<{ class_name: string; images: number; instances: number }>
+  }
+  visualizations?: Array<{ name: string; path: string; url?: string }>
+  operating_point?: Record<string, number>
   training_history: Array<Record<string, number>>
   dataset: {
     splits: Record<string, number>
@@ -79,13 +187,19 @@ export const EXAMPLE_PROMPTS: ExamplePrompt[] = [
     id: "traffic-participants",
     task: "detection",
     domain: "traffic",
-    text: "I need a model for a traffic-monitoring system that detects the traffic participants in each image. The model will run locally on a MacBook Air with an Apple M4 chip and 16 GB of unified memory, using CPU or Metal acceleration. It should aim for a mAP@0.5:0.95 of around 0.30 or higher. Processing an image within roughly 500 milliseconds would be desirable, but reliable classification under different viewpoints, lighting conditions, weather conditions, and partial occlusion is more important than inference speed.",
+    text: "I need a model for a traffic-monitoring system that detects the traffic participants in each image. The model will run locally on a MacBook Air with an Apple M4 chip and 16 GB of unified memory, using CPU or Metal acceleration. It should aim for a mAP@0.5:0.95 of around 0.30 or higher.",
+  },
+  {
+    id: "car-conditions",
+    task: "detection",
+    domain: "traffic",
+    text: "I need a model for a traffic-monitoring system that detects cars in each image. The model will run locally on a MacBook Air with an Apple M4 chip and 16 GB of unified memory, using CPU or Metal acceleration. It should aim for a mAP@0.5:0.95 of around 0.30 or higher. Processing an image within roughly 500 milliseconds would be desirable, but reliable classification under different viewpoints, lighting conditions, weather conditions, and partial occlusion is more important than inference speed.",
   },
   {
     id: "traffic-lights-signs",
     task: "detection",
     domain: "traffic",
-    text: "I need an object detection model to identify traffic lights and signs in dense urban street scenes under low-light and rainy conditions. The model will run locally on a MacBook Air with an Apple M4 chip and 16 GB of unified memory, using Metal acceleration where supported. It should aim for a mAP@0.5:0.95 of around 0.30 or higher. An inference time of approximately 500 milliseconds or less per frame would be desirable, although somewhat slower processing is acceptable when it improves detection quality in difficult conditions. Memory usage during inference should preferably remain below 6 GB.",
+    text: "I need an object detection model to identify traffic lights and traffic signs in dense urban street scenes. The objects may be small and far away in the image. The model will run locally on a MacBook Air with an Apple M4 chip and 16 GB of unified memory, using Metal acceleration where supported. It should aim for a mAP@0.5:0.95 of around 0.30 or higher. An inference time of approximately 500 milliseconds or less per frame would be desirable, although somewhat slower processing is acceptable when it improves detection quality in difficult conditions. Memory usage during inference should preferably remain below 6 GB.",
   },
   {
     id: "ex-vqa",
@@ -103,21 +217,26 @@ export const EXAMPLE_PROMPTS: ExamplePrompt[] = [
     id: "indoor-furniture",
     task: "detection",
     domain: "interiors",
-    text: "I need an object detection model to locate furniture in indoor photographs. It should handle cluttered rooms, partial occlusion, varied lighting, and objects viewed from different angles. Inference will run on CPU-only backend servers with approximately 8 CPU cores and 16 GB of RAM. The model should aim for a mAP@0.5:0.95 of approximately 0.30 or higher, with typical inference latency below 500 milliseconds per image.",
+    text: "I need an object detection model to locate nightstands, coffee tables and desks in indoor photographs. It should handle cluttered rooms, partial occlusion, varied lighting, and objects viewed from different angles. Inference will run on CPU-only backend servers with approximately 8 CPU cores and 16 GB of RAM. The model should aim for a mAP@0.5:0.95 of approximately 0.30 or higher.",
   },
   {
     id: "ex-furniture-classification",
     task: "classification",
     domain: "retail",
-    text: "I need an image classification model for a furniture marketplace that categorizes the primary product in an uploaded photo as a chair, sofa, or table. Each image should primarily contain one product. Inference will run on CPU-only backend servers with approximately 4 CPU cores and 8 GB of RAM. The model should aim for a macro-F1 score of at least 0.85, use less than approximately 1.5 GB of runtime memory, and preferably classify an image within 500 milliseconds."
+    text: "I need an image classification model for a furniture marketplace that categorizes the primary product in an uploaded photo as a chair, sofa, table, cabinet and or lamp. Each image should primarily contain one product. Inference will run on CPU-only backend servers with approximately 4 CPU cores and 8 GB of RAM. The model should aim for a macro-F1 score of at least 0.85, use less than approximately 1.5 GB of runtime memory, and preferably classify an image within 500 milliseconds."
   },
   {
     id: "ex-handwritten-numbers",
     task: "classification",
     domain: "handwriting",
-    text: "I need a lightweight image classification model that recognizes handwritten numbers. The model will run on a CPU-only system with 4 GB of RAM. It should aim for accuracy of at least 90%, use less than approximately 500 MB of runtime memory, and process an image within 200 milliseconds.",
+    text: "I need a lightweight image classification model that recognizes handwritten numbers. The model will run on a CPU-only system with 4 GB of RAM. It should aim for accuracy of at least 95%, use less than approximately 500 MB of runtime memory, and process an image within 200 milliseconds.",
   },
-  
+  {
+    id: "lora-dinov2-vits14",
+    task: "classification",
+    domain: "retail",
+    text: "I need an image classification model for a furniture marketplace that categorizes the primary product in an uploaded photo as a chair, sofa, table, cabinet and or lamp. Please use the dinov2 vits14 and LoRA. The model will run on a CPU-only system with 8 GB of RAM.",
+  },
 ]
 
 export function buildPipeline(): PipelineStage[] {

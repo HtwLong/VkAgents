@@ -28,6 +28,7 @@ from cvmodellearning.download.assignment_manifest import (
     iter_download_allocations,
     load_dataset_manifest,
     load_preparation_summary,
+    validate_content_isolation,
 )
 from cvmodellearning.preprocessing.preprocessing import CocoImageDataset
 from cvmodellearning.preprocessing.transformations import (
@@ -213,7 +214,7 @@ class ClassificationPipeline:
         data_base.mkdir(parents=True, exist_ok=True)
 
         total = sum(item.count for item in iter_download_allocations(config["selected_data"]))
-        progress = DownloadProgressTracker(job_id, total)
+        progress = DownloadProgressTracker(job_id, total, resume=True)
         try:
             kwargs = {}
             if "progress_callback" in inspect.signature(
@@ -291,6 +292,7 @@ class ClassificationPipeline:
                 f"{len(missing_files)} classification samples reference missing image files; "
                 f"first missing path: {missing_files[0]}"
             )
+        content_isolation = validate_content_isolation(manifest, data_dir(job_id))
         for row in df.itertuples(index=False):
             if row.labels not in manifest_by_path[row.image_filename]["class_names"]:
                 raise ValueError(f"Manifest label mismatch for {row.image_filename}.")
@@ -495,7 +497,12 @@ class ClassificationPipeline:
         ema_optimizer_step_count = 0
 
         # training config
-        num_epochs = config["num_epochs"]
+        benchmark_max_batches = config.get("_benchmark_max_batches")
+        benchmark_max_epochs = config.get("_benchmark_max_epochs")
+        num_epochs = min(
+            int(config["num_epochs"]),
+            int(benchmark_max_epochs) if benchmark_max_epochs is not None else int(config["num_epochs"]),
+        )
         patience = config["patience"]
         track_metric = config["track_metric"]
 
@@ -557,13 +564,17 @@ class ClassificationPipeline:
                     else None
                 ),
                 cancel_check=lambda: raise_if_cancelled(job_id),
+                max_batches=benchmark_max_batches,
             )
             evaluation_model = (
                 ema_model
                 if ema_model is not None and int(ema_model.n_averaged.item()) > 0
                 else model
             )
-            val_loss, val_acc, val_metrics = evaluate(classes, evaluation_model, val_loader, criterion, device)
+            val_loss, val_acc, val_metrics = evaluate(
+                classes, evaluation_model, val_loader, criterion, device,
+                max_batches=benchmark_max_batches,
+            )
             if scheduler is not None:
                 scheduler.step()
 
@@ -796,7 +807,7 @@ class ClassificationPipeline:
         if "top5_acc" in test_metrics:
             result["test_top5_acc"] = float(test_metrics["top5_acc"])
         return result
-    
+
     # ======================================================================
     # Model Loading
     # ======================================================================
