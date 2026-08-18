@@ -1,10 +1,12 @@
 import json
 import asyncio
 
+import pytest
 import torch
 from torch.utils.data import DataLoader, TensorDataset
 
 from cvmodellearning.benchmarks.batch_eval import (
+    benchmark_output_for_run_id,
     classify_failure,
     run_training_smoke,
     summarize,
@@ -15,6 +17,21 @@ from cvmodellearning.pipelines.classification_pipe import ClassificationPipeline
 from cvmodellearning.pipelines.detection_pipe import DetectionPipeline
 from cvmodellearning.benchmarks import batch_eval
 from cvmodellearning.training.training_utils import train_one_epoch
+
+
+def test_benchmark_output_for_run_id_resolves_existing_report(tmp_path):
+    output = tmp_path / "20260818-015309"
+    output.mkdir()
+    (output / "runs.json").write_text("[]")
+
+    assert benchmark_output_for_run_id("20260818-015309", root=tmp_path) == output.resolve()
+
+
+def test_benchmark_output_for_run_id_rejects_invalid_or_missing_report(tmp_path):
+    with pytest.raises(ValueError, match="expected YYYYMMDD-HHMMSS"):
+        benchmark_output_for_run_id("../other", root=tmp_path)
+    with pytest.raises(ValueError, match="no runs.json"):
+        benchmark_output_for_run_id("20260818-015309", root=tmp_path)
 
 
 def test_summary_and_reports_include_usage_and_failures(tmp_path):

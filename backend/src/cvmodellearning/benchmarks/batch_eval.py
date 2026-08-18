@@ -5,6 +5,7 @@ import asyncio
 import csv
 import copy
 import json
+import re
 import statistics
 import traceback
 from datetime import UTC, datetime
@@ -30,6 +31,21 @@ STAGES = (
     ("dataset_selection", planning.select_datasets),
     ("hyperparameters", planning.choose_hyperparameters),
 )
+
+BENCHMARK_RUN_ID_PATTERN = re.compile(r"^\d{8}-\d{6}$")
+
+
+def benchmark_output_for_run_id(run_id: str, *, root: Path | None = None) -> Path:
+    """Resolve and validate an existing timestamped benchmark result directory."""
+    if not BENCHMARK_RUN_ID_PATTERN.fullmatch(run_id):
+        raise ValueError(
+            f"Invalid benchmark run ID {run_id!r}; expected YYYYMMDD-HHMMSS."
+        )
+    output = (root or Path("benchmark_results")) / run_id
+    output = output.resolve()
+    if not (output / "runs.json").is_file():
+        raise ValueError(f"Benchmark run has no runs.json to resume: {output}")
+    return output
 
 
 def _json_text(value: Any) -> str:
@@ -324,12 +340,19 @@ def write_reports(output: Path, results: list[dict[str, Any]]) -> None:
 
 async def run(args: argparse.Namespace) -> Path:
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-    output = Path(args.output or f"benchmark_results/{timestamp}").resolve()
+    resume_run_id = getattr(args, "resume_run_id", None)
+    if resume_run_id and args.output:
+        raise ValueError("Use either --resume-run-id or --output, not both.")
+    output = (
+        benchmark_output_for_run_id(resume_run_id)
+        if resume_run_id
+        else Path(args.output or f"benchmark_results/{timestamp}").resolve()
+    )
     conditions = [True, False] if args.graphrag == "both" else [args.graphrag == "enabled"]
     selected = [case for case in CASES if not args.case or case.id in args.case]
     results: list[dict[str, Any]] = []
     saved_results = output / "runs.json"
-    if args.resume and saved_results.is_file():
+    if (args.resume or resume_run_id) and saved_results.is_file():
         loaded = json.loads(saved_results.read_text(encoding="utf-8"))
         if not isinstance(loaded, list):
             raise ValueError(f"Existing report is not a result list: {saved_results}")
@@ -361,6 +384,10 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--case", action="append", help="Only run this case ID; repeat for multiple cases.")
     parser.add_argument("--output", help="Output directory (default: benchmark_results/<timestamp>).")
     parser.add_argument("--resume", action="store_true", help="Resume completed runs from --output.")
+    parser.add_argument(
+        "--resume-run-id",
+        help="Resume benchmark_results/<YYYYMMDD-HHMMSS>, skipping completed runs.",
+    )
     parser.add_argument("--training-smoke", action="store_true", help="Prepare data and run one training batch.")
     return parser
 

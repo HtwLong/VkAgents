@@ -23,7 +23,7 @@ REPETITIONS = 10
 # One of: "enabled", "disabled", or "both".
 GRAPHRAG = "enabled"
 
-# None runs all eight non-VQA prompts. To select individual prompts, use e.g.:
+# None runs all currently defined prompts. To select individual prompts, use e.g.:
 # CASE_IDS = ["ex-furniture-classification", "ex-handwritten-numbers"]
 CASE_IDS: list[str] | None = None # ["traffic-participants", "traffic-lights-signs", "ex-furniture-classification"]
 
@@ -34,6 +34,11 @@ OUTPUT_DIRECTORY: str | None = None
 # True skips case/repetition/GraphRAG combinations already present in the
 # runs.json stored in OUTPUT_DIRECTORY. Requires a stable output directory.
 RESUME = False
+
+# Set this to a timestamped benchmark result ID to continue its missing runs,
+# for example "20260818-015309". This automatically enables resume behavior and
+# uses benchmark_results/<ID>; leave OUTPUT_DIRECTORY unset when using it.
+RESUME_RUN_ID: str | None = None
 
 # Run the real data preparation and one training batch after planning. The data
 # downloader is cache-aware; any cache misses still use its normal download path.
@@ -47,12 +52,15 @@ def configured_arguments() -> argparse.Namespace:
         raise ValueError('GRAPHRAG must be "enabled", "disabled", or "both".')
     if RESUME and not OUTPUT_DIRECTORY:
         raise ValueError("Set OUTPUT_DIRECTORY before enabling RESUME.")
+    if RESUME_RUN_ID and OUTPUT_DIRECTORY:
+        raise ValueError("Set either RESUME_RUN_ID or OUTPUT_DIRECTORY, not both.")
     return argparse.Namespace(
         repetitions=REPETITIONS,
         graphrag=GRAPHRAG,
         case=CASE_IDS,
         output=OUTPUT_DIRECTORY,
         resume=RESUME,
+        resume_run_id=RESUME_RUN_ID,
         training_smoke=RUN_TRAINING_SMOKE,
     )
 
