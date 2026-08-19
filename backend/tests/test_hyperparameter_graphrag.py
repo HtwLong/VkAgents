@@ -1026,6 +1026,52 @@ def test_detection_hardware_recommendations_do_not_cross_model_boundaries():
     assert "rule_ssd300_high_memory_batch" not in applicable_ids
 
 
+def test_inference_rtx2060_does_not_limit_rtx6000_yolov12x_training_candidates():
+    state = PipelineState(
+        task="detection",
+        user_query="Detect small distant traffic lights for inference on an RTX 2060.",
+        classes=["traffic light"],
+        robustness_requirements={"object_scale": ["small"]},
+        available_hardware={
+            "hardware_category": "ConsumerGPU",
+            "gpu_type": "NVIDIA GeForce RTX 2060",
+            "gpu_count": 1,
+            "vram_gb": 6,
+        },
+        training_hardware=get_training_hardware_profile("rtx6000_48gb"),
+        selected_data=[{
+            "class_name": "traffic light",
+            "sources": [{"dataset_name": "bdd_100k_det_train", "count": 100}],
+        }],
+        selected_model_info={"model": [{"model_architecture": "yolov12_x"}]},
+    )
+
+    context = build_hyperparameter_context(state)
+    matched_ids = {rule["id"] for rule in context["matched_adjustment_rules"]}
+    candidates = context["hardware_safe_resolution_candidates"]
+
+    assert "rule_yolo_low_vram_batch" not in matched_ids
+    assert context["training_hardware_adjustments"] == {"workers": 8}
+    assert context["hardware_role_context"]["training_hardware_authority"][
+        "profile_id"
+    ] == "rtx6000_48gb"
+    assert context["hardware_role_context"]["deployment_hardware_not_for_training_memory"][
+        "gpu_type"
+    ] == "NVIDIA GeForce RTX 2060"
+    assert "batch_size" not in context["small_object_training_policy"]
+    assert any(
+        candidate["input_size"] == 768 and candidate["batch_size"] == 16
+        for candidate in candidates
+    )
+    assert any(
+        candidate["input_size"] == 1280
+        for candidate in candidates
+    )
+    assert "deployment_constraints describe inference/deployment" in (
+        context["hardware_role_context"]["instruction"]
+    )
+
+
 @pytest.mark.parametrize(
     ("images_per_class", "expected_mode", "expected_freeze"),
     [

@@ -13,6 +13,7 @@ from cvmodellearning.agents.hyperparameter_agents import (
     format_pydantic_validation_errors,
     normalize_hpo_decision,
     rejected_review_record,
+    training_hardware_role_findings,
 )
 from cvmodellearning.graphrag.hyperparameter_context import (
     _normalize_inactive_classification_fields,
@@ -294,6 +295,43 @@ def test_detection_evaluator_sees_only_active_optimizer_fields():
     assert "beta1" not in active
     assert "momentum" not in active
     assert "precision" not in active
+
+
+def test_batch_rationale_cannot_use_separate_deployment_gpu_as_training_limit():
+    candidate = DetectionConfigModel.model_validate({
+        "task_type": "detection",
+        "classes": ["traffic light"],
+        "selected_data": [{
+            "class_name": "traffic light",
+            "sources": [{"dataset_name": "demo", "count": 20}],
+        }],
+        "model_name": "yolov12_x",
+        "num_epochs": 100,
+        "patience": 20,
+        "batch_size": 4,
+        "rationale": "Reduced batch size to fit the RTX 2060 used for deployment.",
+        "llm_field_rationales": [{
+            "field": "batch_size",
+            "reason": "Batch 4 fits the 6 GB RTX 2060 VRAM limit.",
+        }],
+    })
+    context = {
+        "available_hardware": {"gpu_type": "NVIDIA GeForce RTX 2060", "vram_gb": 6},
+        "training_hardware": {"gpu_type": "NVIDIA RTX 6000 Ada", "vram_gb": 48},
+    }
+
+    findings = training_hardware_role_findings(candidate, context)
+
+    assert findings == [{
+        "field": "batch_size",
+        "severity": "safety_warning",
+        "reason": (
+            "The batch-size rationale cites deployment GPU 'NVIDIA GeForce RTX 2060', "
+            "but training runs on 'NVIDIA RTX 6000 Ada'. Re-evaluate batch size using "
+            "training_hardware and its hardware-safe candidates only."
+        ),
+        "rule_id": "hpo.training_hardware_role.v1",
+    }]
 
 
 def test_inactive_and_cross_task_evaluator_findings_are_discarded():

@@ -1526,6 +1526,20 @@ def build_hyperparameter_context(state: PipelineState) -> dict[str, Any]:
             "informational only. Runtime constraints and schema validation remain authoritative."
         ),
     }
+    if state.training_hardware is not None:
+        context["hardware_role_context"] = {
+            "training_hardware_authority": state.training_hardware.model_dump(mode="json"),
+            "deployment_hardware_not_for_training_memory": (
+                state.available_hardware.model_dump(mode="json")
+                if state.available_hardware is not None
+                else None
+            ),
+            "instruction": (
+                "Use training_hardware exclusively for batch size, workers, AMP, precision, "
+                "and training-memory feasibility. available_hardware and deployment_constraints "
+                "describe inference/deployment and must not reduce training hyperparameters."
+            ),
+        }
     if state.task == "detection":
         identity = resolve_detection_model_identity(_selected_model_id(state) or model_id)
         if identity is not None:
@@ -1614,15 +1628,14 @@ def build_hyperparameter_context(state: PipelineState) -> dict[str, Any]:
                 retained_rules.append(rule)
             matched_rules = retained_rules
             context["small_object_training_policy"] = {
-                "input_size": 768,
-                "batch_size": 2,
-                "translate": 0.05,
-                "scale": 0.25,
-                "fliplr": 0.5,
-                "multi_scale": 0.0,
+                "preferred_minimum_input_size": 768,
+                "selection_policy": (
+                    "Prefer more pixels for small objects, then choose batch_size from "
+                    "hardware_safe_resolution_candidates using training_hardware only."
+                ),
                 "reason": (
-                    "Preserve more pixels for small objects on limited VRAM while using "
-                    "bounded geometric variation and avoiding unprobed multiscale peaks."
+                    "Preserve more pixels for small objects without assuming that deployment "
+                    "VRAM limits the separate training GPU."
                 ),
                 "requires_runtime_memory_validation": True,
             }
@@ -1670,9 +1683,19 @@ def build_hyperparameter_context(state: PipelineState) -> dict[str, Any]:
         recipe_max_size = recipe.get("image_size_max") if recipe else None
         minimum_size = int(recipe_min_size) if str(recipe_min_size).isdigit() else None
         maximum_size = int(recipe_max_size) if str(recipe_max_size).isdigit() else None
+        proposed_sizes: tuple[int | float | None, ...] = (reference_input_size, 640, 768)
+        if (
+            selected_identity is not None
+            and selected_identity.runtime_family == "yolo"
+            and state.training_hardware is not None
+            and state.training_hardware.training_memory_budget_gb >= 32
+        ):
+            proposed_sizes = (
+                reference_input_size, 640, 768, 896, 960, 1024, 1280,
+            )
         candidate_image_sizes = tuple(dict.fromkeys(
             int(value)
-            for value in (reference_input_size, 640, 768)
+            for value in proposed_sizes
             if isinstance(value, (int, float)) and value > 0
             and (minimum_size is None or int(value) >= minimum_size)
             and (maximum_size is None or int(value) <= maximum_size)
@@ -1701,6 +1724,8 @@ def format_hyperparameter_context(context: dict[str, Any]) -> str:
         "Base defaults/ranges:",
     ]
     lines.append(f"Reference configuration: {context.get('reference_configuration', {})}")
+    if context.get("hardware_role_context"):
+        lines.append(f"Hardware role authority: {context['hardware_role_context']}")
     lines.append(
         f"Fields requiring bounded LLM completion: {context.get('fields_requiring_llm_completion', [])}"
     )

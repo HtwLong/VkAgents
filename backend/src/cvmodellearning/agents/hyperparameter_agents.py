@@ -471,6 +471,9 @@ You are receiving a full PipelineState JSON containing:
 - `performance_requirements`: Metrics, targets, and normalized `latency_category` / `accuracy_category` values such as VeryLow, Low, Medium, MediumHigh, or High.
 - `available_hardware`: User-provided inference and deployment hardware.
 - `training_hardware`: Server-selected training hardware; use it for batch size, workers, precision, and training feasibility.
+- Never reduce training batch size, resolution, AMP, workers, or other training parameters because of
+  `available_hardware`, deployment VRAM, or inference-memory constraints. These describe where the trained
+  model will run, not where it is trained.
 - `selected_data`: The authoritative train/validation/test dataset assignments from planning.
 - `selected_model_info`: The architecture chosen in previous steps.
 - `augmentation`, `preprocessing`: The data transformation strategies.
@@ -746,6 +749,67 @@ def hpo_advisory_findings(proposal: BaseModel, context_data: dict) -> list[dict]
     return findings
 
 
+def training_hardware_role_findings(
+    proposal: BaseModel,
+    context_data: dict,
+) -> list[dict]:
+    """Reject training choices justified by the separate deployment GPU."""
+    training = context_data.get("training_hardware") or {}
+    deployment = context_data.get("available_hardware") or {}
+    training_gpu = str(training.get("gpu_type") or "").lower()
+    deployment_gpu = str(deployment.get("gpu_type") or "").lower()
+    if not deployment_gpu or not training_gpu or deployment_gpu == training_gpu:
+        return []
+
+    def compact(value: str) -> str:
+        return "".join(character for character in value.lower() if character.isalnum())
+
+    deployment_marker = compact(deployment_gpu)
+    # GPU names commonly include vendor/product adjectives. The stable RTX token
+    # is enough to identify which device a batch rationale cites.
+    deployment_tokens = [
+        token for token in deployment_marker.split("nvidia") if token
+    ]
+    marker_candidates = {deployment_marker, *deployment_tokens}
+    for prefix in ("nvidiageforce", "nvidia", "geforce"):
+        if deployment_marker.startswith(prefix):
+            marker_candidates.add(deployment_marker[len(prefix):])
+    marker_candidates.discard("")
+
+    batch_reasons = [
+        str(item.reason)
+        for item in getattr(proposal, "llm_field_rationales", []) or []
+        if getattr(item, "field", None) == "batch_size"
+    ]
+    if not batch_reasons:
+        batch_reasons = [
+            sentence
+            for sentence in str(getattr(proposal, "rationale", "")).split(".")
+            if "batch" in sentence.lower()
+        ]
+    safe_phrases = (
+        "inference only", "deployment only", "not used for training",
+        "does not determine", "must not determine", "separate training",
+    )
+    for reason in batch_reasons:
+        normalized = compact(reason)
+        if (
+            any(marker in normalized for marker in marker_candidates)
+            and not any(phrase in reason.lower() for phrase in safe_phrases)
+        ):
+            return [{
+                "field": "batch_size",
+                "severity": "safety_warning",
+                "reason": (
+                    f"The batch-size rationale cites deployment GPU '{deployment.get('gpu_type')}', "
+                    f"but training runs on '{training.get('gpu_type')}'. Re-evaluate batch size "
+                    "using training_hardware and its hardware-safe candidates only."
+                ),
+                "rule_id": "hpo.training_hardware_role.v1",
+            }]
+    return []
+
+
 async def generate_and_evaluate_hpo(
     json_data: str,
     job_id: str,
@@ -845,6 +909,10 @@ async def generate_and_evaluate_hpo(
                 "You must rely ONLY on standard, universally accepted heuristics. Do not attempt creative, novel, or experimental configurations. "
                 "If a parameter is standard, use the standard value. Hallucination or guessing outside of the provided context is strictly prohibited. "
                 "Pay strict attention to memory constraints and learning rates for the selected architecture. "
+                "Use `training_hardware` as the sole hardware authority for batch size, input resolution, workers, "
+                "AMP, precision, and training-memory feasibility. `available_hardware`, deployment GPU/VRAM, "
+                "deployment_constraints, and inference-memory estimates must never be used to reduce training "
+                "hyperparameters. They describe inference after training. "
                 "For TorchVision Faster R-CNN, RetinaNet, and SSD, every YOLO-only augmentation field "
                 "(`mosaic`, `mixup`, `cutmix`, `copy_paste`, `degrees`, `translate`, `scale`, `fliplr`, "
                 "`hsv_h`, `hsv_s`, `hsv_v`, and `close_mosaic`) must be zero. Use the active "
@@ -888,7 +956,9 @@ async def generate_and_evaluate_hpo(
         "GraphRAG recipe-backed hyperparameters that appear in the active configuration remain optimizer-owned and adjustable. "
         "Do not infer candidate fields from "
         "GraphRAG metadata or the broader PipelineState. A blocking finding must name a field present in that active "
-        "configuration. `available_hardware` describes deployment, while `training_hardware` determines training AMP support. "
+        "configuration. `available_hardware` and deployment VRAM describe inference only. `training_hardware` is "
+        "the sole authority for training batch size, resolution, workers, AMP, precision, and memory feasibility. "
+        "Treat use of a different deployment GPU to justify training batch or resolution as a safety error on that field. "
         "For YOLO and RT-DETR with scheduler_name='linear', final_learning_rate_factor is an active runtime field passed "
         "to Ultralytics as lrf; it is not an inactive sentinel and must not be set to zero or a near-zero placeholder. "
         "The standard grounded default is 0.01. "
@@ -1251,6 +1321,22 @@ async def generate_and_evaluate_hpo(
             }
             round_diagnostics.append(diagnostic)
             print(f"ℹ️ Inactive evaluator findings discarded: {json.dumps(diagnostic)}")
+
+        hardware_role_findings = training_hardware_role_findings(proposal, context_data)
+        if hardware_role_findings:
+            existing = {(finding.field, finding.rule_id) for finding in decision.findings}
+            additions = [
+                HpoFinding.model_validate(item)
+                for item in hardware_role_findings
+                if (item["field"], item.get("rule_id")) not in existing
+            ]
+            decision = decision.model_copy(update={"findings": [*decision.findings, *additions]})
+            round_diagnostics.append({
+                "round": round_idx,
+                "phase": "hardware_role_validation",
+                "reason": "deployment_hardware_used_for_training_choice",
+                "findings": hardware_role_findings,
+            })
 
         advisory = hpo_advisory_findings(proposal, context_data)
         if advisory:
