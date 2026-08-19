@@ -908,6 +908,20 @@ def test_low_vram_small_object_yolo_context_uses_bounded_high_resolution_profile
     ),
     [
         (
+            "yolov12_x",
+            "rtx2060_6gb_ryzen5600x_16gb",
+            "rule_yolo_low_vram_batch",
+            {"batch_size": 4, "learning_rate": 0.0025},
+            640,
+        ),
+        (
+            "yolov12_x",
+            "rtx6000_48gb",
+            "rule_yolo_high_memory_batch_lr",
+            {"batch_size": 16, "learning_rate": 0.01},
+            640,
+        ),
+        (
             "faster-rcnn_r50_fpn_1x_coco",
             "rtx2060_6gb_ryzen5600x_16gb",
             "rule_fasterrcnn_low_memory_batch_lr",
@@ -1051,6 +1065,16 @@ def test_inference_rtx2060_does_not_limit_rtx6000_yolov12x_training_candidates()
     candidates = context["hardware_safe_resolution_candidates"]
 
     assert "rule_yolo_low_vram_batch" not in matched_ids
+    assert "rule_yolo_high_memory_batch_lr" in matched_ids
+    high_memory_rule = next(
+        rule
+        for rule in context["matched_adjustment_rules"]
+        if rule["id"] == "rule_yolo_high_memory_batch_lr"
+    )
+    assert high_memory_rule["executable_adjustments"] == {
+        "batch_size": 16,
+        "learning_rate": 0.01,
+    }
     assert context["training_hardware_adjustments"] == {"workers": 8}
     assert context["hardware_role_context"]["training_hardware_authority"][
         "profile_id"

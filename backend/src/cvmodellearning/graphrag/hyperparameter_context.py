@@ -1523,7 +1523,10 @@ def build_hyperparameter_context(state: PipelineState) -> dict[str, Any]:
             "choice. Treat matched_adjustment_rules as evidence-backed recommendations, not mandatory "
             "overrides: follow or adapt them using the retrieved recipe, hardware-safe candidates, and "
             "task requirements, and explain the decision. Rules absent from matched_adjustment_rules are "
-            "informational only. Runtime constraints and schema validation remain authoritative."
+            "informational only. When a matched rule pairs batch_size and learning_rate, select them "
+            "jointly. For Ultralytics optimizer=auto, leave learning-rate control to Ultralytics; apply "
+            "the paired LR guidance only if an explicit optimizer is selected. Runtime constraints and "
+            "schema validation remain authoritative."
         ),
     }
     if state.training_hardware is not None:
