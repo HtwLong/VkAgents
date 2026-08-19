@@ -51917,5 +51917,1210 @@
         "The installed Agents SDK reports aggregate input tokens without a cached-token breakdown; those calls are calculated at the standard input rate."
       ]
     }
+  },
+  {
+    "job_id": "batch-lora-dinov2-vits14-graph-9-42621a71",
+    "case_id": "lora-dinov2-vits14",
+    "repetition": 9,
+    "use_graphrag": true,
+    "status": "passed",
+    "stages": {
+      "completeness": "passed",
+      "task_interpretation": "passed",
+      "data_check": "passed",
+      "model_selection": "passed",
+      "dataset_selection": "passed",
+      "hyperparameters": "passed",
+      "configuration_validation": "passed",
+      "training_smoke": "passed"
+    },
+    "llm_attempts": {
+      "task_interpretation": [
+        {
+          "task": "classification",
+          "application_domain": "furniture",
+          "use_case_description": "Classify the primary product in an uploaded photo as chair, sofa, table, cabinet, or lamp.",
+          "questions_list": null,
+          "classes": [
+            "chair",
+            "sofa",
+            "table",
+            "cabinet",
+            "lamp"
+          ],
+          "performance_requirements": {
+            "primary_metric": "accuracy",
+            "target_value": null,
+            "target_is_hard": false,
+            "latency_category": null,
+            "accuracy_category": null,
+            "other_constraints": null
+          },
+          "constraint_strengths": {
+            "accuracy": "unspecified",
+            "latency": "unspecified",
+            "runtime_memory": "unspecified",
+            "model_size": "unspecified",
+            "training_time": "unspecified"
+          },
+          "robustness_requirements": {
+            "lighting": [],
+            "weather": [],
+            "object_scale": [],
+            "scene_density": [],
+            "motion_blur": false,
+            "occlusion": false,
+            "viewpoint": [],
+            "color_semantics": false,
+            "horizontal_flip_safe": null,
+            "text_or_symbols_present": false
+          },
+          "deployment_constraints": {
+            "memory_category": "Low",
+            "max_runtime_memory_mb": null,
+            "max_model_size_mb": null,
+            "max_parameters_m": null,
+            "max_cpu_latency_ms": null,
+            "hard_limits": []
+          },
+          "available_hardware": {
+            "hardware_category": "ConsumerCPU",
+            "cpu_cores": null,
+            "gpu_type": null,
+            "gpu_count": null,
+            "vram_gb": null,
+            "ram_gb": 8.0,
+            "storage_gb": null,
+            "details": "CPU-only system with 8 GB RAM"
+          },
+          "model_requirements": [
+            {
+              "name": "dinov2_vits14",
+              "framework": null,
+              "backbone": null,
+              "hyperparameters": null,
+              "description": null,
+              "requirement_strength": "required",
+              "training_mode": "lora",
+              "lora_rank": null,
+              "lora_alpha": null,
+              "lora_dropout": null
+            }
+          ]
+        }
+      ],
+      "model_selection": [
+        {
+          "selected_candidate_id": "dinov2_vits14",
+          "model": {
+            "model_architecture": "dinov2_vits14",
+            "description": "DINOv2 ViT-S/14 backbone with LoRA adapter for image classification of furniture into chair, sofa, table, cabinet, lamp. 224x224 input; CPU-only inference on 8 GB RAM."
+          },
+          "rationale": "The user requests using dinov2_vits14 with LoRA on a CPU-only system with 8 GB RAM. Among executable candidates with LoRA support and CPU-friendly footprints, the dinov2_vits14 variant (ViT-S/14) offers the smallest inference memory footprint (total_estimated_vram_gb ~0.137; practical_min_vram_gb ~1.0), well within the 8 GB RAM budget. It is LoRA-enabled per the local LoRA execution registry and PEFT docs, and has a compact parameter count (~22.1M), making it a strong baseline for CPU deployments. A second architecture option with diversity is swin_v2_t, which provides a different transformer family with similar low memory needs but somewhat higher latency. The CLIP-based models offer higher top-1 accuracy but require more memory and may be less suited to a strict CPU-only, low-memory setting. The chosen dinov2_vits14 aligns with the explicit request and fits the hardware constraints while remaining amenable to LoRA-based fine-tuning for the 5-class furniture task (chair, sofa, table, cabinet, lamp).",
+          "evaluated_candidates": [
+            {
+              "candidate_id": "dinov2_vits14",
+              "advantages": [
+                "Very low inference memory footprint; total_estimated_vram_gb ~0.137; practical_min_vram_gb ~1.0 (fits on 8 GB system)",
+                "LoRA-executable per evidence; supports CPU deployment (evidence_classification_lora_execution, evidence_hf_peft_custom_models)",
+                "Small parameter count (~22.1M); favorable for CPU inference",
+                "Explicit 224x224 input configuration and transfer learning suitability (DINOv2 ViT-S/14)"
+              ],
+              "risks": [
+                "Accuracy may be lower than larger backbones on some benchmarks; furniture-domain transfer depends on data similarity",
+                "LoRA training on CPU is slow; practical fine-tuning may require GPU",
+                "Domain shift from SOP-like data to furniture data may reduce accuracy without careful data curation/augmentation"
+              ],
+              "constraint_status": "feasible"
+            },
+            {
+              "candidate_id": "swin_v2_t",
+              "advantages": [
+                "Architecture diversity (Swin V2 Tiny) with LoRA support; good memory footprint (~0.464 VRAM) and strong top-1 potential at 256 px input",
+                "LoRA-executable with evidence; suitable for CPU deployment",
+                "Moderate parameter count (~28.3M); CPU-friendly"
+              ],
+              "risks": [
+                "Input resolution difference (256 px) vs 224 px may require preprocessing adjustments; latency may be higher than dinov2_vits14 on CPU",
+                "Fine-tuning with LoRA on CPU is slow; training would typically require GPU",
+                " furniture-domain transfer may vary with dataset alignment"
+              ],
+              "constraint_status": "feasible"
+            }
+          ],
+          "uncertainties": [
+            "Exact LoRA hyperparameters (rank, alpha, layers) are not fixed in this patch; recommended starting points exist in PEFT guidance but should be tuned for your data.",
+            "Domain transfer performance to chair/sofa/table/cabinet/lamp depends on data similarity to SOP dataset and augmentation; actual accuracy should be validated on a furniture-specific validation split.",
+            "Inference latency on a CPU-only 8 GB system varies by CPU model and PyTorch build; the provided memory footprints reflect model-level deployment estimates and may differ in practice."
+          ]
+        }
+      ]
+    },
+    "planning_warnings": {
+      "dataset": [],
+      "hyperparameters": [
+        {
+          "field": "batch_size",
+          "severity": "preference",
+          "reason": "Aligned with the low-VRAM adjustment rule for VRAM <= 8 GB; micro-batch size of 2 with gradient accumulation steps of 4 keeps memory usage within the 6GB VRAM budget while preserving effective batch size.",
+          "recommended_value": "batch_size=2; gradient_accumulation_steps=4",
+          "rule_id": "rule_dinov2_low_vram_use_smaller_variant_or_accumulation"
+        },
+        {
+          "field": "gradient_accumulation_steps",
+          "severity": "preference",
+          "reason": "Selected gradient_accumulation_steps=4 complements a small batch_size to maintain an effective batch size around 8, in line with the VRAM-constrained policy.",
+          "recommended_value": "gradient_accumulation_steps=4",
+          "rule_id": "rule_dinov2_low_vram_use_smaller_variant_or_accumulation"
+        },
+        {
+          "field": "training_mode",
+          "severity": "preference",
+          "reason": "LoRA-based fine-tuning is supported and appropriate for parameter-efficient training on a 6GB GPU; the proposed settings (lora_rank=8, lora_alpha=16, lora_dropout=0.05) match the conservative policy for limited VRAM and the registered LoRA-enabled model constraints.",
+          "recommended_value": "training_mode=lora; lora_rank=8; lora_alpha=16; lora_dropout=0.05; freeze_backbone_epochs=0; head_learning_rate_multiplier=1.0; use_model_ema=false",
+          "rule_id": "rule_transformer_classifier_low_vram_use_lora"
+        },
+        {
+          "field": "image_size",
+          "severity": "preference",
+          "reason": "Fixed at 224 to conform with the executable base recipe for dinov2_vits14 and to maintain memory footprint predictability; compatible with the registered constraints.",
+          "recommended_value": "image_size=224",
+          "rule_id": null
+        }
+      ]
+    },
+    "selection": {
+      "task": "classification",
+      "classes": [
+        "chair",
+        "sofa",
+        "table",
+        "cabinet",
+        "lamp"
+      ],
+      "model": null,
+      "datasets": [
+        ""
+      ],
+      "hpo_config": {
+        "classes": [
+          "chair",
+          "sofa",
+          "table",
+          "cabinet",
+          "lamp"
+        ],
+        "selected_data": [
+          {
+            "class_name": "chair",
+            "sources": [
+              {
+                "dataset_name": "SOP_cls_train",
+                "allocations": [
+                  {
+                    "split": "train",
+                    "count": 1200,
+                    "assignment_type": "official_split"
+                  },
+                  {
+                    "split": "validation",
+                    "count": 150,
+                    "assignment_type": "derived_from_train"
+                  }
+                ]
+              },
+              {
+                "dataset_name": "SOP_cls_test",
+                "allocations": [
+                  {
+                    "split": "test",
+                    "count": 150,
+                    "assignment_type": "official_split"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "class_name": "sofa",
+            "sources": [
+              {
+                "dataset_name": "SOP_cls_train",
+                "allocations": [
+                  {
+                    "split": "train",
+                    "count": 1200,
+                    "assignment_type": "official_split"
+                  },
+                  {
+                    "split": "validation",
+                    "count": 150,
+                    "assignment_type": "derived_from_train"
+                  }
+                ]
+              },
+              {
+                "dataset_name": "SOP_cls_test",
+                "allocations": [
+                  {
+                    "split": "test",
+                    "count": 150,
+                    "assignment_type": "official_split"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "class_name": "table",
+            "sources": [
+              {
+                "dataset_name": "SOP_cls_train",
+                "allocations": [
+                  {
+                    "split": "train",
+                    "count": 1200,
+                    "assignment_type": "official_split"
+                  },
+                  {
+                    "split": "validation",
+                    "count": 150,
+                    "assignment_type": "derived_from_train"
+                  }
+                ]
+              },
+              {
+                "dataset_name": "SOP_cls_test",
+                "allocations": [
+                  {
+                    "split": "test",
+                    "count": 150,
+                    "assignment_type": "official_split"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "class_name": "cabinet",
+            "sources": [
+              {
+                "dataset_name": "SOP_cls_train",
+                "allocations": [
+                  {
+                    "split": "train",
+                    "count": 1200,
+                    "assignment_type": "official_split"
+                  },
+                  {
+                    "split": "validation",
+                    "count": 150,
+                    "assignment_type": "derived_from_train"
+                  }
+                ]
+              },
+              {
+                "dataset_name": "SOP_cls_test",
+                "allocations": [
+                  {
+                    "split": "test",
+                    "count": 150,
+                    "assignment_type": "official_split"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "class_name": "lamp",
+            "sources": [
+              {
+                "dataset_name": "SOP_cls_train",
+                "allocations": [
+                  {
+                    "split": "train",
+                    "count": 1200,
+                    "assignment_type": "official_split"
+                  },
+                  {
+                    "split": "validation",
+                    "count": 150,
+                    "assignment_type": "derived_from_train"
+                  }
+                ]
+              },
+              {
+                "dataset_name": "SOP_cls_test",
+                "allocations": [
+                  {
+                    "split": "test",
+                    "count": 150,
+                    "assignment_type": "official_split"
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "train_data_ratio": 0.8,
+        "val_data_ratio": 0.1,
+        "test_data_ratio": 0.1,
+        "num_epochs": 3,
+        "patience": 0,
+        "batch_size": 2,
+        "image_size": 224,
+        "precision": "mixed",
+        "scheduler_name": "cosine",
+        "min_learning_rate": 1e-06,
+        "warmup_epochs": 0,
+        "gradient_accumulation_steps": 4,
+        "gradient_clip_norm": 0.0,
+        "freeze_backbone_epochs": 0,
+        "head_learning_rate_multiplier": 1.0,
+        "mixup_alpha": 0.0,
+        "cutmix_alpha": 0.0,
+        "random_erasing": 0.0,
+        "auto_augment_policy": "none",
+        "random_resized_crop_scale_min": 0.6,
+        "horizontal_flip_probability": 0.5,
+        "use_model_ema": false,
+        "repeated_augmentation_repetitions": 1,
+        "use_activation_checkpointing": false,
+        "track_metric": "val_acc",
+        "model_name": "dinov2_vits14",
+        "model_weights": "default",
+        "training_mode": "lora",
+        "training_recipe_id": "",
+        "lora_rank": 8,
+        "lora_alpha": 16,
+        "lora_dropout": 0.05,
+        "optimizer": {
+          "name": "adamw",
+          "params": {
+            "learning_rate": 5e-05,
+            "weight_decay": 0.0,
+            "eps": 1e-08,
+            "beta1": 0.9,
+            "beta2": 0.999
+          }
+        },
+        "criterion": {
+          "name": "cross_entropy",
+          "params": {
+            "label_smoothing": 0.0
+          }
+        }
+      }
+    },
+    "configuration_validation": {
+      "passed": true,
+      "validated_fields": [
+        "auto_augment_policy",
+        "batch_size",
+        "beta1",
+        "beta2",
+        "classes",
+        "criterion_name",
+        "cutmix_alpha",
+        "eps",
+        "freeze_backbone_epochs",
+        "gradient_accumulation_steps",
+        "gradient_clip_norm",
+        "head_learning_rate_multiplier",
+        "horizontal_flip_probability",
+        "image_size",
+        "label_smoothing",
+        "learning_rate",
+        "lora_alpha",
+        "lora_dropout",
+        "lora_rank",
+        "min_learning_rate",
+        "mixup_alpha",
+        "model_name",
+        "model_weights",
+        "num_epochs",
+        "optimizer_name",
+        "patience",
+        "precision",
+        "random_erasing",
+        "random_resized_crop_scale_min",
+        "repeated_augmentation_repetitions",
+        "scheduler_name",
+        "selected_data",
+        "test_data_ratio",
+        "track_metric",
+        "train_data_ratio",
+        "training_mode",
+        "training_recipe_id",
+        "use_activation_checkpointing",
+        "use_model_ema",
+        "val_data_ratio",
+        "warmup_epochs",
+        "weight_decay"
+      ]
+    },
+    "training_smoke": {
+      "status": "passed",
+      "stages": {
+        "data_materialized": "passed",
+        "data_prepared": "passed",
+        "execution_readiness": "passed",
+        "training_batch": "passed",
+        "model_initialized": "passed",
+        "forward_pass": "passed",
+        "loss_computed": "passed",
+        "backward_pass": "passed",
+        "optimizer_step": "passed",
+        "validation_pass": "passed"
+      },
+      "data_policy": {
+        "source": "normal cache-aware downloader",
+        "train_images_per_allocation_at_most": 2,
+        "validation_and_test_images_per_allocation_at_most": 1,
+        "saved_planning_configuration_changed": false
+      },
+      "runtime_overrides": {
+        "max_epochs": 1,
+        "max_train_batches": 1,
+        "gradient_accumulation_steps": 1
+      },
+      "training_result": {
+        "best_epoch": 1,
+        "best_metric": "val_acc",
+        "best_value": 0.5,
+        "effective_precision": "mixed",
+        "artifacts": {
+          "best_model": "C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\runs\\batch-lora-dinov2-vits14-graph-9-42621a71\\artifacts\\best_model.pth",
+          "metrics_csv": "C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\runs\\batch-lora-dinov2-vits14-graph-9-42621a71\\artifacts\\metrics_log.csv",
+          "data_provenance": "C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\runs\\batch-lora-dinov2-vits14-graph-9-42621a71\\artifacts\\data_provenance.json"
+        },
+        "test_batch_size": 2
+      },
+      "cache": {
+        "cache_hits": 20,
+        "bytes_downloaded": 0
+      },
+      "duration_seconds": 25.802
+    },
+    "duration_seconds": 320.428,
+    "llm_usage": {
+      "schema_version": 1,
+      "job_id": "batch-lora-dinov2-vits14-graph-9-42621a71",
+      "scope": "planning",
+      "currency": "USD",
+      "totals": {
+        "requests": 6,
+        "input_tokens": 131790,
+        "cached_input_tokens": 73600,
+        "output_tokens": 38036,
+        "reasoning_tokens": 13952,
+        "total_tokens": 169826,
+        "calculated_cost_usd": "0.01849190"
+      },
+      "models": {
+        "gpt-5-nano": {
+          "requests": 4,
+          "input_tokens": 55263,
+          "cached_input_tokens": 0,
+          "output_tokens": 21523,
+          "reasoning_tokens": 0,
+          "total_tokens": 76786,
+          "calculated_cost_usd": "0.01137235"
+        },
+        "gpt-5-nano-2025-08-07": {
+          "requests": 2,
+          "input_tokens": 76527,
+          "cached_input_tokens": 73600,
+          "output_tokens": 16513,
+          "reasoning_tokens": 13952,
+          "total_tokens": 93040,
+          "calculated_cost_usd": "0.00711955"
+        }
+      },
+      "operations": {
+        "completeness_check": {
+          "requests": 1,
+          "input_tokens": 247,
+          "cached_input_tokens": 0,
+          "output_tokens": 646,
+          "reasoning_tokens": 0,
+          "total_tokens": 893,
+          "calculated_cost_usd": "0.00027075"
+        },
+        "task_interpretation": {
+          "requests": 1,
+          "input_tokens": 3163,
+          "cached_input_tokens": 0,
+          "output_tokens": 7479,
+          "reasoning_tokens": 0,
+          "total_tokens": 10642,
+          "calculated_cost_usd": "0.00314975"
+        },
+        "model_selection": {
+          "requests": 1,
+          "input_tokens": 46470,
+          "cached_input_tokens": 0,
+          "output_tokens": 7898,
+          "reasoning_tokens": 0,
+          "total_tokens": 54368,
+          "calculated_cost_usd": "0.00548270"
+        },
+        "dataset_selection": {
+          "requests": 1,
+          "input_tokens": 5383,
+          "cached_input_tokens": 0,
+          "output_tokens": 5500,
+          "reasoning_tokens": 0,
+          "total_tokens": 10883,
+          "calculated_cost_usd": "0.00246915"
+        },
+        "hpo_optimizer": {
+          "requests": 1,
+          "input_tokens": 71862,
+          "cached_input_tokens": 71680,
+          "output_tokens": 9050,
+          "reasoning_tokens": 7168,
+          "total_tokens": 80912,
+          "calculated_cost_usd": "0.00398750"
+        },
+        "hpo_evaluator": {
+          "requests": 1,
+          "input_tokens": 4665,
+          "cached_input_tokens": 1920,
+          "output_tokens": 7463,
+          "reasoning_tokens": 6784,
+          "total_tokens": 12128,
+          "calculated_cost_usd": "0.00313205"
+        }
+      },
+      "pricing": {
+        "gpt-5-nano": {
+          "input_per_million": "0.05",
+          "cached_input_per_million": "0.005",
+          "output_per_million": "0.40",
+          "effective_date": "2026-08-15",
+          "source": "https://developers.openai.com/api/docs/models/gpt-5-nano"
+        },
+        "gpt-5-nano-2025-08-07": {
+          "input_per_million": "0.05",
+          "cached_input_per_million": "0.005",
+          "output_per_million": "0.40",
+          "effective_date": "2026-08-15",
+          "source": "https://developers.openai.com/api/docs/models/gpt-5-nano"
+        }
+      },
+      "usage_notes": [
+        "The installed Agents SDK reports aggregate input tokens without a cached-token breakdown; those calls are calculated at the standard input rate."
+      ]
+    }
+  },
+  {
+    "job_id": "batch-lora-dinov2-vits14-graph-10-884e8e74",
+    "case_id": "lora-dinov2-vits14",
+    "repetition": 10,
+    "use_graphrag": true,
+    "status": "passed",
+    "stages": {
+      "completeness": "passed",
+      "task_interpretation": "passed",
+      "data_check": "passed",
+      "model_selection": "passed",
+      "dataset_selection": "passed",
+      "hyperparameters": "passed",
+      "configuration_validation": "passed",
+      "training_smoke": "passed"
+    },
+    "llm_attempts": {
+      "task_interpretation": [
+        {
+          "task": "classification",
+          "application_domain": null,
+          "use_case_description": null,
+          "questions_list": null,
+          "classes": [
+            "chair",
+            "sofa",
+            "table",
+            "cabinet",
+            "lamp"
+          ],
+          "performance_requirements": null,
+          "constraint_strengths": {
+            "accuracy": "unspecified",
+            "latency": "unspecified",
+            "runtime_memory": "unspecified",
+            "model_size": "unspecified",
+            "training_time": "unspecified"
+          },
+          "robustness_requirements": {
+            "lighting": [],
+            "weather": [],
+            "object_scale": [],
+            "scene_density": [],
+            "motion_blur": false,
+            "occlusion": false,
+            "viewpoint": [],
+            "color_semantics": false,
+            "horizontal_flip_safe": null,
+            "text_or_symbols_present": false
+          },
+          "deployment_constraints": null,
+          "available_hardware": {
+            "hardware_category": "ConsumerCPU",
+            "cpu_cores": null,
+            "gpu_type": null,
+            "gpu_count": null,
+            "vram_gb": null,
+            "ram_gb": 8.0,
+            "storage_gb": null,
+            "details": null
+          },
+          "model_requirements": [
+            {
+              "name": "dinov2_vits14",
+              "framework": null,
+              "backbone": null,
+              "hyperparameters": null,
+              "description": "LoRA-tuned version of DINOv2 ViT-S14 for furniture product classification.",
+              "requirement_strength": "required",
+              "training_mode": "lora",
+              "lora_rank": null,
+              "lora_alpha": null,
+              "lora_dropout": null
+            }
+          ]
+        }
+      ],
+      "model_selection": [
+        {
+          "selected_candidate_id": "dinov2_vits14",
+          "model": {
+            "model_architecture": "dinov2_vits14",
+            "description": "LoRA-tuned DINOv2 ViT-S/14 classifier for furniture category recognition (chair, sofa, table, cabinet, lamp); CPU-friendly footprint with LoRA support; designed for 8 GB RAM systems."
+          },
+          "rationale": "The task requires a LoRA-enabled image classifier that runs on a CPU-only system with 8 GB RAM. Among GraphRAG candidates, dinov2_vits14 offers the smallest inferred memory footprint (total estimated VRAM ~0.137 GB; practical minimum ~1.0 GB) and explicit LoRA support, making it the most suitable starting point for a CPU-constrained deployment. While the latency category is not Low for any candidate, the vits14 variant provides the best balance of memory efficiency and transfer learning potential for furniture domain classification. The other candidates offer higher accuracy on generic benchmarks but incur higher memory and latency and thus pose greater risk on a strict CPU-8GB budget. A fallback path includes swin_v2_t or clip_vit_b16 if real world latency tests indicate a need for further latency headroom or if a GPU becomes available later.",
+          "evaluated_candidates": [
+            {
+              "candidate_id": "dinov2_vits14",
+              "advantages": [
+                "lowest inference memory footprint among LoRA-enabled candidates",
+                "total estimated VRAM ~0.137 GB; practical minimum ~1.0 GB",
+                "explicit LoRA support and compatible with edge/CPU deployment",
+                "224 px input; 22.1M parameters; 8.8 GMACs; suitable for CPU inference"
+              ],
+              "risks": [
+                "latency on CPU may still be higher than a low latency target in some environments",
+                "domain transfer to furniture SOP data may require some fine-tuning for optimal 5-class categorization",
+                "LoRA adapter specifics (rank/alpha) must be correctly configured in the local environment"
+              ],
+              "constraint_status": "feasible"
+            },
+            {
+              "candidate_id": "swin_v2_t",
+              "advantages": [
+                "low memory footprint among larger architectures",
+                "LoRA support present and suitable for CPU deployment",
+                "practical memory footprint ~0.464 GB total VRAM with a 256 px input"
+              ],
+              "risks": [
+                "latency category is not Low; still may be slower on CPU than vits14",
+                "ImageNet style benchmarks may not translate perfectly to furniture domain without fine-tuning"
+              ],
+              "constraint_status": "feasible"
+            },
+            {
+              "candidate_id": "clip_vit_b16",
+              "advantages": [
+                "strong pretrained visual backbone with high potential transfer performance",
+                "LoRA support available; 0.368 GB total VRAM in memory estimate",
+                "high top-1 accuracy potential on generic benchmarks"
+              ],
+              "risks": [
+                "practical minimum VRAM ~2.0 GB; may be heavier than vits14 on CPU",
+                "real world CPU latency may be higher due to large parameter count and FLOPs",
+                "requires adapting the projection head for 5 furniture classes"
+              ],
+              "constraint_status": "feasible"
+            }
+          ],
+          "uncertainties": [
+            "No candidate meets a strict 'Low' latency category on CPU in the given evidence; real-world CPU benchmarks are needed to confirm latency targets",
+            "Furniture-domain performance on SOP data depends on fine-tuning strategy and dataset splits; exact accuracy on this use case is not measured in the provided evidence",
+            "LoRA configuration specifics (lora_rank, lora_alpha, modules_to_train) are assumed compatible with the local LoRA execution registry"
+          ]
+        }
+      ]
+    },
+    "planning_warnings": {
+      "dataset": [],
+      "hyperparameters": [
+        {
+          "field": "batch_size",
+          "severity": "preference",
+          "reason": "VRAM constraint on a 6GB RTX 2060 led to a conservative batch_size=2 with gradient_accumulation_steps=4, in line with the rule_dinov2_low_vram_use_smaller_variant_or_accumulation. If memory allows, batch_size could be increased with a corresponding reduction in gradient_accumulation_steps to preserve effective batch size.",
+          "recommended_value": "batch_size=2; gradient_accumulation_steps=4",
+          "rule_id": "rule_dinov2_low_vram_use_smaller_variant_or_accumulation"
+        },
+        {
+          "field": "precision",
+          "severity": "preference",
+          "reason": "Currently using fp32. The RTX 2060 with CUDA and supports AMP. Enabling mixed precision (fp16) could reduce memory usage and potentially speed up training on this hardware.",
+          "recommended_value": "fp16",
+          "rule_id": null
+        },
+        {
+          "field": "lora_rank",
+          "severity": "preference",
+          "reason": "LoRA rank 8 is a reasonable starter given limited VRAM. If memory permits, increasing rank can enhance adaptation capacity.",
+          "recommended_value": "lora_rank=12",
+          "rule_id": null
+        },
+        {
+          "field": "lora_alpha",
+          "severity": "preference",
+          "reason": "With higher LoRA rank, you may want to adjust the adaptation strength. Consider increasing to 24 if memory allows to improve expressivity.",
+          "recommended_value": "lora_alpha=24",
+          "rule_id": null
+        },
+        {
+          "field": "learning_rate",
+          "severity": "preference",
+          "reason": "Base LR of 5e-05 is common for fine-tuning with LoRA, but on small datasets a slight reduction can stabilize updates. A modest reduction to 3e-05 is suggested as a precaution.",
+          "recommended_value": "learning_rate=3e-05",
+          "rule_id": null
+        },
+        {
+          "field": "weight_decay",
+          "severity": "preference",
+          "reason": "Weight decay of 0.01 is reasonable, but for small datasets with LoRA, lower decay (e.g., 0.001) can sometimes improve generalization.",
+          "recommended_value": "weight_decay=0.001",
+          "rule_id": null
+        }
+      ]
+    },
+    "selection": {
+      "task": "classification",
+      "classes": [
+        "chair",
+        "sofa",
+        "table",
+        "cabinet",
+        "lamp"
+      ],
+      "model": null,
+      "datasets": [
+        ""
+      ],
+      "hpo_config": {
+        "classes": [
+          "chair",
+          "sofa",
+          "table",
+          "cabinet",
+          "lamp"
+        ],
+        "selected_data": [
+          {
+            "class_name": "chair",
+            "sources": [
+              {
+                "dataset_name": "SOP_cls_train",
+                "allocations": [
+                  {
+                    "split": "train",
+                    "count": 1200,
+                    "assignment_type": "official_split"
+                  },
+                  {
+                    "split": "validation",
+                    "count": 150,
+                    "assignment_type": "derived_from_train"
+                  }
+                ]
+              },
+              {
+                "dataset_name": "SOP_cls_test",
+                "allocations": [
+                  {
+                    "split": "test",
+                    "count": 150,
+                    "assignment_type": "official_split"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "class_name": "sofa",
+            "sources": [
+              {
+                "dataset_name": "SOP_cls_train",
+                "allocations": [
+                  {
+                    "split": "train",
+                    "count": 1200,
+                    "assignment_type": "official_split"
+                  },
+                  {
+                    "split": "validation",
+                    "count": 150,
+                    "assignment_type": "derived_from_train"
+                  }
+                ]
+              },
+              {
+                "dataset_name": "SOP_cls_test",
+                "allocations": [
+                  {
+                    "split": "test",
+                    "count": 150,
+                    "assignment_type": "official_split"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "class_name": "table",
+            "sources": [
+              {
+                "dataset_name": "SOP_cls_train",
+                "allocations": [
+                  {
+                    "split": "train",
+                    "count": 1200,
+                    "assignment_type": "official_split"
+                  },
+                  {
+                    "split": "validation",
+                    "count": 150,
+                    "assignment_type": "derived_from_train"
+                  }
+                ]
+              },
+              {
+                "dataset_name": "SOP_cls_test",
+                "allocations": [
+                  {
+                    "split": "test",
+                    "count": 150,
+                    "assignment_type": "official_split"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "class_name": "cabinet",
+            "sources": [
+              {
+                "dataset_name": "SOP_cls_train",
+                "allocations": [
+                  {
+                    "split": "train",
+                    "count": 1200,
+                    "assignment_type": "official_split"
+                  },
+                  {
+                    "split": "validation",
+                    "count": 150,
+                    "assignment_type": "derived_from_train"
+                  }
+                ]
+              },
+              {
+                "dataset_name": "SOP_cls_test",
+                "allocations": [
+                  {
+                    "split": "test",
+                    "count": 150,
+                    "assignment_type": "official_split"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "class_name": "lamp",
+            "sources": [
+              {
+                "dataset_name": "SOP_cls_train",
+                "allocations": [
+                  {
+                    "split": "train",
+                    "count": 1200,
+                    "assignment_type": "official_split"
+                  },
+                  {
+                    "split": "validation",
+                    "count": 150,
+                    "assignment_type": "derived_from_train"
+                  }
+                ]
+              },
+              {
+                "dataset_name": "SOP_cls_test",
+                "allocations": [
+                  {
+                    "split": "test",
+                    "count": 150,
+                    "assignment_type": "official_split"
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "train_data_ratio": 0.8,
+        "val_data_ratio": 0.1,
+        "test_data_ratio": 0.1,
+        "num_epochs": 3,
+        "patience": 0,
+        "batch_size": 2,
+        "image_size": 224,
+        "precision": "fp32",
+        "scheduler_name": "cosine",
+        "min_learning_rate": 1e-06,
+        "warmup_epochs": 0,
+        "gradient_accumulation_steps": 4,
+        "gradient_clip_norm": 0.0,
+        "freeze_backbone_epochs": 0,
+        "head_learning_rate_multiplier": 1.0,
+        "mixup_alpha": 0.0,
+        "cutmix_alpha": 0.0,
+        "random_erasing": 0.0,
+        "auto_augment_policy": "none",
+        "random_resized_crop_scale_min": 0.6,
+        "horizontal_flip_probability": 0.5,
+        "use_model_ema": false,
+        "repeated_augmentation_repetitions": 1,
+        "use_activation_checkpointing": false,
+        "track_metric": "val_acc",
+        "model_name": "dinov2_vits14",
+        "model_weights": "default",
+        "training_mode": "lora",
+        "training_recipe_id": "timm_dinov2_s_b14_adapted_custom_finetune",
+        "lora_rank": 8,
+        "lora_alpha": 16,
+        "lora_dropout": 0.05,
+        "optimizer": {
+          "name": "adamw",
+          "params": {
+            "learning_rate": 5e-05,
+            "weight_decay": 0.01,
+            "eps": 1e-08,
+            "beta1": 0.9,
+            "beta2": 0.999
+          }
+        },
+        "criterion": {
+          "name": "cross_entropy",
+          "params": {
+            "label_smoothing": 0.0
+          }
+        }
+      }
+    },
+    "configuration_validation": {
+      "passed": true,
+      "validated_fields": [
+        "auto_augment_policy",
+        "batch_size",
+        "beta1",
+        "beta2",
+        "classes",
+        "criterion_name",
+        "cutmix_alpha",
+        "eps",
+        "freeze_backbone_epochs",
+        "gradient_accumulation_steps",
+        "gradient_clip_norm",
+        "head_learning_rate_multiplier",
+        "horizontal_flip_probability",
+        "image_size",
+        "label_smoothing",
+        "learning_rate",
+        "lora_alpha",
+        "lora_dropout",
+        "lora_rank",
+        "min_learning_rate",
+        "mixup_alpha",
+        "model_name",
+        "model_weights",
+        "num_epochs",
+        "optimizer_name",
+        "patience",
+        "precision",
+        "random_erasing",
+        "random_resized_crop_scale_min",
+        "repeated_augmentation_repetitions",
+        "scheduler_name",
+        "selected_data",
+        "test_data_ratio",
+        "track_metric",
+        "train_data_ratio",
+        "training_mode",
+        "training_recipe_id",
+        "use_activation_checkpointing",
+        "use_model_ema",
+        "val_data_ratio",
+        "warmup_epochs",
+        "weight_decay"
+      ]
+    },
+    "training_smoke": {
+      "status": "passed",
+      "stages": {
+        "data_materialized": "passed",
+        "data_prepared": "passed",
+        "execution_readiness": "passed",
+        "training_batch": "passed",
+        "model_initialized": "passed",
+        "forward_pass": "passed",
+        "loss_computed": "passed",
+        "backward_pass": "passed",
+        "optimizer_step": "passed",
+        "validation_pass": "passed"
+      },
+      "data_policy": {
+        "source": "normal cache-aware downloader",
+        "train_images_per_allocation_at_most": 2,
+        "validation_and_test_images_per_allocation_at_most": 1,
+        "saved_planning_configuration_changed": false
+      },
+      "runtime_overrides": {
+        "max_epochs": 1,
+        "max_train_batches": 1,
+        "gradient_accumulation_steps": 1
+      },
+      "training_result": {
+        "best_epoch": 1,
+        "best_metric": "val_acc",
+        "best_value": 0.5,
+        "effective_precision": "fp32",
+        "artifacts": {
+          "best_model": "C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\runs\\batch-lora-dinov2-vits14-graph-10-884e8e74\\artifacts\\best_model.pth",
+          "metrics_csv": "C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\runs\\batch-lora-dinov2-vits14-graph-10-884e8e74\\artifacts\\metrics_log.csv",
+          "data_provenance": "C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\runs\\batch-lora-dinov2-vits14-graph-10-884e8e74\\artifacts\\data_provenance.json"
+        },
+        "test_batch_size": 2
+      },
+      "cache": {
+        "cache_hits": 20,
+        "bytes_downloaded": 0
+      },
+      "duration_seconds": 27.982
+    },
+    "duration_seconds": 240.047,
+    "llm_usage": {
+      "schema_version": 1,
+      "job_id": "batch-lora-dinov2-vits14-graph-10-884e8e74",
+      "scope": "planning",
+      "currency": "USD",
+      "totals": {
+        "requests": 6,
+        "input_tokens": 131061,
+        "cached_input_tokens": 4224,
+        "output_tokens": 33295,
+        "reasoning_tokens": 15744,
+        "total_tokens": 164356,
+        "calculated_cost_usd": "0.01968097"
+      },
+      "models": {
+        "gpt-5-nano": {
+          "requests": 4,
+          "input_tokens": 55154,
+          "cached_input_tokens": 0,
+          "output_tokens": 15302,
+          "reasoning_tokens": 0,
+          "total_tokens": 70456,
+          "calculated_cost_usd": "0.00887850"
+        },
+        "gpt-5-nano-2025-08-07": {
+          "requests": 2,
+          "input_tokens": 75907,
+          "cached_input_tokens": 4224,
+          "output_tokens": 17993,
+          "reasoning_tokens": 15744,
+          "total_tokens": 93900,
+          "calculated_cost_usd": "0.01080247"
+        }
+      },
+      "operations": {
+        "completeness_check": {
+          "requests": 1,
+          "input_tokens": 247,
+          "cached_input_tokens": 0,
+          "output_tokens": 676,
+          "reasoning_tokens": 0,
+          "total_tokens": 923,
+          "calculated_cost_usd": "0.00028275"
+        },
+        "task_interpretation": {
+          "requests": 1,
+          "input_tokens": 3163,
+          "cached_input_tokens": 0,
+          "output_tokens": 3967,
+          "reasoning_tokens": 0,
+          "total_tokens": 7130,
+          "calculated_cost_usd": "0.00174495"
+        },
+        "model_selection": {
+          "requests": 1,
+          "input_tokens": 46431,
+          "cached_input_tokens": 0,
+          "output_tokens": 6535,
+          "reasoning_tokens": 0,
+          "total_tokens": 52966,
+          "calculated_cost_usd": "0.00493555"
+        },
+        "dataset_selection": {
+          "requests": 1,
+          "input_tokens": 5313,
+          "cached_input_tokens": 0,
+          "output_tokens": 4124,
+          "reasoning_tokens": 0,
+          "total_tokens": 9437,
+          "calculated_cost_usd": "0.00191525"
+        },
+        "hpo_optimizer": {
+          "requests": 1,
+          "input_tokens": 71174,
+          "cached_input_tokens": 4224,
+          "output_tokens": 10274,
+          "reasoning_tokens": 8768,
+          "total_tokens": 81448,
+          "calculated_cost_usd": "0.00747822"
+        },
+        "hpo_evaluator": {
+          "requests": 1,
+          "input_tokens": 4733,
+          "cached_input_tokens": 0,
+          "output_tokens": 7719,
+          "reasoning_tokens": 6976,
+          "total_tokens": 12452,
+          "calculated_cost_usd": "0.00332425"
+        }
+      },
+      "pricing": {
+        "gpt-5-nano": {
+          "input_per_million": "0.05",
+          "cached_input_per_million": "0.005",
+          "output_per_million": "0.40",
+          "effective_date": "2026-08-15",
+          "source": "https://developers.openai.com/api/docs/models/gpt-5-nano"
+        },
+        "gpt-5-nano-2025-08-07": {
+          "input_per_million": "0.05",
+          "cached_input_per_million": "0.005",
+          "output_per_million": "0.40",
+          "effective_date": "2026-08-15",
+          "source": "https://developers.openai.com/api/docs/models/gpt-5-nano"
+        }
+      },
+      "usage_notes": [
+        "The installed Agents SDK reports aggregate input tokens without a cached-token breakdown; those calls are calculated at the standard input rate."
+      ]
+    }
   }
 ]

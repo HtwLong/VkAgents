@@ -1,14 +1,14 @@
 # Batch planning evaluation
 
-Generated: 2026-08-18T06:53:17.112432+00:00
+Generated: 2026-08-18T07:02:37.652062+00:00
 
-- Total Runs: 88
-- Technical Successes: 84
-- Technical Success Rate: 0.9545454545454546
-- Training Smoke Successes: 84
-- Total Cost Usd: 2.07001035
-- Mean Cost Usd: 0.02352284488636363636363636364
-- Mean Duration Seconds: 286.4334090909091
-- Mean Input Tokens: 172398.89772727274
-- Mean Output Tokens: 39683.97727272727
+- Total Runs: 90
+- Technical Successes: 86
+- Technical Success Rate: 0.9555555555555556
+- Training Smoke Successes: 86
+- Total Cost Usd: 2.10818322
+- Mean Cost Usd: 0.023424258
+- Mean Duration Seconds: 286.29572222222225
+- Mean Input Tokens: 171488.3777777778
+- Mean Output Tokens: 39594.677777777775
 - Failures By Category: {'infeasible_dataset_selection': 3, 'invalid_hyperparameters': 1}
