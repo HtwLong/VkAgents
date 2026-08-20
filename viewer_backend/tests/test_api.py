@@ -144,6 +144,10 @@ def test_graphrag_planning_routes_ground_and_validate_decisions(tmp_path, monkey
     assert evidence["selected_id"] == "yolo11n"
     assert evidence["evaluated_candidates"]
     assert "active_filters" in evidence
+    assert evidence["decision"]["id"] == "yolo11n"
+    assert evidence["retrieved_facts"]
+    assert evidence["grounding"]["fact_count"] >= 1
+    assert evidence["evidence_sources"]
 
     body["context"] = context
     dataset_response = client.post("/api/v1/planning/select-datasets", json=body)
@@ -159,6 +163,11 @@ def test_graphrag_planning_routes_ground_and_validate_decisions(tmp_path, monkey
     assert context["dataset_profile"]["planned_counts"]["train"] > 0
     assert context["preprocessing_plan"]["materialization_status"] == "planned_not_executed"
     assert context["dataset_selection_graph_context"]["matched_domains"]
+    dataset_evidence = context["dataset_selection_decision_evidence"]
+    assert dataset_evidence["decision"] == context["selected_data"]
+    assert {"retrieved_facts", "evidence_sources", "grounding"} <= dataset_evidence.keys()
+    assert "conflicts" not in context["data_strategy"]
+    assert "primary_evaluation_domain" in context["data_strategy"]["split_strategy"]
 
     body["context"] = context
     hpo_response = client.post("/api/v1/planning/choose-hyperparameters", json=body)
@@ -169,6 +178,9 @@ def test_graphrag_planning_routes_ground_and_validate_decisions(tmp_path, monkey
     assert hpo_response.json()["decision"]["accept"] is True
     assert hpo_response.json()["field_provenance"]["selected_data"]["source"] == "pipeline_state"
     assert context["hyperparameter_graph_context"]["candidate_recipes"]
+    hpo_evidence = context["hyperparameter_decision_evidence"]
+    assert hpo_evidence["decision"] == context["hpo_config"]
+    assert hpo_evidence["field_provenance"] == hpo_response.json()["field_provenance"]
     planning_dir = tmp_path / "graph-plan" / "artifacts" / "planning"
     assert (planning_dir / "STATE_04_PREPROCESSING.json").is_file()
     assert len(json.loads((planning_dir / "RESULT_HYPERPARAMETERS.json").read_text())) == 70

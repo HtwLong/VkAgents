@@ -32,7 +32,7 @@ from ..visionkg import query_class_availability
 from ..dataset_planning import availability_candidates, build_split_assignments, preprocessing_plan
 from ..hpo_planning import materialize_hpo
 from ..hpo_evaluation import decision_from_findings, evaluate_hpo, repair_hpo
-from ..data_strategy import build_data_strategy
+from ..data_strategy import build_data_plan_conflicts, build_data_strategy
 
 
 router = APIRouter(prefix="/planning", tags=["Planning"])
@@ -321,6 +321,7 @@ async def select_model(request: StateRequest):
     evidence = decision_evidence(
         decision_type="model_selection", selected_id=selected["id"], rationale=plan.rationale,
         candidates=candidates, graph_context=graph_context, uncertainties=plan.uncertainties,
+        decision=context["selected_model_info"],
     )
     context["model_selection_decision_evidence"] = evidence
     _history(context, f"Model Selection Rationale: {plan.rationale}")
@@ -383,11 +384,12 @@ async def select_datasets(request: StateRequest):
     selected_sources = [item.model_dump(mode="json") for item in plan.sources]
     if live_candidates:
         strategy = build_data_strategy(context)
+        conflicts = build_data_plan_conflicts(context)
         context["data_strategy"] = strategy
         context["data_plan_constraints"] = {
             "minimum_unique_pool_images": strategy["minimum_unique_pool_images"],
             "preferred_unique_pool_images": strategy["preferred_unique_pool_images"],
-            "conflicts": strategy["conflicts"],
+            "conflicts": conflicts,
         }
         required_includes = {
             str(value) for change in _revision_changes(context, "dataset-selection", "required")
@@ -424,7 +426,7 @@ async def select_datasets(request: StateRequest):
     evidence = decision_evidence(
         decision_type="dataset_selection", selected_id=selected_sources[0]["dataset_name"] if selected_sources else None,
         rationale=plan.rationale, candidates=planning_candidates, graph_context=graph_context,
-        uncertainties=plan.uncertainties,
+        uncertainties=plan.uncertainties, decision=context.get("selected_data") or selected_sources,
     )
     context["dataset_selection_decision_evidence"] = evidence
     _history(context, f"Data Selection Rationale: {plan.rationale}")
@@ -497,8 +499,8 @@ async def choose_hyperparameters(request: StateRequest):
         decision_type="hyperparameter_selection", selected_id=selected_recipe.get("id") if selected_recipe else selected["id"],
         rationale=plan.rationale, candidates=recipes or [{"id": selected["id"]}],
         graph_context=graph_context, uncertainties=plan.uncertainties,
+        decision=config, field_provenance=field_provenance,
     )
-    evidence["field_provenance"] = field_provenance
     context["hyperparameter_decision_evidence"] = evidence
     _history(context, f"Hyperparameter Rationale: {plan.rationale}")
     _history(context, "Hyperparameter Planning Completed (not executed)")
