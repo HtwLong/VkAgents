@@ -3,12 +3,14 @@ FROM ghcr.io/astral-sh/uv:python3.13-bookworm-slim
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
     git \
     libgl1 \
     libglib2.0-0 \
     libxcb1 \
     && rm -rf /var/lib/apt/lists/*
 
+ENV CC=gcc
 ENV UV_COMPILE_BYTECODE=1
 ENV UV_LINK_MODE=copy
 
