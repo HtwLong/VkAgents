@@ -1,0 +1,10 @@
+[
+  {
+    "timestamp": "2026-08-05T10:21:18.735101+00:00",
+    "job_id": "msfxohj96qtkzd0i8ht",
+    "endpoint": "/api/v1/planning/task-interpret",
+    "status_code": 400,
+    "error_type": "HTTPException",
+    "error": "Class 'digit 1' not found."
+  }
+]

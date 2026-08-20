@@ -1,0 +1,253 @@
+{
+  "task": "classification",
+  "application_domain": null,
+  "user_query": "I need a lightweight image classification model that recognizes handwritten numbers. The model will run on a CPU-only system with 4 GB of RAM. It should aim for accuracy of at least 90%, use less than approximately 500 MB of runtime memory, and process an image within 200 milliseconds.",
+  "use_case_description": "Lightweight image classification model for handwritten digits on a CPU-only system with 4 GB RAM; target accuracy >= 90%; runtime memory <= 500 MB; processing time <= 200 ms per image.",
+  "questions_list": null,
+  "classes": [
+    "0",
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+    "7",
+    "8",
+    "9"
+  ],
+  "available_data": [
+    {
+      "class_name": "0",
+      "sources": [
+        {
+          "dataset_name": "mnist_cls_train",
+          "count": 5923
+        },
+        {
+          "dataset_name": "mnist_cls_test",
+          "count": 980
+        }
+      ]
+    },
+    {
+      "class_name": "1",
+      "sources": [
+        {
+          "dataset_name": "mnist_cls_train",
+          "count": 6742
+        },
+        {
+          "dataset_name": "mnist_cls_test",
+          "count": 1135
+        }
+      ]
+    },
+    {
+      "class_name": "2",
+      "sources": [
+        {
+          "dataset_name": "mnist_cls_train",
+          "count": 5958
+        },
+        {
+          "dataset_name": "mnist_cls_test",
+          "count": 1032
+        }
+      ]
+    },
+    {
+      "class_name": "3",
+      "sources": [
+        {
+          "dataset_name": "mnist_cls_train",
+          "count": 6131
+        },
+        {
+          "dataset_name": "mnist_cls_test",
+          "count": 1010
+        }
+      ]
+    },
+    {
+      "class_name": "4",
+      "sources": [
+        {
+          "dataset_name": "mnist_cls_train",
+          "count": 5842
+        },
+        {
+          "dataset_name": "mnist_cls_test",
+          "count": 982
+        }
+      ]
+    },
+    {
+      "class_name": "5",
+      "sources": [
+        {
+          "dataset_name": "mnist_cls_train",
+          "count": 5421
+        },
+        {
+          "dataset_name": "mnist_cls_test",
+          "count": 892
+        }
+      ]
+    },
+    {
+      "class_name": "6",
+      "sources": [
+        {
+          "dataset_name": "mnist_cls_train",
+          "count": 5918
+        },
+        {
+          "dataset_name": "mnist_cls_test",
+          "count": 958
+        }
+      ]
+    },
+    {
+      "class_name": "7",
+      "sources": [
+        {
+          "dataset_name": "mnist_cls_train",
+          "count": 6265
+        },
+        {
+          "dataset_name": "mnist_cls_test",
+          "count": 1028
+        }
+      ]
+    },
+    {
+      "class_name": "8",
+      "sources": [
+        {
+          "dataset_name": "mnist_cls_train",
+          "count": 5851
+        },
+        {
+          "dataset_name": "mnist_cls_test",
+          "count": 974
+        }
+      ]
+    },
+    {
+      "class_name": "9",
+      "sources": [
+        {
+          "dataset_name": "mnist_cls_train",
+          "count": 5949
+        },
+        {
+          "dataset_name": "mnist_cls_test",
+          "count": 1009
+        }
+      ]
+    }
+  ],
+  "selected_data": null,
+  "performance_requirements": {
+    "primary_metric": "accuracy",
+    "target_value": 0.9,
+    "target_is_hard": true,
+    "latency_category": "Low",
+    "accuracy_category": null,
+    "other_constraints": null
+  },
+  "deployment_constraints": {
+    "memory_category": "Low",
+    "max_runtime_memory_mb": 500.0,
+    "max_model_size_mb": null,
+    "max_parameters_m": null,
+    "max_cpu_latency_ms": 200.0,
+    "hard_limits": [
+      "max_cpu_latency_ms",
+      "max_runtime_memory_mb"
+    ]
+  },
+  "available_hardware": {
+    "hardware_category": "ConsumerCPU",
+    "cpu_cores": null,
+    "gpu_type": null,
+    "gpu_count": null,
+    "vram_gb": null,
+    "ram_gb": 4.0,
+    "storage_gb": null,
+    "details": "CPU-only system"
+  },
+  "model_requirements": null,
+  "augmentation": null,
+  "preprocessing": null,
+  "num_qa_pairs": null,
+  "training_hardware": {
+    "profile_id": "macbook_air_m4_16gb",
+    "accelerator": "mps",
+    "hardware_category": "ConsumerGPU",
+    "gpu_type": "Apple M4 10-core GPU",
+    "gpu_count": 1,
+    "vram_gb": null,
+    "ram_gb": 16.0,
+    "unified_memory": true,
+    "training_memory_budget_gb": 8.0,
+    "max_batch_size": 4,
+    "workers": 4,
+    "supports_amp": false
+  },
+  "class_expansions": {},
+  "model_selection_graph_context": null,
+  "dataset_selection_graph_context": null,
+  "hyperparameter_graph_context": null,
+  "hyperparameter_policy_context": null,
+  "use_graphrag": false,
+  "use_policy_registry": true,
+  "selected_model_info": {
+    "model": {
+      "model_architecture": "mobilenet_v3_small",
+      "description": "A very lightweight CNN family designed for mobile/embedded use. MobileNetV3 small offers strong efficiency with good accuracy, making it a good fit for 28x28 MNIST style digits on CPU.",
+      "num_epochs": null,
+      "patience": null,
+      "architecture_family": "mobilenet"
+    }
+  },
+  "hpo_config": null,
+  "hpo_decision": null,
+  "model_selection_decision_evidence": {
+    "decision_type": "model_selection",
+    "decision": {
+      "model": {
+        "model_architecture": "mobilenet_v3_small",
+        "description": "A very lightweight CNN family designed for mobile/embedded use. MobileNetV3 small offers strong efficiency with good accuracy, making it a good fit for 28x28 MNIST style digits on CPU.",
+        "num_epochs": null,
+        "patience": null,
+        "architecture_family": "mobilenet"
+      }
+    },
+    "rationale": "Reasoning for the choice is driven by the provided constraints: CPU-only system with 4 GB RAM, runtime memory limit around 500 MB, and latency target of 200 ms per image, while needing at least 90 percent accuracy on MNIST style digits. MobileNetV3 Small is among the lightest architectures in the candidate set and tends to deliver solid accuracy with very low compute. The 28x28 MNIST input can be accommodated by using a 1-channel input (grayscale) or by converting to 3 channels with channel replication, which MobileNetV3 can handle with minor architectural adjustments. The small footprint helps keep both model size and runtime memory well under the 500 MB cap; the reduced compute keeps inference latency within the 200 ms budget on typical consumer CPUs. MNIST style digits are easy to classify with such a network, and accuracy well above 90% is achievable with proper training, data normalization, and optional quantization at inference time. If necessary, a minor shift to a slightly larger but still efficient variant (for example, MobileNetV2) can be used as a fallback, but MobileNetV3 Small is the strongest initial match for the stated constraints.\n\nNotes on latency and feasibility:\n- Measured latency: not provided in this context; the estimate is based on common benchmarks for MobileNetV3 Small on CPU with small inputs and single image inference. Expected range is roughly 60 to 150 ms per image on a typical consumer CPU, especially with 1x1 round trips and no heavy pre/post processing, and further reduced with 8-bit quantization.\n- Unverified CPU feasibility: given the 4 GB RAM limit and a 1 image batch size, this architecture should be feasible within memory and time budgets when using standard optimizations (quantization, efficient runtime, and lightweight pre/post processing).\n- Fallback: if latency or memory exceedance is observed in practice, switch to mobilenet_v2 with quantization or reduce input resolution/quality, and ensure 1-channel input to minimize compute. EfficientNet-B0 is generally heavier and should be a last resort if needs grow beyond current budgets.",
+    "selection_policy": null,
+    "retrieved_facts": [],
+    "evidence_sources": [],
+    "grounded": false,
+    "evidence_backed": false,
+    "match_scope": null,
+    "grounding": {
+      "status": "ungrounded",
+      "fact_count": 0,
+      "support_counts": {},
+      "evidence_coverage": 0.0
+    }
+  },
+  "dataset_selection_decision_evidence": null,
+  "hyperparameter_decision_evidence": null,
+  "dataset_profile": null,
+  "step_history": [
+    "Task Interpretation Completed",
+    "Data Availability Checked",
+    "GraphRAG Model Suggestions: disabled for this run.",
+    "Model Selection Rationale: Reasoning for the choice is driven by the provided constraints: CPU-only system with 4 GB RAM, runtime memory limit around 500 MB, and latency target of 200 ms per image, while needing at least 90 percent accuracy on MNIST style digits. MobileNetV3 Small is among the lightest architectures in the candidate set and tends to deliver solid accuracy with very low compute. The 28x28 MNIST input can be accommodated by using a 1-channel input (grayscale) or by converting to 3 channels with channel replication, which MobileNetV3 can handle with minor architectural adjustments. The small footprint helps keep both model size and runtime memory well under the 500 MB cap; the reduced compute keeps inference latency within the 200 ms budget on typical consumer CPUs. MNIST style digits are easy to classify with such a network, and accuracy well above 90% is achievable with proper training, data normalization, and optional quantization at inference time. If necessary, a minor shift to a slightly larger but still efficient variant (for example, MobileNetV2) can be used as a fallback, but MobileNetV3 Small is the strongest initial match for the stated constraints.\n\nNotes on latency and feasibility:\n- Measured latency: not provided in this context; the estimate is based on common benchmarks for MobileNetV3 Small on CPU with small inputs and single image inference. Expected range is roughly 60 to 150 ms per image on a typical consumer CPU, especially with 1x1 round trips and no heavy pre/post processing, and further reduced with 8-bit quantization.\n- Unverified CPU feasibility: given the 4 GB RAM limit and a 1 image batch size, this architecture should be feasible within memory and time budgets when using standard optimizations (quantization, efficient runtime, and lightweight pre/post processing).\n- Fallback: if latency or memory exceedance is observed in practice, switch to mobilenet_v2 with quantization or reduce input resolution/quality, and ensure 1-channel input to minimize compute. EfficientNet-B0 is generally heavier and should be a last resort if needs grow beyond current budgets.",
+    "Model Selection Completed"
+  ],
+  "last_updated": "2026-08-05T12:35:17.949108"
+}

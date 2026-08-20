@@ -1,0 +1,78 @@
+{
+  "task": "classification",
+  "application_domain": "furniture marketplace",
+  "user_query": "I need an image classification model for a furniture marketplace that categorizes the primary product in an uploaded photo as a chair, sofa, or table. Each image should primarily contain one product. Inference will run on CPU-only backend servers with approximately 4 CPU cores and 8 GB of RAM. The model should aim for a macro-F1 score of at least 0.85, use less than approximately 1.5 GB of runtime memory, and preferably classify an image within 500 milliseconds.",
+  "use_case_description": null,
+  "questions_list": null,
+  "classes": [
+    "chair",
+    "sofa",
+    "table"
+  ],
+  "available_data": null,
+  "selected_data": null,
+  "performance_requirements": {
+    "primary_metric": "macro-F1 score",
+    "target_value": 0.85,
+    "target_is_hard": false,
+    "latency_category": "Medium",
+    "accuracy_category": "MediumHigh",
+    "other_constraints": null
+  },
+  "deployment_constraints": {
+    "memory_category": null,
+    "max_runtime_memory_mb": 1536.0,
+    "max_model_size_mb": null,
+    "max_parameters_m": null,
+    "max_cpu_latency_ms": 500.0,
+    "hard_limits": [
+      "max_cpu_latency_ms"
+    ]
+  },
+  "available_hardware": {
+    "hardware_category": "ConsumerCPU",
+    "cpu_cores": 4,
+    "gpu_type": null,
+    "gpu_count": null,
+    "vram_gb": null,
+    "ram_gb": 8.0,
+    "storage_gb": null,
+    "details": "CPU-only backend servers"
+  },
+  "model_requirements": null,
+  "augmentation": null,
+  "preprocessing": null,
+  "num_qa_pairs": null,
+  "training_hardware": {
+    "profile_id": "macbook_air_m4_16gb",
+    "accelerator": "mps",
+    "hardware_category": "ConsumerGPU",
+    "gpu_type": "Apple M4 10-core GPU",
+    "gpu_count": 1,
+    "vram_gb": null,
+    "ram_gb": 16.0,
+    "unified_memory": true,
+    "training_memory_budget_gb": 8.0,
+    "max_batch_size": 4,
+    "workers": 4,
+    "supports_amp": false
+  },
+  "class_expansions": {},
+  "model_selection_graph_context": null,
+  "dataset_selection_graph_context": null,
+  "hyperparameter_graph_context": null,
+  "hyperparameter_policy_context": null,
+  "use_graphrag": true,
+  "use_policy_registry": true,
+  "selected_model_info": null,
+  "hpo_config": null,
+  "hpo_decision": null,
+  "model_selection_decision_evidence": null,
+  "dataset_selection_decision_evidence": null,
+  "hyperparameter_decision_evidence": null,
+  "dataset_profile": null,
+  "step_history": [
+    "Task Interpretation Completed"
+  ],
+  "last_updated": "2026-08-05T17:42:13.385182"
+}

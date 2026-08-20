@@ -1,0 +1,15 @@
+PREFIX cv: <http://vision.semkg.org/onto/v0.1/>
+    PREFIX schema: <http://schema.org/>
+
+    SELECT ?targetLabel ?datasetName (COUNT(DISTINCT ?image) AS ?count)
+    WHERE {
+        # Inject the list of classes directly into the query engine's execution plan
+        VALUES ?targetLabel { "chair" "sofa" "table" } 
+        
+        ?image cv:hasAnnotation ?annotation .
+        ?annotation cv:hasLabel ?lbl .
+        ?lbl cv:label ?targetLabel .
+        ?image schema:isPartOf / schema:name ?datasetName .
+    }
+    GROUP BY ?targetLabel ?datasetName
+    ORDER BY ?targetLabel DESC(?count)

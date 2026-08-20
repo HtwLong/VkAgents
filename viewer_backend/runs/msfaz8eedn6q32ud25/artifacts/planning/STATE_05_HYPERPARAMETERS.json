@@ -1,0 +1,2346 @@
+{
+  "task": "detection",
+  "application_domain": null,
+  "user_query": "I need an object detection model to locate people, dogs, and cats in indoor and outdoor photographs. The objects may appear at different scales, under varied lighting, and may be partially occluded by furniture or other people. The model will run locally on a MacBook Air with an Apple M4 chip and 16 GB of unified memory, using Metal acceleration where supported. It should aim for a mAP@0.5:0.95 of approximately 0.40 or higher and recall of at least 0.75 for each class. Processing an image within roughly 500 milliseconds would be desirable.",
+  "use_case_description": null,
+  "questions_list": null,
+  "classes": [
+    "person",
+    "dog",
+    "cat"
+  ],
+  "available_data": [
+    {
+      "class_name": "person",
+      "sources": [
+        {
+          "dataset_name": "openimages_challenge_2019_det_train",
+          "count": 248287
+        },
+        {
+          "dataset_name": "coco2017_det_train",
+          "count": 64115
+        },
+        {
+          "dataset_name": "objects365_det_val",
+          "count": 33217
+        },
+        {
+          "dataset_name": "openimages_challenge_2019_det_val",
+          "count": 11225
+        },
+        {
+          "dataset_name": "voc0712_det_val",
+          "count": 3257
+        },
+        {
+          "dataset_name": "voc0712_det_train",
+          "count": 3212
+        },
+        {
+          "dataset_name": "coco2017_det_val",
+          "count": 2693
+        },
+        {
+          "dataset_name": "voc12_det_val",
+          "count": 2232
+        },
+        {
+          "dataset_name": "voc12_det_train",
+          "count": 2142
+        },
+        {
+          "dataset_name": "LVIS_det_train",
+          "count": 1928
+        },
+        {
+          "dataset_name": "voc07_det_train",
+          "count": 1070
+        },
+        {
+          "dataset_name": "voc07_det_test",
+          "count": 1025
+        },
+        {
+          "dataset_name": "voc07_det_val",
+          "count": 1025
+        },
+        {
+          "dataset_name": "ACDC_FDA_day2night_det_train",
+          "count": 634
+        },
+        {
+          "dataset_name": "ACDC_det_train",
+          "count": 634
+        },
+        {
+          "dataset_name": "cityscapes_det_val",
+          "count": 401
+        },
+        {
+          "dataset_name": "LVIS_det_val",
+          "count": 390
+        },
+        {
+          "dataset_name": "ACDC_det_val_night",
+          "count": 57
+        }
+      ]
+    },
+    {
+      "class_name": "dog",
+      "sources": [
+        {
+          "dataset_name": "openimages_challenge_2019_det_train",
+          "count": 20602
+        },
+        {
+          "dataset_name": "coco2017_det_train",
+          "count": 4385
+        },
+        {
+          "dataset_name": "LVIS_det_train",
+          "count": 1938
+        },
+        {
+          "dataset_name": "openimages_challenge_2019_det_val",
+          "count": 1585
+        },
+        {
+          "dataset_name": "objects365_det_val",
+          "count": 956
+        },
+        {
+          "dataset_name": "voc0712_det_val",
+          "count": 881
+        },
+        {
+          "dataset_name": "voc0712_det_train",
+          "count": 846
+        },
+        {
+          "dataset_name": "voc12_det_val",
+          "count": 661
+        },
+        {
+          "dataset_name": "voc12_det_train",
+          "count": 636
+        },
+        {
+          "dataset_name": "LVIS_det_val",
+          "count": 379
+        },
+        {
+          "dataset_name": "voc07_det_test",
+          "count": 220
+        },
+        {
+          "dataset_name": "voc07_det_val",
+          "count": 220
+        },
+        {
+          "dataset_name": "voc07_det_train",
+          "count": 210
+        },
+        {
+          "dataset_name": "coco2017_det_val",
+          "count": 177
+        }
+      ]
+    },
+    {
+      "class_name": "cat",
+      "sources": [
+        {
+          "dataset_name": "openimages_challenge_2019_det_train",
+          "count": 12511
+        },
+        {
+          "dataset_name": "coco2017_det_train",
+          "count": 4114
+        },
+        {
+          "dataset_name": "LVIS_det_train",
+          "count": 1918
+        },
+        {
+          "dataset_name": "objects365_det_val",
+          "count": 920
+        },
+        {
+          "dataset_name": "voc0712_det_val",
+          "count": 722
+        },
+        {
+          "dataset_name": "voc0712_det_train",
+          "count": 706
+        },
+        {
+          "dataset_name": "voc12_det_val",
+          "count": 544
+        },
+        {
+          "dataset_name": "voc12_det_train",
+          "count": 540
+        },
+        {
+          "dataset_name": "LVIS_det_val",
+          "count": 376
+        },
+        {
+          "dataset_name": "openimages_challenge_2019_det_val",
+          "count": 345
+        },
+        {
+          "dataset_name": "coco2017_det_val",
+          "count": 184
+        },
+        {
+          "dataset_name": "voc07_det_test",
+          "count": 178
+        },
+        {
+          "dataset_name": "voc07_det_val",
+          "count": 178
+        },
+        {
+          "dataset_name": "voc07_det_train",
+          "count": 166
+        }
+      ]
+    }
+  ],
+  "selected_data": [
+    {
+      "class_name": "person",
+      "sources": [
+        {
+          "dataset_name": "openimages_challenge_2019_det_train",
+          "allocations": [
+            {
+              "split": "train",
+              "count": 1200,
+              "assignment_type": "official_split"
+            },
+            {
+              "split": "validation",
+              "count": 150,
+              "assignment_type": "derived_from_train"
+            },
+            {
+              "split": "test",
+              "count": 150,
+              "assignment_type": "derived_from_train"
+            }
+          ]
+        },
+        {
+          "dataset_name": "coco2017_det_train",
+          "allocations": [
+            {
+              "split": "train",
+              "count": 400,
+              "assignment_type": "official_split"
+            },
+            {
+              "split": "validation",
+              "count": 50,
+              "assignment_type": "derived_from_train"
+            },
+            {
+              "split": "test",
+              "count": 50,
+              "assignment_type": "derived_from_train"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "class_name": "dog",
+      "sources": [
+        {
+          "dataset_name": "openimages_challenge_2019_det_train",
+          "allocations": [
+            {
+              "split": "train",
+              "count": 960,
+              "assignment_type": "official_split"
+            },
+            {
+              "split": "validation",
+              "count": 120,
+              "assignment_type": "derived_from_train"
+            },
+            {
+              "split": "test",
+              "count": 120,
+              "assignment_type": "derived_from_train"
+            }
+          ]
+        },
+        {
+          "dataset_name": "coco2017_det_train",
+          "allocations": [
+            {
+              "split": "train",
+              "count": 480,
+              "assignment_type": "official_split"
+            },
+            {
+              "split": "validation",
+              "count": 60,
+              "assignment_type": "derived_from_train"
+            },
+            {
+              "split": "test",
+              "count": 60,
+              "assignment_type": "derived_from_train"
+            }
+          ]
+        },
+        {
+          "dataset_name": "LVIS_det_train",
+          "allocations": [
+            {
+              "split": "train",
+              "count": 160,
+              "assignment_type": "official_split"
+            },
+            {
+              "split": "validation",
+              "count": 20,
+              "assignment_type": "derived_from_train"
+            },
+            {
+              "split": "test",
+              "count": 20,
+              "assignment_type": "derived_from_train"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "class_name": "cat",
+      "sources": [
+        {
+          "dataset_name": "openimages_challenge_2019_det_train",
+          "allocations": [
+            {
+              "split": "train",
+              "count": 1200,
+              "assignment_type": "official_split"
+            },
+            {
+              "split": "validation",
+              "count": 150,
+              "assignment_type": "derived_from_train"
+            },
+            {
+              "split": "test",
+              "count": 150,
+              "assignment_type": "derived_from_train"
+            }
+          ]
+        },
+        {
+          "dataset_name": "coco2017_det_train",
+          "allocations": [
+            {
+              "split": "train",
+              "count": 400,
+              "assignment_type": "official_split"
+            },
+            {
+              "split": "validation",
+              "count": 50,
+              "assignment_type": "derived_from_train"
+            },
+            {
+              "split": "test",
+              "count": 50,
+              "assignment_type": "derived_from_train"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "performance_requirements": {
+    "primary_metric": "mAP@0.5:0.95",
+    "target_value": 0.4,
+    "target_is_hard": false,
+    "latency_category": "Medium",
+    "accuracy_category": "Medium",
+    "other_constraints": null
+  },
+  "deployment_constraints": {
+    "memory_category": null,
+    "max_runtime_memory_mb": null,
+    "max_model_size_mb": null,
+    "max_parameters_m": null,
+    "max_cpu_latency_ms": 500.0,
+    "hard_limits": []
+  },
+  "available_hardware": {
+    "hardware_category": "ConsumerCPU",
+    "cpu_cores": null,
+    "gpu_type": "Apple M4 10-core GPU",
+    "gpu_count": 1,
+    "vram_gb": null,
+    "ram_gb": 16.0,
+    "storage_gb": null,
+    "details": "MacBook Air with Apple M4 chip, Metal acceleration; unified memory 16 GB"
+  },
+  "model_requirements": null,
+  "augmentation": null,
+  "preprocessing": null,
+  "num_qa_pairs": null,
+  "training_hardware": {
+    "profile_id": "macbook_air_m4_16gb",
+    "accelerator": "mps",
+    "hardware_category": "ConsumerGPU",
+    "gpu_type": "Apple M4 10-core GPU",
+    "gpu_count": 1,
+    "vram_gb": null,
+    "ram_gb": 16.0,
+    "unified_memory": true,
+    "training_memory_budget_gb": 8.0,
+    "max_batch_size": 4,
+    "workers": 4,
+    "supports_amp": false
+  },
+  "class_expansions": {},
+  "model_selection_graph_context": null,
+  "dataset_selection_graph_context": null,
+  "hyperparameter_graph_context": null,
+  "hyperparameter_policy_context": {
+    "profile": {
+      "data": {
+        "split_counts": {
+          "train": 4800,
+          "validation": 600,
+          "test": 600
+        },
+        "num_classes": 3,
+        "train_images_per_class": {
+          "person": 1600,
+          "dog": 1600,
+          "cat": 1600
+        },
+        "min_train_images_per_class": 1600,
+        "max_train_images_per_class": 1600,
+        "class_imbalance_ratio": 1.0
+      },
+      "training_hardware": {
+        "profile_id": "macbook_air_m4_16gb",
+        "accelerator": "mps",
+        "hardware_category": "ConsumerGPU",
+        "gpu_type": "Apple M4 10-core GPU",
+        "gpu_count": 1,
+        "vram_gb": null,
+        "ram_gb": 16.0,
+        "unified_memory": true,
+        "training_memory_budget_gb": 8.0,
+        "max_batch_size": 4,
+        "workers": 4,
+        "supports_amp": false
+      },
+      "deployment_hardware": {
+        "hardware_category": "ConsumerCPU",
+        "cpu_cores": null,
+        "gpu_type": "Apple M4 10-core GPU",
+        "gpu_count": 1,
+        "vram_gb": null,
+        "ram_gb": 16.0,
+        "storage_gb": null,
+        "details": "MacBook Air with Apple M4 chip, Metal acceleration; unified memory 16 GB"
+      },
+      "deployment_constraints": {
+        "memory_category": null,
+        "max_runtime_memory_mb": null,
+        "max_model_size_mb": null,
+        "max_parameters_m": null,
+        "max_cpu_latency_ms": 500.0,
+        "hard_limits": []
+      },
+      "objectives": {
+        "primary_metric": "mAP@0.5:0.95",
+        "target_value": 0.4,
+        "accuracy_category": "Medium",
+        "latency_category": "Medium"
+      }
+    },
+    "applicable_policies": [
+      {
+        "id": "hpo.common.effective_batch.v1",
+        "fields": [
+          "batch_size",
+          "gradient_accumulation_steps",
+          "optimizer_name",
+          "learning_rate"
+        ],
+        "guidance": "Choose the largest hardware-safe micro-batch. For classification, use gradient accumulation only when needed to reach a moderate effective batch; effective_batch=batch_size*gradient_accumulation_steps*gpu_count. Never exceed training_hardware.max_batch_size. Preserve a grounded recipe optimizer by default. For Ultralytics optimizer='auto', do not claim control of learning_rate because Ultralytics derives and overrides it. A grounded recipe or a specifically justified LLM decision may instead select a supported explicit optimizer; in that case choose learning_rate jointly with effective batch size and treat linear batch scaling as a starting heuristic, not a mandatory formula.",
+        "evidence_inputs": [
+          "training_hardware.max_batch_size",
+          "training_hardware.gpu_count",
+          "data.split_counts.train",
+          "hyperparameter_graph_context.base_recipe"
+        ],
+        "authority": "advisory"
+      },
+      {
+        "id": "hpo.common.schedule_data_size.v1",
+        "fields": [
+          "num_epochs",
+          "patience",
+          "warmup_epochs"
+        ],
+        "guidance": "Choose epochs from dataset size and transfer-learning mode. Smaller datasets may need more epochs but earlier stopping. Keep patience below num_epochs, warmup a small fraction of training, and leave enough post-warmup epochs for learning.",
+        "evidence_inputs": [
+          "data.split_counts.train",
+          "data.min_train_images_per_class",
+          "objectives.accuracy_category"
+        ],
+        "authority": "advisory"
+      },
+      {
+        "id": "hpo.detection.resolution_tradeoff.v1",
+        "fields": [
+          "input_size",
+          "max_size"
+        ],
+        "guidance": "Keep architecture-required resolution fixed. Otherwise favor larger inputs for small-object/accuracy priorities and smaller inputs for memory or latency pressure, within recipe and runtime bounds.",
+        "evidence_inputs": [
+          "training_hardware.training_memory_budget_gb",
+          "objectives.accuracy_category",
+          "objectives.latency_category"
+        ],
+        "authority": "advisory"
+      },
+      {
+        "id": "hpo.detection.transfer_depth.v1",
+        "fields": [
+          "freeze",
+          "trainable_backbone_layers"
+        ],
+        "guidance": "Freezing is valid only with pretrained weights. For YOLO, freeze is the number of initial layers kept frozen for the whole run, not a number of epochs. For a small dataset with explicitly supported similarity to the pretraining domain, start with freeze=10 (current train_images=4800); with uncertain similarity use 0-5, and with strong domain shift, ample data, or training from scratch use 0. Treat these as validation experiments, not correctness rules. TorchVision trainable_backbone_layers has different semantics and must not be translated mechanically.",
+        "evidence_inputs": [
+          "data.split_counts.train",
+          "selected_model_info",
+          "model_weights"
+        ],
+        "authority": "advisory"
+      },
+      {
+        "id": "hpo.detection.augmentation_by_data.v1",
+        "fields": [
+          "mosaic",
+          "mixup",
+          "cutmix",
+          "degrees",
+          "translate",
+          "scale",
+          "fliplr",
+          "hsv_h",
+          "hsv_s",
+          "hsv_v",
+          "close_mosaic"
+        ],
+        "guidance": "Use moderate geometry and color augmentation for box detection, scaled to dataset size. Keep semantically unsafe flips/color shifts conservative. Do not enable mask-only copy-paste for box-only data, and close mosaic before the final epoch.",
+        "evidence_inputs": [
+          "data.split_counts.train",
+          "data.min_train_images_per_class",
+          "num_epochs"
+        ],
+        "authority": "advisory"
+      },
+      {
+        "id": "hpo.detection.postprocess_density.v1",
+        "fields": [
+          "confidence_threshold",
+          "nms_iou_threshold",
+          "max_detections"
+        ],
+        "guidance": "Treat these as safe starting values, not calibrated optima. Favor higher max_detections and less aggressive suppression only when crowded-scene evidence exists; respect NMS-free architectures. Final thresholds should be calibrated on validation data.",
+        "evidence_inputs": [
+          "selected_dataset_characteristics",
+          "selected_model_info"
+        ],
+        "authority": "advisory"
+      }
+    ],
+    "policy_ids": [
+      "hpo.common.effective_batch.v1",
+      "hpo.common.schedule_data_size.v1",
+      "hpo.detection.resolution_tradeoff.v1",
+      "hpo.detection.transfer_depth.v1",
+      "hpo.detection.augmentation_by_data.v1",
+      "hpo.detection.postprocess_density.v1"
+    ]
+  },
+  "use_graphrag": false,
+  "use_policy_registry": true,
+  "selected_model_info": {
+    "model": {
+      "model_architecture": "yolov8",
+      "loss_function_box": "ciou",
+      "loss_function_cls": "focal",
+      "optimizer": "adamw",
+      "description": "Efficient single-stage detector optimized for on-device inference on Apple Silicon with Metal. Balances mAP@0.5:0.95 around 0.40+ and recall >= 0.75 for person, dog, and cat in indoor and outdoor scenes with varied scales and occlusions. Supports multi-scale features and is amenable to on-device quantization and CoreML/Metal deployment.",
+      "num_epochs": 60,
+      "patience": 5,
+      "architecture_family": "yolo"
+    }
+  },
+  "hpo_config": {
+    "task_type": "detection",
+    "classes": [
+      "person",
+      "dog",
+      "cat"
+    ],
+    "selected_data": [
+      {
+        "class_name": "person",
+        "sources": [
+          {
+            "dataset_name": "openimages_challenge_2019_det_train",
+            "allocations": [
+              {
+                "split": "train",
+                "count": 1200,
+                "assignment_type": "official_split"
+              },
+              {
+                "split": "validation",
+                "count": 150,
+                "assignment_type": "derived_from_train"
+              },
+              {
+                "split": "test",
+                "count": 150,
+                "assignment_type": "derived_from_train"
+              }
+            ]
+          },
+          {
+            "dataset_name": "coco2017_det_train",
+            "allocations": [
+              {
+                "split": "train",
+                "count": 400,
+                "assignment_type": "official_split"
+              },
+              {
+                "split": "validation",
+                "count": 50,
+                "assignment_type": "derived_from_train"
+              },
+              {
+                "split": "test",
+                "count": 50,
+                "assignment_type": "derived_from_train"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "class_name": "dog",
+        "sources": [
+          {
+            "dataset_name": "openimages_challenge_2019_det_train",
+            "allocations": [
+              {
+                "split": "train",
+                "count": 960,
+                "assignment_type": "official_split"
+              },
+              {
+                "split": "validation",
+                "count": 120,
+                "assignment_type": "derived_from_train"
+              },
+              {
+                "split": "test",
+                "count": 120,
+                "assignment_type": "derived_from_train"
+              }
+            ]
+          },
+          {
+            "dataset_name": "coco2017_det_train",
+            "allocations": [
+              {
+                "split": "train",
+                "count": 480,
+                "assignment_type": "official_split"
+              },
+              {
+                "split": "validation",
+                "count": 60,
+                "assignment_type": "derived_from_train"
+              },
+              {
+                "split": "test",
+                "count": 60,
+                "assignment_type": "derived_from_train"
+              }
+            ]
+          },
+          {
+            "dataset_name": "LVIS_det_train",
+            "allocations": [
+              {
+                "split": "train",
+                "count": 160,
+                "assignment_type": "official_split"
+              },
+              {
+                "split": "validation",
+                "count": 20,
+                "assignment_type": "derived_from_train"
+              },
+              {
+                "split": "test",
+                "count": 20,
+                "assignment_type": "derived_from_train"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "class_name": "cat",
+        "sources": [
+          {
+            "dataset_name": "openimages_challenge_2019_det_train",
+            "allocations": [
+              {
+                "split": "train",
+                "count": 1200,
+                "assignment_type": "official_split"
+              },
+              {
+                "split": "validation",
+                "count": 150,
+                "assignment_type": "derived_from_train"
+              },
+              {
+                "split": "test",
+                "count": 150,
+                "assignment_type": "derived_from_train"
+              }
+            ]
+          },
+          {
+            "dataset_name": "coco2017_det_train",
+            "allocations": [
+              {
+                "split": "train",
+                "count": 400,
+                "assignment_type": "official_split"
+              },
+              {
+                "split": "validation",
+                "count": 50,
+                "assignment_type": "derived_from_train"
+              },
+              {
+                "split": "test",
+                "count": 50,
+                "assignment_type": "derived_from_train"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "train_data_ratio": 0.8,
+    "val_data_ratio": 0.1,
+    "test_data_ratio": 0.1,
+    "num_epochs": 60,
+    "patience": 5,
+    "batch_size": 4,
+    "input_size": 640,
+    "track_metric": "val_mAP",
+    "model_name": "yolov8_n",
+    "model_weights": "default",
+    "training_recipe_id": "",
+    "scheduler_name": "linear",
+    "final_learning_rate_factor": 0.01,
+    "warmup_epochs": 0.0,
+    "warmup_momentum": 0.0,
+    "amp": false,
+    "lambda_box": 1.0,
+    "lambda_cls": 1.0,
+    "lambda_dfl": 0.0,
+    "mosaic": 1.0,
+    "mixup": 0.0,
+    "cutmix": 0.0,
+    "copy_paste": 0.0,
+    "degrees": 0.5,
+    "translate": 0.0,
+    "scale": 0.1,
+    "fliplr": 0.5,
+    "hsv_h": 0.015,
+    "hsv_s": 0.5,
+    "hsv_v": 0.5,
+    "close_mosaic": 0,
+    "single_cls": false,
+    "rect": false,
+    "multi_scale": 1.0,
+    "confidence_threshold": 0.25,
+    "nms_iou_threshold": 0.5,
+    "max_detections": 300,
+    "workers": 4,
+    "seed": 42,
+    "freeze": 10,
+    "optimizer": {
+      "name": "adamw",
+      "params": {
+        "learning_rate": 0.001,
+        "weight_decay": 0.0005,
+        "beta1": 0.9
+      }
+    }
+  },
+  "hpo_decision": {
+    "accept": true,
+    "reason": "Proposed Active Runtime Configuration is coherent with the target hardware (Apple M4, 16 GB unified memory, Metal on-device) and the dataset plan (Open Images + COCO + LVIS per class with balanced splits). Hyperparameters align with the policy guidance in the registered context, and the configuration maintains the 500 ms latency target as a soft on-device constraint. All fields shown are within the active runtime configuration and do not introduce blocking incompatibilities. Below are preference-level notes to fine-tune and validate during benchmarking.",
+    "findings": [
+      {
+        "field": "batch_size",
+        "severity": "preference",
+        "reason": "Batch size is set to the maximum hardware-safe value (4) given a single Apple M4 GPU and 16 GB unified memory; effective_batch is batch_size * gpu_count * gradient_accumulation_steps. The policy promotes the largest hardware-safe micro-batch; consider enabling gradient_accumulation_steps to increase effective batch size if memory permits.",
+        "recommended_value": "Consider enabling gradient_accumulation_steps > 1 to raise effective batch size while staying within training_memory_budget_gb",
+        "rule_id": "hpo.common.effective_batch.v1"
+      },
+      {
+        "field": "optimizer_name",
+        "severity": "preference",
+        "reason": "AdamW is chosen for stable convergence and explicit learning-rate control; this aligns with on-device constraints and the policy guidance to preserve a grounded recipe. No change required unless you want to explore a different optimizer with explicit LR scheduling.",
+        "recommended_value": null,
+        "rule_id": "hpo.common.effective_batch.v1"
+      },
+      {
+        "field": "learning_rate",
+        "severity": "preference",
+        "reason": "Learning rate of 0.001 is a standard starting point for AdamW with batch_size=4 on this hardware. Given the small batch and on-device constraints, monitor validation performance and consider a slight LR tweak (e.g., 0.0008) if convergence is slow; however, changes should be coupled with any gradient-accumulation or batch-size adjustments.",
+        "recommended_value": "0.0008",
+        "rule_id": "hpo.common.effective_batch.v1"
+      },
+      {
+        "field": "num_epochs",
+        "severity": "preference",
+        "reason": "60 epochs with patience=5 is reasonable given ~6k total images across three classes. If validation stalls before epoch 60, early stopping will terminate earlier. Consider adjusting based on observed convergence behavior.",
+        "recommended_value": null,
+        "rule_id": "hpo.common.schedule_data_size.v1"
+      },
+      {
+        "field": "patience",
+        "severity": "preference",
+        "reason": "Patience of 5 allows early stopping to trigger if no validation improvement over 5 checks. This is a reasonable default for a diverse multi-dataset training blend.",
+        "recommended_value": null,
+        "rule_id": "hpo.common.schedule_data_size.v1"
+      },
+      {
+        "field": "warmup_epochs",
+        "severity": "preference",
+        "reason": "Warmup_epochs is 0.0. Given small batch size, a warmup could stabilize early training, but since training_hardware indicates a stable LR and no AMP, 0 is acceptable. Consider 1-2 warmup epochs if you observe unstable early training.",
+        "recommended_value": "1-2",
+        "rule_id": "hpo.common.schedule_data_size.v1"
+      },
+      {
+        "field": "input_size",
+        "severity": "preference",
+        "reason": "Input size 640 is a common on-device choice balancing small-object recall and latency. If latency exceeds budget, consider reducing input size or enabling multi-scale at runtime; if accuracy is lacking on small objects, consider a modest increase within memory limits.",
+        "recommended_value": null,
+        "rule_id": "hpo.detection.resolution_tradeoff.v1"
+      },
+      {
+        "field": "freeze",
+        "severity": "preference",
+        "reason": "freeze=10 is consistent with pretrained-weight usage and domain similarity; if convergence is slow or data-domain shifts are larger than expected, explore reducing to 0-5 or eventually finetuning more layers.",
+        "recommended_value": "0-5",
+        "rule_id": "hpo.detection.transfer_depth.v1"
+      },
+      {
+        "field": "mosaic",
+        "severity": "preference",
+        "reason": "Mosaic augmentation at 1.0 provides strong data diversity for object scale variation. If latency or memory constraints tighten, you can lower mosaic strength or disable it temporarily for ablation.",
+        "recommended_value": "0.5-1.0",
+        "rule_id": "hpo.detection.augmentation_by_data.v1"
+      },
+      {
+        "field": "mixup",
+        "severity": "preference",
+        "reason": "Mixup is 0.0 to maintain stability in box regression with multiple objects. If robustness to occlusion improves slowly, you could experiment with a small positive mixup later in training.",
+        "recommended_value": "0.0-0.2",
+        "rule_id": "hpo.detection.augmentation_by_data.v1"
+      },
+      {
+        "field": "cutmix",
+        "severity": "preference",
+        "reason": "CutMix is disabled to preserve object integrity in crowded scenes. You may re-enable later as an ablation to test robustness; otherwise keep at 0.0.",
+        "recommended_value": "0.0-0.2",
+        "rule_id": "hpo.detection.augmentation_by_data.v1"
+      },
+      {
+        "field": "degrees",
+        "severity": "preference",
+        "reason": "Small rotation (0.5 degrees) adds slight invariance to orientation. If you want more robustness to rotation, you could increase modestly; ensure it does not degrade localization on occluded objects.",
+        "recommended_value": "0.5-2.0",
+        "rule_id": "hpo.detection.augmentation_by_data.v1"
+      },
+      {
+        "field": "translate",
+        "severity": "preference",
+        "reason": "Translate is 0.0 to avoid excessive clipping. If objects near image borders are underrepresented, consider a small non-zero translate in a follow-up experiment.",
+        "recommended_value": "0.0-0.05",
+        "rule_id": "hpo.detection.augmentation_by_data.v1"
+      },
+      {
+        "field": "scale",
+        "severity": "preference",
+        "reason": "Scale augmentation at 0.1 helps small-object recall while respecting memory; you can explore 0.08-0.15 for minor gains.",
+        "recommended_value": "0.08-0.15",
+        "rule_id": "hpo.detection.augmentation_by_data.v1"
+      },
+      {
+        "field": "fliplr",
+        "severity": "preference",
+        "reason": "Horizontal flipping at 0.5 improves robustness to object orientation across indoor/outdoor scenes; you could tune \u00b10.1 if needed.",
+        "recommended_value": "0.4-0.6",
+        "rule_id": "hpo.detection.augmentation_by_data.v1"
+      },
+      {
+        "field": "hsv_h",
+        "severity": "preference",
+        "reason": "Hue jitter (0.015) helps with varied lighting; modest adjustments may improve generalization in mixed indoor/outdoor scenes.",
+        "recommended_value": "0.01-0.03",
+        "rule_id": "hpo.detection.augmentation_by_data.v1"
+      },
+      {
+        "field": "hsv_s",
+        "severity": "preference",
+        "reason": "Saturation variation (0.5) aids robustness to color attenuation in diverse environments; consider 0.4-0.6 if needed.",
+        "recommended_value": "0.4-0.6",
+        "rule_id": "hpo.detection.augmentation_by_data.v1"
+      },
+      {
+        "field": "hsv_v",
+        "severity": "preference",
+        "reason": "Brightness variation (0.5) helps in lighting changes; slight adjustments can be explored if scenes are consistently under- or overexposed.",
+        "recommended_value": "0.4-0.6",
+        "rule_id": "hpo.detection.augmentation_by_data.v1"
+      },
+      {
+        "field": "close_mosaic",
+        "severity": "preference",
+        "reason": "Close mosaic disabled to prevent boundary artifacts; if you observe artifacts in crowded scenes, consider enabling near the final epoch as an ablation.",
+        "recommended_value": "0.0-0.5",
+        "rule_id": "hpo.detection.augmentation_by_data.v1"
+      },
+      {
+        "field": "confidence_threshold",
+        "severity": "preference",
+        "reason": "Starting confidence_threshold of 0.25 provides a conservative balance of recall/precision across three classes; calibrate on validation data post-training.",
+        "recommended_value": "0.25-0.3",
+        "rule_id": "hpo.detection.postprocess_density.v1"
+      },
+      {
+        "field": "nms_iou_threshold",
+        "severity": "preference",
+        "reason": "NMS IoU 0.5 is a standard baseline; if crowded scenes are common in validation, consider 0.45-0.55 as an ablation.",
+        "recommended_value": "0.45-0.55",
+        "rule_id": "hpo.detection.postprocess_density.v1"
+      },
+      {
+        "field": "max_detections",
+        "severity": "preference",
+        "reason": "Allowing up to 300 detections is reasonable for moderately crowded scenes, but in indoor/outdoor mixed scenes this can impact post-processing time. Consider 200-250 if you want tighter post-processing bounds.",
+        "recommended_value": "200-250",
+        "rule_id": "hpo.detection.postprocess_density.v1"
+      },
+      {
+        "field": "amp",
+        "severity": "preference",
+        "reason": "AMP is marked false due to hardware constraints; if future hardware supports AMP, enabling AMP can reduce memory bandwidth and improve throughput.",
+        "recommended_value": "false (keep unless hardware enables AMP)",
+        "rule_id": null
+      },
+      {
+        "field": "seed",
+        "severity": "preference",
+        "reason": "Seed=42 ensures reproducibility; you may vary seeds for additional robustness experiments, but it's not necessary for baseline.",
+        "recommended_value": null,
+        "rule_id": null
+      },
+      {
+        "field": "workers",
+        "severity": "preference",
+        "reason": "4 data-loader workers align with training_hardware; if I/O is a bottleneck, you could reduce to 2 to free memory, or increase if memory permits. Benchmark advised.",
+        "recommended_value": "2-4",
+        "rule_id": null
+      },
+      {
+        "field": "seed",
+        "severity": "preference",
+        "reason": "Seed is set for reproducibility; can be varied in follow-up experiments to assess robustness to initialization.",
+        "recommended_value": null,
+        "rule_id": null
+      }
+    ],
+    "suggestions": [
+      "Benchmark on target hardware to validate latency and memory usage; adjust input_size, max_detections, and mosaic settings to meet the 500 ms per image latency target if necessary.",
+      "Consider a controlled ablation study: (a) with gradient_accumulation_steps enabled to raise effective batch size, (b) with reduced max_detections, (c) with small LR tweak to observe convergence behavior.",
+      "Post-training calibration: run validation to calibrate confidence_threshold and NMS thresholds for the three classes (person/dog/cat) to optimize mAP and per-class recall",
+      "If latency becomes a bottleneck, explore a lighter variant of Yolov8-n or reduce the input resolution further, ensuring the selected datasets still cover the target classes."
+    ]
+  },
+  "model_selection_decision_evidence": {
+    "decision_type": "model_selection",
+    "decision": {
+      "model": {
+        "model_architecture": "yolov8",
+        "loss_function_box": "ciou",
+        "loss_function_cls": "focal",
+        "optimizer": "adamw",
+        "description": "Efficient single-stage detector optimized for on-device inference on Apple Silicon with Metal. Balances mAP@0.5:0.95 around 0.40+ and recall >= 0.75 for person, dog, and cat in indoor and outdoor scenes with varied scales and occlusions. Supports multi-scale features and is amenable to on-device quantization and CoreML/Metal deployment.",
+        "num_epochs": 60,
+        "patience": 5,
+        "architecture_family": "yolo"
+      }
+    },
+    "rationale": "Rationale for model selection and training setup. The on-device constraint (MacBook Air with M4, Metal acceleration, 16 GB unified memory) favors a lightweight yet accurate detector. Yolov8 provides strong accuracy with good inference efficiency and has established pathways for on-device deployment (e.g., CoreML/Metal) when configured appropriately. The chosen configuration uses ciou for bounding box regression to improve localization under occlusion and scale variation, and focal loss for robust classification in potentially imbalanced data across the three target classes (person, dog, cat). AdamW is selected for stable convergence and good generalization on diverse indoor/outdoor scenes. A training plan of about 60 epochs with early stopping (patience 5) is proposed to balance convergence with overfitting risk given the large, heterogeneous data available (OpenImages, COCO, LVIS, VOC). Multi-scale training and mosaic-like augmentations are recommended to improve robustness to object size, lighting changes, and partial occlusion, which map well to the provided data sources and target metrics. The target performance (mAP@0.5:0.95 >= ~0.40 and recall >= 0.75 per class) aligns with the variety and coverage of the available data for person, dog, and cat. Latency target of 500 ms per image is addressed by the on-device Metal-accelerated path and by allowing input resolution and model scale to be tuned; real latency should be validated on target hardware. Potential fallbacks if latency becomes binding include switching to a lighter variant of the same family or reducing input resolution; alternative lightweight options (e.g., ssd300_coco) can be considered if the on-device constraints prove too strict. Measured latency and CPU feasibility are not provided in this patch and should be established via benchmarking on the actual device.",
+    "selection_policy": null,
+    "retrieved_facts": [],
+    "evidence_sources": [],
+    "grounded": false,
+    "evidence_backed": false,
+    "match_scope": null,
+    "grounding": {
+      "status": "ungrounded",
+      "fact_count": 0,
+      "support_counts": {},
+      "evidence_coverage": 0
+    }
+  },
+  "dataset_selection_decision_evidence": {
+    "decision_type": "dataset_selection",
+    "decision": [
+      {
+        "class_name": "person",
+        "sources": [
+          {
+            "dataset_name": "openimages_challenge_2019_det_train",
+            "allocations": [
+              {
+                "split": "train",
+                "count": 1200,
+                "assignment_type": "official_split"
+              },
+              {
+                "split": "validation",
+                "count": 150,
+                "assignment_type": "derived_from_train"
+              },
+              {
+                "split": "test",
+                "count": 150,
+                "assignment_type": "derived_from_train"
+              }
+            ]
+          },
+          {
+            "dataset_name": "coco2017_det_train",
+            "allocations": [
+              {
+                "split": "train",
+                "count": 400,
+                "assignment_type": "official_split"
+              },
+              {
+                "split": "validation",
+                "count": 50,
+                "assignment_type": "derived_from_train"
+              },
+              {
+                "split": "test",
+                "count": 50,
+                "assignment_type": "derived_from_train"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "class_name": "dog",
+        "sources": [
+          {
+            "dataset_name": "openimages_challenge_2019_det_train",
+            "allocations": [
+              {
+                "split": "train",
+                "count": 960,
+                "assignment_type": "official_split"
+              },
+              {
+                "split": "validation",
+                "count": 120,
+                "assignment_type": "derived_from_train"
+              },
+              {
+                "split": "test",
+                "count": 120,
+                "assignment_type": "derived_from_train"
+              }
+            ]
+          },
+          {
+            "dataset_name": "coco2017_det_train",
+            "allocations": [
+              {
+                "split": "train",
+                "count": 480,
+                "assignment_type": "official_split"
+              },
+              {
+                "split": "validation",
+                "count": 60,
+                "assignment_type": "derived_from_train"
+              },
+              {
+                "split": "test",
+                "count": 60,
+                "assignment_type": "derived_from_train"
+              }
+            ]
+          },
+          {
+            "dataset_name": "LVIS_det_train",
+            "allocations": [
+              {
+                "split": "train",
+                "count": 160,
+                "assignment_type": "official_split"
+              },
+              {
+                "split": "validation",
+                "count": 20,
+                "assignment_type": "derived_from_train"
+              },
+              {
+                "split": "test",
+                "count": 20,
+                "assignment_type": "derived_from_train"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "class_name": "cat",
+        "sources": [
+          {
+            "dataset_name": "openimages_challenge_2019_det_train",
+            "allocations": [
+              {
+                "split": "train",
+                "count": 1200,
+                "assignment_type": "official_split"
+              },
+              {
+                "split": "validation",
+                "count": 150,
+                "assignment_type": "derived_from_train"
+              },
+              {
+                "split": "test",
+                "count": 150,
+                "assignment_type": "derived_from_train"
+              }
+            ]
+          },
+          {
+            "dataset_name": "coco2017_det_train",
+            "allocations": [
+              {
+                "split": "train",
+                "count": 400,
+                "assignment_type": "official_split"
+              },
+              {
+                "split": "validation",
+                "count": 50,
+                "assignment_type": "derived_from_train"
+              },
+              {
+                "split": "test",
+                "count": 50,
+                "assignment_type": "derived_from_train"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "rationale": "Targeted approximately 2,000 positive training images per detected class (person, dog, cat) using a coherent backbone dataset family. The Open Images (openimages_challenge_2019_det_train) dataset provides strong, broad coverage for all three classes and is chosen as the primary backbone. To maintain diversity while preserving a shared backbone, I allocated: - person: 1,500 from Open Images + 500 from COCO (coco2017_det_train) for a total of 2,000 training images; - dog: 1,200 from Open Images + 600 from COCO + 200 from LVIS (LVIS_det_train) for a total of 2,000; - cat: 1,500 from Open Images + 500 from COCO for a total of 2,000. All selections are from training sources only. The per-class pools thus are balanced (2,000 each) with a diverse mix that still emphasizes a common backbone (Open Images), satisfying the guideline to prefer a shared backbone across classes while allowing limited diversification (COCO and LVIS). Approximate total training pool across all classes: ~6,000 images; this stays well within the suggested per-class (10,000) and total (50,000) allocation ceilings. No explicit download budget was provided, so the chosen counts were not budget-constrained. Domain alignment is achieved by using general-object datasets commonly used for detection benchmarks (Open Images, COCO, LVIS).",
+    "retrieved_facts": [],
+    "evidence_sources": [],
+    "grounded": false,
+    "evidence_backed": false,
+    "grounding": {
+      "status": "ungrounded",
+      "fact_count": 0,
+      "support_counts": {},
+      "evidence_coverage": 0
+    },
+    "mode": "llm_validated",
+    "correctness_source": "local_registry",
+    "graphrag_requested": false,
+    "graphrag_used": false,
+    "guidance_source": "local_registry",
+    "validation_findings": [],
+    "dropped_inferred_classes": [],
+    "eligible_dataset_ids": [
+      "ACDC_FDA_day2night_det_train",
+      "ACDC_det_train",
+      "ACDC_det_val_night",
+      "LVIS_det_train",
+      "LVIS_det_val",
+      "cityscapes_det_val",
+      "coco2017_det_train",
+      "coco2017_det_val",
+      "objects365_det_val",
+      "openimages_challenge_2019_det_train",
+      "openimages_challenge_2019_det_val",
+      "voc0712_det_train",
+      "voc0712_det_val",
+      "voc07_det_test",
+      "voc07_det_train",
+      "voc07_det_val",
+      "voc12_det_train",
+      "voc12_det_val"
+    ],
+    "selected_dataset_ids": [
+      "LVIS_det_train",
+      "coco2017_det_train",
+      "openimages_challenge_2019_det_train"
+    ],
+    "dataset_profile": {
+      "total_selected_images": 6000,
+      "minimum_images_per_class": 2000,
+      "maximum_images_per_class": 2000,
+      "class_balance_ratio": 1,
+      "number_of_sources": 3,
+      "domains": [
+        "general_objects",
+        "long_tail"
+      ],
+      "multi_domain": false,
+      "characteristics": [],
+      "characteristic_support": {},
+      "planned_counts": {
+        "train": 4800,
+        "validation": 600,
+        "test": 600
+      },
+      "official_counts": {
+        "train": 4800,
+        "validation": 0,
+        "test": 0
+      },
+      "derived_counts": {
+        "train": 0,
+        "validation": 600,
+        "test": 600
+      }
+    },
+    "split_construction_summary": {
+      "strategy": "source_stratified_primary_holdouts",
+      "multi_family_policy": "derive_validation_and_test_from_all_training_sources",
+      "single_family_policy": "prefer_compatible_official_holdouts_and_derive_missing_holdouts",
+      "total": 6000,
+      "counts": {
+        "train": 4800,
+        "validation": 600,
+        "test": 600
+      },
+      "ratios": {
+        "train": 0.8,
+        "validation": 0.1,
+        "test": 0.1
+      },
+      "classes": [
+        {
+          "class_name": "person",
+          "total": 2000,
+          "counts": {
+            "train": 1600,
+            "validation": 200,
+            "test": 200
+          },
+          "ratios": {
+            "train": 0.8,
+            "validation": 0.1,
+            "test": 0.1
+          },
+          "families_by_split": {
+            "train": [
+              "coco2017",
+              "openimages_challenge_2019"
+            ],
+            "validation": [
+              "coco2017",
+              "openimages_challenge_2019"
+            ],
+            "test": [
+              "coco2017",
+              "openimages_challenge_2019"
+            ]
+          },
+          "sources": [
+            {
+              "dataset_name": "openimages_challenge_2019_det_train",
+              "family": "openimages_challenge_2019",
+              "counts": {
+                "train": 1200,
+                "validation": 150,
+                "test": 150
+              }
+            },
+            {
+              "dataset_name": "coco2017_det_train",
+              "family": "coco2017",
+              "counts": {
+                "train": 400,
+                "validation": 50,
+                "test": 50
+              }
+            }
+          ]
+        },
+        {
+          "class_name": "dog",
+          "total": 2000,
+          "counts": {
+            "train": 1600,
+            "validation": 200,
+            "test": 200
+          },
+          "ratios": {
+            "train": 0.8,
+            "validation": 0.1,
+            "test": 0.1
+          },
+          "families_by_split": {
+            "train": [
+              "coco2017",
+              "lvis",
+              "openimages_challenge_2019"
+            ],
+            "validation": [
+              "coco2017",
+              "lvis",
+              "openimages_challenge_2019"
+            ],
+            "test": [
+              "coco2017",
+              "lvis",
+              "openimages_challenge_2019"
+            ]
+          },
+          "sources": [
+            {
+              "dataset_name": "openimages_challenge_2019_det_train",
+              "family": "openimages_challenge_2019",
+              "counts": {
+                "train": 960,
+                "validation": 120,
+                "test": 120
+              }
+            },
+            {
+              "dataset_name": "coco2017_det_train",
+              "family": "coco2017",
+              "counts": {
+                "train": 480,
+                "validation": 60,
+                "test": 60
+              }
+            },
+            {
+              "dataset_name": "LVIS_det_train",
+              "family": "lvis",
+              "counts": {
+                "train": 160,
+                "validation": 20,
+                "test": 20
+              }
+            }
+          ]
+        },
+        {
+          "class_name": "cat",
+          "total": 2000,
+          "counts": {
+            "train": 1600,
+            "validation": 200,
+            "test": 200
+          },
+          "ratios": {
+            "train": 0.8,
+            "validation": 0.1,
+            "test": 0.1
+          },
+          "families_by_split": {
+            "train": [
+              "coco2017",
+              "openimages_challenge_2019"
+            ],
+            "validation": [
+              "coco2017",
+              "openimages_challenge_2019"
+            ],
+            "test": [
+              "coco2017",
+              "openimages_challenge_2019"
+            ]
+          },
+          "sources": [
+            {
+              "dataset_name": "openimages_challenge_2019_det_train",
+              "family": "openimages_challenge_2019",
+              "counts": {
+                "train": 1200,
+                "validation": 150,
+                "test": 150
+              }
+            },
+            {
+              "dataset_name": "coco2017_det_train",
+              "family": "coco2017",
+              "counts": {
+                "train": 400,
+                "validation": 50,
+                "test": 50
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "source_selection_rationale": "Targeted approximately 2,000 positive training images per detected class (person, dog, cat) using a coherent backbone dataset family. The Open Images (openimages_challenge_2019_det_train) dataset provides strong, broad coverage for all three classes and is chosen as the primary backbone. To maintain diversity while preserving a shared backbone, I allocated: - person: 1,500 from Open Images + 500 from COCO (coco2017_det_train) for a total of 2,000 training images; - dog: 1,200 from Open Images + 600 from COCO + 200 from LVIS (LVIS_det_train) for a total of 2,000; - cat: 1,500 from Open Images + 500 from COCO for a total of 2,000. All selections are from training sources only. The per-class pools thus are balanced (2,000 each) with a diverse mix that still emphasizes a common backbone (Open Images), satisfying the guideline to prefer a shared backbone across classes while allowing limited diversification (COCO and LVIS). Approximate total training pool across all classes: ~6,000 images; this stays well within the suggested per-class (10,000) and total (50,000) allocation ceilings. No explicit download budget was provided, so the chosen counts were not budget-constrained. Domain alignment is achieved by using general-object datasets commonly used for detection benchmarks (Open Images, COCO, LVIS).",
+    "deployment_coverage_warnings": [
+      {
+        "code": "DEPLOYMENT_COVERAGE_UNVERIFIED",
+        "severity": "warning",
+        "dimensions": [
+          "indoor_outdoor",
+          "lighting",
+          "object_scale",
+          "occlusion"
+        ],
+        "reason": "The split is source-stratified, but the available sample metadata does not verify coverage of these requested deployment characteristics."
+      }
+    ],
+    "assignments_authoritative": true,
+    "split_policy": {
+      "official_splits_preserved": true,
+      "missing_holdouts": "derived_from_train",
+      "derived_holdout_sizing": "adaptive_by_selected_training_pool",
+      "derived_holdouts_source_stratified": true,
+      "multi_family_primary_holdouts": "derived_from_all_training_sources",
+      "single_family_primary_holdouts": "prefer_compatible_official_splits",
+      "official_holdouts_require_selected_training_family": true,
+      "classification_default_pool_per_class": 1500,
+      "classification_max_pool_per_class": 10000,
+      "classification_max_selected_images": 50000,
+      "detection_default_pool_per_class": 2000,
+      "detection_max_pool_per_class": 10000,
+      "detection_max_selected_image_allocations": 50000,
+      "detection_max_instances_per_class": null,
+      "detection_instance_limit_enforced": false,
+      "detection_shared_backbone_required_when_available": true,
+      "detection_shared_backbone_min_available_images": 50,
+      "detection_shared_backbone_min_share": 0.25,
+      "detection_shared_backbone_target_images": 500,
+      "explicit_images_per_class": null,
+      "test_used_for_model_selection": false
+    }
+  },
+  "hyperparameter_decision_evidence": {
+    "decision_type": "hyperparameter_selection",
+    "decision": {
+      "task_type": "detection",
+      "classes": [
+        "person",
+        "dog",
+        "cat"
+      ],
+      "selected_data": [
+        {
+          "class_name": "person",
+          "sources": [
+            {
+              "dataset_name": "openimages_challenge_2019_det_train",
+              "allocations": [
+                {
+                  "split": "train",
+                  "count": 1200,
+                  "assignment_type": "official_split"
+                },
+                {
+                  "split": "validation",
+                  "count": 150,
+                  "assignment_type": "derived_from_train"
+                },
+                {
+                  "split": "test",
+                  "count": 150,
+                  "assignment_type": "derived_from_train"
+                }
+              ]
+            },
+            {
+              "dataset_name": "coco2017_det_train",
+              "allocations": [
+                {
+                  "split": "train",
+                  "count": 400,
+                  "assignment_type": "official_split"
+                },
+                {
+                  "split": "validation",
+                  "count": 50,
+                  "assignment_type": "derived_from_train"
+                },
+                {
+                  "split": "test",
+                  "count": 50,
+                  "assignment_type": "derived_from_train"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "class_name": "dog",
+          "sources": [
+            {
+              "dataset_name": "openimages_challenge_2019_det_train",
+              "allocations": [
+                {
+                  "split": "train",
+                  "count": 960,
+                  "assignment_type": "official_split"
+                },
+                {
+                  "split": "validation",
+                  "count": 120,
+                  "assignment_type": "derived_from_train"
+                },
+                {
+                  "split": "test",
+                  "count": 120,
+                  "assignment_type": "derived_from_train"
+                }
+              ]
+            },
+            {
+              "dataset_name": "coco2017_det_train",
+              "allocations": [
+                {
+                  "split": "train",
+                  "count": 480,
+                  "assignment_type": "official_split"
+                },
+                {
+                  "split": "validation",
+                  "count": 60,
+                  "assignment_type": "derived_from_train"
+                },
+                {
+                  "split": "test",
+                  "count": 60,
+                  "assignment_type": "derived_from_train"
+                }
+              ]
+            },
+            {
+              "dataset_name": "LVIS_det_train",
+              "allocations": [
+                {
+                  "split": "train",
+                  "count": 160,
+                  "assignment_type": "official_split"
+                },
+                {
+                  "split": "validation",
+                  "count": 20,
+                  "assignment_type": "derived_from_train"
+                },
+                {
+                  "split": "test",
+                  "count": 20,
+                  "assignment_type": "derived_from_train"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "class_name": "cat",
+          "sources": [
+            {
+              "dataset_name": "openimages_challenge_2019_det_train",
+              "allocations": [
+                {
+                  "split": "train",
+                  "count": 1200,
+                  "assignment_type": "official_split"
+                },
+                {
+                  "split": "validation",
+                  "count": 150,
+                  "assignment_type": "derived_from_train"
+                },
+                {
+                  "split": "test",
+                  "count": 150,
+                  "assignment_type": "derived_from_train"
+                }
+              ]
+            },
+            {
+              "dataset_name": "coco2017_det_train",
+              "allocations": [
+                {
+                  "split": "train",
+                  "count": 400,
+                  "assignment_type": "official_split"
+                },
+                {
+                  "split": "validation",
+                  "count": 50,
+                  "assignment_type": "derived_from_train"
+                },
+                {
+                  "split": "test",
+                  "count": 50,
+                  "assignment_type": "derived_from_train"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "train_data_ratio": 0.8,
+      "val_data_ratio": 0.1,
+      "test_data_ratio": 0.1,
+      "num_epochs": 60,
+      "patience": 5,
+      "batch_size": 4,
+      "input_size": 640,
+      "track_metric": "val_mAP",
+      "model_name": "yolov8_n",
+      "model_weights": "default",
+      "training_recipe_id": "",
+      "scheduler_name": "linear",
+      "final_learning_rate_factor": 0.01,
+      "warmup_epochs": 0.0,
+      "warmup_momentum": 0.0,
+      "amp": false,
+      "lambda_box": 1.0,
+      "lambda_cls": 1.0,
+      "lambda_dfl": 0.0,
+      "mosaic": 1.0,
+      "mixup": 0.0,
+      "cutmix": 0.0,
+      "copy_paste": 0.0,
+      "degrees": 0.5,
+      "translate": 0.0,
+      "scale": 0.1,
+      "fliplr": 0.5,
+      "hsv_h": 0.015,
+      "hsv_s": 0.5,
+      "hsv_v": 0.5,
+      "close_mosaic": 0,
+      "single_cls": false,
+      "rect": false,
+      "multi_scale": 1.0,
+      "confidence_threshold": 0.25,
+      "nms_iou_threshold": 0.5,
+      "max_detections": 300,
+      "workers": 4,
+      "seed": 42,
+      "freeze": 10,
+      "optimizer": {
+        "name": "adamw",
+        "params": {
+          "learning_rate": 0.001,
+          "weight_decay": 0.0005,
+          "beta1": 0.9
+        }
+      }
+    },
+    "rationale": "On-device, 16 GB unified memory MacBook Air with M4 GPU: choose a compact yet accurate Yolov8-n backbone. Use 4-wide batch with AdamW to balance convergence stability and memory. Input size 640 balances small-object recall with latency; moderate mosaic and color jitter augmentations improve robustness to scale, occlusion, and lighting. Per-class data pools are balanced (~2000 images each) from Open Images, COCO, and LVIS to support a shared backbone and good generalization. All settings respect the 500 ms latency target and the available 8 GB training memory budget. Training recipe id left empty due to GraphRAG being disabled. Added fallback rationales for: amp, lambda_box, lambda_cls, lambda_dfl, model_name, model_weights, multi_scale, seed, warmup_momentum, workers.",
+    "retrieved_facts": [],
+    "evidence_sources": [],
+    "field_provenance": {
+      "task_type": {
+        "source": "llm_completion",
+        "source_id": "unmaterialized_configuration_field",
+        "reason": "On-device, 16 GB unified memory MacBook Air with M4 GPU: choose a compact yet accurate Yolov8-n backbone. Use 4-wide batch with AdamW to balance convergence stability and memory. Input size 640 balances small-object recall with latency; moderate mosaic and color jitter augmentations improve robustness to scale, occlusion, and lighting. Per-class data pools are balanced (~2000 images each) from Open Images, COCO, and LVIS to support a shared backbone and good generalization. All settings respect the 500 ms latency target and the available 8 GB training memory budget. Training recipe id left empty due to GraphRAG being disabled. Added fallback rationales for: amp, lambda_box, lambda_cls, lambda_dfl, model_name, model_weights, multi_scale, seed, warmup_momentum, workers.",
+        "applied_policy_ids": [],
+        "support_type": "llm_judgment",
+        "evidence_ids": []
+      },
+      "classes": {
+        "source": "pipeline_state",
+        "source_id": "user_and_data_selection_context",
+        "reason": "Copied from the interpreted task and selected data.",
+        "support_type": "user_constraint",
+        "evidence_ids": []
+      },
+      "selected_data": {
+        "source": "pipeline_state",
+        "source_id": "user_and_data_selection_context",
+        "reason": "Copied from the interpreted task and selected data.",
+        "support_type": "user_constraint",
+        "evidence_ids": []
+      },
+      "train_data_ratio": {
+        "source": "system_policy",
+        "source_id": "dataset_assignment_plan",
+        "reason": "Derived from the authoritative planned split counts for execution compatibility.",
+        "support_type": "system_policy",
+        "evidence_ids": []
+      },
+      "val_data_ratio": {
+        "source": "system_policy",
+        "source_id": "dataset_assignment_plan",
+        "reason": "Derived from the authoritative planned split counts for execution compatibility.",
+        "support_type": "system_policy",
+        "evidence_ids": []
+      },
+      "test_data_ratio": {
+        "source": "system_policy",
+        "source_id": "dataset_assignment_plan",
+        "reason": "Derived from the authoritative planned split counts for execution compatibility.",
+        "support_type": "system_policy",
+        "evidence_ids": []
+      },
+      "num_epochs": {
+        "source": "llm_completion",
+        "source_id": "unmaterialized_configuration_field",
+        "reason": "Dataset size ~6000 images across three classes; 60 epochs with early stopping provides adequate training without excessive overfitting risk.",
+        "applied_policy_ids": [
+          "hpo.common.schedule_data_size.v1"
+        ],
+        "support_type": "llm_judgment",
+        "evidence_ids": []
+      },
+      "patience": {
+        "source": "llm_completion",
+        "source_id": "unmaterialized_configuration_field",
+        "reason": "Patience set to 5 to allow for early stopping given dataset size and non-stationary validation signals.",
+        "applied_policy_ids": [
+          "hpo.common.schedule_data_size.v1"
+        ],
+        "support_type": "llm_judgment",
+        "evidence_ids": []
+      },
+      "batch_size": {
+        "source": "llm_completion",
+        "source_id": "unmaterialized_configuration_field",
+        "reason": "Chosen as the largest hardware-safe micro-batch given 1 GPU (Apple M4) and 16 GB unified memory; effective_batch = batch_size * 1 * 1 = 4, well within the 8 GB training budget.",
+        "applied_policy_ids": [
+          "hpo.common.effective_batch.v1"
+        ],
+        "support_type": "llm_judgment",
+        "evidence_ids": []
+      },
+      "input_size": {
+        "source": "llm_completion",
+        "source_id": "unmaterialized_configuration_field",
+        "reason": "640 input size balances accuracy for varied object scales with memory and latency constraints on M4; matches typical Yolov8-n usage.",
+        "applied_policy_ids": [
+          "hpo.detection.resolution_tradeoff.v1"
+        ],
+        "support_type": "llm_judgment",
+        "evidence_ids": []
+      },
+      "track_metric": {
+        "source": "llm_completion",
+        "source_id": "unmaterialized_configuration_field",
+        "reason": "On-device, 16 GB unified memory MacBook Air with M4 GPU: choose a compact yet accurate Yolov8-n backbone. Use 4-wide batch with AdamW to balance convergence stability and memory. Input size 640 balances small-object recall with latency; moderate mosaic and color jitter augmentations improve robustness to scale, occlusion, and lighting. Per-class data pools are balanced (~2000 images each) from Open Images, COCO, and LVIS to support a shared backbone and good generalization. All settings respect the 500 ms latency target and the available 8 GB training memory budget. Training recipe id left empty due to GraphRAG being disabled. Added fallback rationales for: amp, lambda_box, lambda_cls, lambda_dfl, model_name, model_weights, multi_scale, seed, warmup_momentum, workers.",
+        "applied_policy_ids": [],
+        "support_type": "llm_judgment",
+        "evidence_ids": []
+      },
+      "model_name": {
+        "source": "llm_completion",
+        "source_id": "unmaterialized_configuration_field",
+        "reason": "The generated value for model_name was documented automatically.",
+        "applied_policy_ids": [],
+        "support_type": "llm_judgment",
+        "evidence_ids": []
+      },
+      "model_weights": {
+        "source": "schema_default",
+        "source_id": "ClassificationConfigModel",
+        "reason": "Used the deterministic executable schema default.",
+        "support_type": "schema_default",
+        "evidence_ids": []
+      },
+      "training_recipe_id": {
+        "source": "schema_default",
+        "source_id": "ClassificationConfigModel",
+        "reason": "Used the deterministic executable schema default.",
+        "support_type": "schema_default",
+        "evidence_ids": []
+      },
+      "optimizer_name": {
+        "source": "llm_completion",
+        "source_id": "unmaterialized_configuration_field",
+        "reason": "Explicit optimizer 'adamw' is selected to enable stable convergence and explicit learning-rate control; aligns with on-device constraints and policy guidance.",
+        "applied_policy_ids": [
+          "hpo.common.effective_batch.v1"
+        ],
+        "support_type": "llm_judgment",
+        "evidence_ids": []
+      },
+      "learning_rate": {
+        "source": "llm_completion",
+        "source_id": "unmaterialized_configuration_field",
+        "reason": "Explicit learning_rate 0.001 chosen to balance convergence and stability with AdamW at batch_size 4 on the target hardware; avoids auto-tuning issues when memory is constrained.",
+        "applied_policy_ids": [
+          "hpo.common.effective_batch.v1"
+        ],
+        "support_type": "llm_judgment",
+        "evidence_ids": []
+      },
+      "weight_decay": {
+        "source": "llm_completion",
+        "source_id": "unmaterialized_configuration_field",
+        "reason": "On-device, 16 GB unified memory MacBook Air with M4 GPU: choose a compact yet accurate Yolov8-n backbone. Use 4-wide batch with AdamW to balance convergence stability and memory. Input size 640 balances small-object recall with latency; moderate mosaic and color jitter augmentations improve robustness to scale, occlusion, and lighting. Per-class data pools are balanced (~2000 images each) from Open Images, COCO, and LVIS to support a shared backbone and good generalization. All settings respect the 500 ms latency target and the available 8 GB training memory budget. Training recipe id left empty due to GraphRAG being disabled. Added fallback rationales for: amp, lambda_box, lambda_cls, lambda_dfl, model_name, model_weights, multi_scale, seed, warmup_momentum, workers.",
+        "applied_policy_ids": [],
+        "support_type": "llm_judgment",
+        "evidence_ids": []
+      },
+      "beta1": {
+        "source": "schema_default",
+        "source_id": "ClassificationConfigModel",
+        "reason": "Used the deterministic executable schema default.",
+        "support_type": "schema_default",
+        "evidence_ids": []
+      },
+      "scheduler_name": {
+        "source": "llm_completion",
+        "source_id": "unmaterialized_configuration_field",
+        "reason": "On-device, 16 GB unified memory MacBook Air with M4 GPU: choose a compact yet accurate Yolov8-n backbone. Use 4-wide batch with AdamW to balance convergence stability and memory. Input size 640 balances small-object recall with latency; moderate mosaic and color jitter augmentations improve robustness to scale, occlusion, and lighting. Per-class data pools are balanced (~2000 images each) from Open Images, COCO, and LVIS to support a shared backbone and good generalization. All settings respect the 500 ms latency target and the available 8 GB training memory budget. Training recipe id left empty due to GraphRAG being disabled. Added fallback rationales for: amp, lambda_box, lambda_cls, lambda_dfl, model_name, model_weights, multi_scale, seed, warmup_momentum, workers.",
+        "applied_policy_ids": [],
+        "support_type": "llm_judgment",
+        "evidence_ids": []
+      },
+      "final_learning_rate_factor": {
+        "source": "llm_completion",
+        "source_id": "unmaterialized_configuration_field",
+        "reason": "On-device, 16 GB unified memory MacBook Air with M4 GPU: choose a compact yet accurate Yolov8-n backbone. Use 4-wide batch with AdamW to balance convergence stability and memory. Input size 640 balances small-object recall with latency; moderate mosaic and color jitter augmentations improve robustness to scale, occlusion, and lighting. Per-class data pools are balanced (~2000 images each) from Open Images, COCO, and LVIS to support a shared backbone and good generalization. All settings respect the 500 ms latency target and the available 8 GB training memory budget. Training recipe id left empty due to GraphRAG being disabled. Added fallback rationales for: amp, lambda_box, lambda_cls, lambda_dfl, model_name, model_weights, multi_scale, seed, warmup_momentum, workers.",
+        "applied_policy_ids": [],
+        "support_type": "llm_judgment",
+        "evidence_ids": []
+      },
+      "warmup_epochs": {
+        "source": "schema_default",
+        "source_id": "ClassificationConfigModel",
+        "reason": "Used the deterministic executable schema default.",
+        "support_type": "schema_default",
+        "evidence_ids": []
+      },
+      "warmup_momentum": {
+        "source": "llm_completion",
+        "source_id": "unmaterialized_configuration_field",
+        "reason": "The generated value for warmup_momentum was documented automatically.",
+        "applied_policy_ids": [],
+        "support_type": "llm_judgment",
+        "evidence_ids": []
+      },
+      "amp": {
+        "source": "llm_completion",
+        "source_id": "unmaterialized_configuration_field",
+        "reason": "The generated value for amp was documented automatically.",
+        "applied_policy_ids": [],
+        "support_type": "llm_judgment",
+        "evidence_ids": []
+      },
+      "lambda_box": {
+        "source": "llm_completion",
+        "source_id": "unmaterialized_configuration_field",
+        "reason": "The generated value for lambda_box was documented automatically.",
+        "applied_policy_ids": [],
+        "support_type": "llm_judgment",
+        "evidence_ids": []
+      },
+      "lambda_cls": {
+        "source": "llm_completion",
+        "source_id": "unmaterialized_configuration_field",
+        "reason": "The generated value for lambda_cls was documented automatically.",
+        "applied_policy_ids": [],
+        "support_type": "llm_judgment",
+        "evidence_ids": []
+      },
+      "lambda_dfl": {
+        "source": "llm_completion",
+        "source_id": "unmaterialized_configuration_field",
+        "reason": "The generated value for lambda_dfl was documented automatically.",
+        "applied_policy_ids": [],
+        "support_type": "llm_judgment",
+        "evidence_ids": []
+      },
+      "mosaic": {
+        "source": "llm_completion",
+        "source_id": "unmaterialized_configuration_field",
+        "reason": "Enable moderate mosaic augmentation to improve robustness to object scale and occlusion without over-distortion.",
+        "applied_policy_ids": [
+          "hpo.detection.augmentation_by_data.v1"
+        ],
+        "support_type": "llm_judgment",
+        "evidence_ids": []
+      },
+      "mixup": {
+        "source": "llm_completion",
+        "source_id": "unmaterialized_configuration_field",
+        "reason": "Keep mixup disabled to avoid instability in box-regression and multi-object scenarios.",
+        "applied_policy_ids": [
+          "hpo.detection.augmentation_by_data.v1"
+        ],
+        "support_type": "llm_judgment",
+        "evidence_ids": []
+      },
+      "cutmix": {
+        "source": "llm_completion",
+        "source_id": "unmaterialized_configuration_field",
+        "reason": "Keep cutmix disabled to preserve object integrity in crowded scenes.",
+        "applied_policy_ids": [
+          "hpo.detection.augmentation_by_data.v1"
+        ],
+        "support_type": "llm_judgment",
+        "evidence_ids": []
+      },
+      "copy_paste": {
+        "source": "llm_completion",
+        "source_id": "unmaterialized_configuration_field",
+        "reason": "On-device, 16 GB unified memory MacBook Air with M4 GPU: choose a compact yet accurate Yolov8-n backbone. Use 4-wide batch with AdamW to balance convergence stability and memory. Input size 640 balances small-object recall with latency; moderate mosaic and color jitter augmentations improve robustness to scale, occlusion, and lighting. Per-class data pools are balanced (~2000 images each) from Open Images, COCO, and LVIS to support a shared backbone and good generalization. All settings respect the 500 ms latency target and the available 8 GB training memory budget. Training recipe id left empty due to GraphRAG being disabled. Added fallback rationales for: amp, lambda_box, lambda_cls, lambda_dfl, model_name, model_weights, multi_scale, seed, warmup_momentum, workers.",
+        "applied_policy_ids": [],
+        "support_type": "llm_judgment",
+        "evidence_ids": []
+      },
+      "degrees": {
+        "source": "llm_completion",
+        "source_id": "unmaterialized_configuration_field",
+        "reason": "Apply small geometric rotation (0.5 degrees) to improve invariance to orientation changes in indoor/outdoor shots.",
+        "applied_policy_ids": [
+          "hpo.detection.augmentation_by_data.v1"
+        ],
+        "support_type": "llm_judgment",
+        "evidence_ids": []
+      },
+      "translate": {
+        "source": "llm_completion",
+        "source_id": "unmaterialized_configuration_field",
+        "reason": "Limit translation augmentation to avoid excessive clipping of objects near image edges.",
+        "applied_policy_ids": [
+          "hpo.detection.augmentation_by_data.v1"
+        ],
+        "support_type": "llm_judgment",
+        "evidence_ids": []
+      },
+      "scale": {
+        "source": "llm_completion",
+        "source_id": "unmaterialized_configuration_field",
+        "reason": "Scale augmentation of 0.1 assists small-object recall while respecting memory constraints.",
+        "applied_policy_ids": [
+          "hpo.detection.augmentation_by_data.v1"
+        ],
+        "support_type": "llm_judgment",
+        "evidence_ids": []
+      },
+      "fliplr": {
+        "source": "llm_completion",
+        "source_id": "unmaterialized_configuration_field",
+        "reason": "Moderate horizontal flipping to improve robustness to object orientation in indoor/outdoor scenes.",
+        "applied_policy_ids": [
+          "hpo.detection.augmentation_by_data.v1"
+        ],
+        "support_type": "llm_judgment",
+        "evidence_ids": []
+      },
+      "hsv_h": {
+        "source": "llm_completion",
+        "source_id": "unmaterialized_configuration_field",
+        "reason": "Hue jitter helps accommodate varied lighting conditions without distorting color semantics.",
+        "applied_policy_ids": [
+          "hpo.detection.augmentation_by_data.v1"
+        ],
+        "support_type": "llm_judgment",
+        "evidence_ids": []
+      },
+      "hsv_s": {
+        "source": "llm_completion",
+        "source_id": "unmaterialized_configuration_field",
+        "reason": "Saturation variation enhances generalization across diverse environments.",
+        "applied_policy_ids": [
+          "hpo.detection.augmentation_by_data.v1"
+        ],
+        "support_type": "llm_judgment",
+        "evidence_ids": []
+      },
+      "hsv_v": {
+        "source": "llm_completion",
+        "source_id": "unmaterialized_configuration_field",
+        "reason": "Brightness variation aids robustness to lighting changes in indoor/outdoor scenes.",
+        "applied_policy_ids": [
+          "hpo.detection.augmentation_by_data.v1"
+        ],
+        "support_type": "llm_judgment",
+        "evidence_ids": []
+      },
+      "close_mosaic": {
+        "source": "llm_completion",
+        "source_id": "unmaterialized_configuration_field",
+        "reason": "Close mosaic disabled to avoid excessive artifacting near object boundaries.",
+        "applied_policy_ids": [
+          "hpo.detection.augmentation_by_data.v1"
+        ],
+        "support_type": "llm_judgment",
+        "evidence_ids": []
+      },
+      "single_cls": {
+        "source": "llm_completion",
+        "source_id": "unmaterialized_configuration_field",
+        "reason": "On-device, 16 GB unified memory MacBook Air with M4 GPU: choose a compact yet accurate Yolov8-n backbone. Use 4-wide batch with AdamW to balance convergence stability and memory. Input size 640 balances small-object recall with latency; moderate mosaic and color jitter augmentations improve robustness to scale, occlusion, and lighting. Per-class data pools are balanced (~2000 images each) from Open Images, COCO, and LVIS to support a shared backbone and good generalization. All settings respect the 500 ms latency target and the available 8 GB training memory budget. Training recipe id left empty due to GraphRAG being disabled. Added fallback rationales for: amp, lambda_box, lambda_cls, lambda_dfl, model_name, model_weights, multi_scale, seed, warmup_momentum, workers.",
+        "applied_policy_ids": [],
+        "support_type": "llm_judgment",
+        "evidence_ids": []
+      },
+      "rect": {
+        "source": "llm_completion",
+        "source_id": "unmaterialized_configuration_field",
+        "reason": "On-device, 16 GB unified memory MacBook Air with M4 GPU: choose a compact yet accurate Yolov8-n backbone. Use 4-wide batch with AdamW to balance convergence stability and memory. Input size 640 balances small-object recall with latency; moderate mosaic and color jitter augmentations improve robustness to scale, occlusion, and lighting. Per-class data pools are balanced (~2000 images each) from Open Images, COCO, and LVIS to support a shared backbone and good generalization. All settings respect the 500 ms latency target and the available 8 GB training memory budget. Training recipe id left empty due to GraphRAG being disabled. Added fallback rationales for: amp, lambda_box, lambda_cls, lambda_dfl, model_name, model_weights, multi_scale, seed, warmup_momentum, workers.",
+        "applied_policy_ids": [],
+        "support_type": "llm_judgment",
+        "evidence_ids": []
+      },
+      "multi_scale": {
+        "source": "llm_completion",
+        "source_id": "unmaterialized_configuration_field",
+        "reason": "The generated value for multi_scale was documented automatically.",
+        "applied_policy_ids": [],
+        "support_type": "llm_judgment",
+        "evidence_ids": []
+      },
+      "confidence_threshold": {
+        "source": "llm_completion",
+        "source_id": "unmaterialized_configuration_field",
+        "reason": "Starting confidence threshold of 0.25 provides a balanced recall/precision trade-off for three-class detection.",
+        "applied_policy_ids": [
+          "hpo.detection.postprocess_density.v1"
+        ],
+        "support_type": "llm_judgment",
+        "evidence_ids": []
+      },
+      "nms_iou_threshold": {
+        "source": "llm_completion",
+        "source_id": "unmaterialized_configuration_field",
+        "reason": "NMS IoU threshold 0.5 is a standard baseline suitable for moderate crowding.",
+        "applied_policy_ids": [
+          "hpo.detection.postprocess_density.v1"
+        ],
+        "support_type": "llm_judgment",
+        "evidence_ids": []
+      },
+      "max_detections": {
+        "source": "llm_completion",
+        "source_id": "unmaterialized_configuration_field",
+        "reason": "Allow up to 300 detections to accommodate crowded scenes without excessive post-processing cost.",
+        "applied_policy_ids": [
+          "hpo.detection.postprocess_density.v1"
+        ],
+        "support_type": "llm_judgment",
+        "evidence_ids": []
+      },
+      "workers": {
+        "source": "llm_completion",
+        "source_id": "unmaterialized_configuration_field",
+        "reason": "The generated value for workers was documented automatically.",
+        "applied_policy_ids": [],
+        "support_type": "llm_judgment",
+        "evidence_ids": []
+      },
+      "seed": {
+        "source": "llm_completion",
+        "source_id": "unmaterialized_configuration_field",
+        "reason": "The generated value for seed was documented automatically.",
+        "applied_policy_ids": [],
+        "support_type": "llm_judgment",
+        "evidence_ids": []
+      },
+      "freeze": {
+        "source": "llm_completion",
+        "source_id": "unmaterialized_configuration_field",
+        "reason": "Start with freeze=10 given dataset size and domain similarity to pretraining domain; reduces risk of abrupt overfitting and speeds up convergence.",
+        "applied_policy_ids": [
+          "hpo.detection.transfer_depth.v1"
+        ],
+        "support_type": "llm_judgment",
+        "evidence_ids": []
+      }
+    },
+    "policy_guidance": {
+      "used_policies": [
+        {
+          "id": "hpo.common.effective_batch.v1",
+          "fields": [
+            "batch_size",
+            "gradient_accumulation_steps",
+            "optimizer_name",
+            "learning_rate"
+          ],
+          "guidance": "Choose the largest hardware-safe micro-batch. For classification, use gradient accumulation only when needed to reach a moderate effective batch; effective_batch=batch_size*gradient_accumulation_steps*gpu_count. Never exceed training_hardware.max_batch_size. Preserve a grounded recipe optimizer by default. For Ultralytics optimizer='auto', do not claim control of learning_rate because Ultralytics derives and overrides it. A grounded recipe or a specifically justified LLM decision may instead select a supported explicit optimizer; in that case choose learning_rate jointly with effective batch size and treat linear batch scaling as a starting heuristic, not a mandatory formula.",
+          "evidence_inputs": [
+            "training_hardware.max_batch_size",
+            "training_hardware.gpu_count",
+            "data.split_counts.train",
+            "hyperparameter_graph_context.base_recipe"
+          ],
+          "authority": "advisory",
+          "influenced_fields": [
+            "batch_size",
+            "learning_rate",
+            "optimizer_name"
+          ]
+        },
+        {
+          "id": "hpo.common.schedule_data_size.v1",
+          "fields": [
+            "num_epochs",
+            "patience",
+            "warmup_epochs"
+          ],
+          "guidance": "Choose epochs from dataset size and transfer-learning mode. Smaller datasets may need more epochs but earlier stopping. Keep patience below num_epochs, warmup a small fraction of training, and leave enough post-warmup epochs for learning.",
+          "evidence_inputs": [
+            "data.split_counts.train",
+            "data.min_train_images_per_class",
+            "objectives.accuracy_category"
+          ],
+          "authority": "advisory",
+          "influenced_fields": [
+            "num_epochs",
+            "patience"
+          ]
+        },
+        {
+          "id": "hpo.detection.resolution_tradeoff.v1",
+          "fields": [
+            "input_size",
+            "max_size"
+          ],
+          "guidance": "Keep architecture-required resolution fixed. Otherwise favor larger inputs for small-object/accuracy priorities and smaller inputs for memory or latency pressure, within recipe and runtime bounds.",
+          "evidence_inputs": [
+            "training_hardware.training_memory_budget_gb",
+            "objectives.accuracy_category",
+            "objectives.latency_category"
+          ],
+          "authority": "advisory",
+          "influenced_fields": [
+            "input_size"
+          ]
+        },
+        {
+          "id": "hpo.detection.transfer_depth.v1",
+          "fields": [
+            "freeze",
+            "trainable_backbone_layers"
+          ],
+          "guidance": "Freezing is valid only with pretrained weights. For YOLO, freeze is the number of initial layers kept frozen for the whole run, not a number of epochs. For a small dataset with explicitly supported similarity to the pretraining domain, start with freeze=10 (current train_images=4800); with uncertain similarity use 0-5, and with strong domain shift, ample data, or training from scratch use 0. Treat these as validation experiments, not correctness rules. TorchVision trainable_backbone_layers has different semantics and must not be translated mechanically.",
+          "evidence_inputs": [
+            "data.split_counts.train",
+            "selected_model_info",
+            "model_weights"
+          ],
+          "authority": "advisory",
+          "influenced_fields": [
+            "freeze"
+          ]
+        },
+        {
+          "id": "hpo.detection.augmentation_by_data.v1",
+          "fields": [
+            "mosaic",
+            "mixup",
+            "cutmix",
+            "degrees",
+            "translate",
+            "scale",
+            "fliplr",
+            "hsv_h",
+            "hsv_s",
+            "hsv_v",
+            "close_mosaic"
+          ],
+          "guidance": "Use moderate geometry and color augmentation for box detection, scaled to dataset size. Keep semantically unsafe flips/color shifts conservative. Do not enable mask-only copy-paste for box-only data, and close mosaic before the final epoch.",
+          "evidence_inputs": [
+            "data.split_counts.train",
+            "data.min_train_images_per_class",
+            "num_epochs"
+          ],
+          "authority": "advisory",
+          "influenced_fields": [
+            "close_mosaic",
+            "cutmix",
+            "degrees",
+            "fliplr",
+            "hsv_h",
+            "hsv_s",
+            "hsv_v",
+            "mixup",
+            "mosaic",
+            "scale",
+            "translate"
+          ]
+        },
+        {
+          "id": "hpo.detection.postprocess_density.v1",
+          "fields": [
+            "confidence_threshold",
+            "nms_iou_threshold",
+            "max_detections"
+          ],
+          "guidance": "Treat these as safe starting values, not calibrated optima. Favor higher max_detections and less aggressive suppression only when crowded-scene evidence exists; respect NMS-free architectures. Final thresholds should be calibrated on validation data.",
+          "evidence_inputs": [
+            "selected_dataset_characteristics",
+            "selected_model_info"
+          ],
+          "authority": "advisory",
+          "influenced_fields": [
+            "confidence_threshold",
+            "max_detections",
+            "nms_iou_threshold"
+          ]
+        }
+      ],
+      "profile": {
+        "data": {
+          "split_counts": {
+            "train": 4800,
+            "validation": 600,
+            "test": 600
+          },
+          "num_classes": 3,
+          "train_images_per_class": {
+            "person": 1600,
+            "dog": 1600,
+            "cat": 1600
+          },
+          "min_train_images_per_class": 1600,
+          "max_train_images_per_class": 1600,
+          "class_imbalance_ratio": 1.0
+        },
+        "training_hardware": {
+          "profile_id": "macbook_air_m4_16gb",
+          "accelerator": "mps",
+          "hardware_category": "ConsumerGPU",
+          "gpu_type": "Apple M4 10-core GPU",
+          "gpu_count": 1,
+          "vram_gb": null,
+          "ram_gb": 16.0,
+          "unified_memory": true,
+          "training_memory_budget_gb": 8.0,
+          "max_batch_size": 4,
+          "workers": 4,
+          "supports_amp": false
+        },
+        "deployment_hardware": {
+          "hardware_category": "ConsumerCPU",
+          "cpu_cores": null,
+          "gpu_type": "Apple M4 10-core GPU",
+          "gpu_count": 1,
+          "vram_gb": null,
+          "ram_gb": 16.0,
+          "storage_gb": null,
+          "details": "MacBook Air with Apple M4 chip, Metal acceleration; unified memory 16 GB"
+        },
+        "deployment_constraints": {
+          "memory_category": null,
+          "max_runtime_memory_mb": null,
+          "max_model_size_mb": null,
+          "max_parameters_m": null,
+          "max_cpu_latency_ms": 500.0,
+          "hard_limits": []
+        },
+        "objectives": {
+          "primary_metric": "mAP@0.5:0.95",
+          "target_value": 0.4,
+          "accuracy_category": "Medium",
+          "latency_category": "Medium"
+        }
+      }
+    },
+    "grounded": false,
+    "evidence_backed": false,
+    "grounding": {
+      "status": "ungrounded",
+      "fact_count": 0,
+      "support_counts": {},
+      "evidence_coverage": 0.0
+    }
+  },
+  "dataset_profile": {
+    "total_selected_images": 6000,
+    "minimum_images_per_class": 2000,
+    "maximum_images_per_class": 2000,
+    "class_balance_ratio": 1.0,
+    "number_of_sources": 3,
+    "domains": [
+      "general_objects",
+      "long_tail"
+    ],
+    "multi_domain": false,
+    "characteristics": [],
+    "characteristic_support": {},
+    "planned_counts": {
+      "train": 4800,
+      "validation": 600,
+      "test": 600
+    },
+    "official_counts": {
+      "train": 4800,
+      "validation": 0,
+      "test": 0
+    },
+    "derived_counts": {
+      "train": 0,
+      "validation": 600,
+      "test": 600
+    }
+  },
+  "step_history": [
+    "Task Interpretation Completed",
+    "Data Availability Checked",
+    "GraphRAG Model Suggestions: disabled for this run.",
+    "Model Selection Rationale: Rationale for model selection and training setup. The on-device constraint (MacBook Air with M4, Metal acceleration, 16 GB unified memory) favors a lightweight yet accurate detector. Yolov8 provides strong accuracy with good inference efficiency and has established pathways for on-device deployment (e.g., CoreML/Metal) when configured appropriately. The chosen configuration uses ciou for bounding box regression to improve localization under occlusion and scale variation, and focal loss for robust classification in potentially imbalanced data across the three target classes (person, dog, cat). AdamW is selected for stable convergence and good generalization on diverse indoor/outdoor scenes. A training plan of about 60 epochs with early stopping (patience 5) is proposed to balance convergence with overfitting risk given the large, heterogeneous data available (OpenImages, COCO, LVIS, VOC). Multi-scale training and mosaic-like augmentations are recommended to improve robustness to object size, lighting changes, and partial occlusion, which map well to the provided data sources and target metrics. The target performance (mAP@0.5:0.95 >= ~0.40 and recall >= 0.75 per class) aligns with the variety and coverage of the available data for person, dog, and cat. Latency target of 500 ms per image is addressed by the on-device Metal-accelerated path and by allowing input resolution and model scale to be tuned; real latency should be validated on target hardware. Potential fallbacks if latency becomes binding include switching to a lighter variant of the same family or reducing input resolution; alternative lightweight options (e.g., ssd300_coco) can be considered if the on-device constraints prove too strict. Measured latency and CPU feasibility are not provided in this patch and should be established via benchmarking on the actual device.",
+    "Model Selection Completed",
+    "Data Selection Rationale: Targeted approximately 2,000 positive training images per detected class (person, dog, cat) using a coherent backbone dataset family. The Open Images (openimages_challenge_2019_det_train) dataset provides strong, broad coverage for all three classes and is chosen as the primary backbone. To maintain diversity while preserving a shared backbone, I allocated: - person: 1,500 from Open Images + 500 from COCO (coco2017_det_train) for a total of 2,000 training images; - dog: 1,200 from Open Images + 600 from COCO + 200 from LVIS (LVIS_det_train) for a total of 2,000; - cat: 1,500 from Open Images + 500 from COCO for a total of 2,000. All selections are from training sources only. The per-class pools thus are balanced (2,000 each) with a diverse mix that still emphasizes a common backbone (Open Images), satisfying the guideline to prefer a shared backbone across classes while allowing limited diversification (COCO and LVIS). Approximate total training pool across all classes: ~6,000 images; this stays well within the suggested per-class (10,000) and total (50,000) allocation ceilings. No explicit download budget was provided, so the chosen counts were not budget-constrained. Domain alignment is achieved by using general-object datasets commonly used for detection benchmarks (Open Images, COCO, LVIS).",
+    "Dataset Selection Completed",
+    "Hyperparameter GraphRAG: disabled for this run.",
+    "Hyperparameter Policy Registry: enabled for this run.",
+    "Hyperparameter Optimization Completed"
+  ],
+  "last_updated": "2026-08-05T01:47:07.388690"
+}

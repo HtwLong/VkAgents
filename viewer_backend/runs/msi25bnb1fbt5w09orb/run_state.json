@@ -1,0 +1,7 @@
+{
+  "job_id": "msi25bnb1fbt5w09orb",
+  "status": "stopped",
+  "active_step": "download-data",
+  "attempt": 7,
+  "updated_at": "2026-08-07T15:25:55.524036+00:00"
+}

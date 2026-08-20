@@ -1,0 +1,9 @@
+2026-08-03 21:48:54,945 INFO Logging initialized
+2026-08-03 21:48:55,169 INFO Configured precision=fp32; effective precision=fp32 on mps
+2026-08-03 21:48:55,169 INFO Starting training
+2026-08-03 21:52:13,230 INFO Epoch 01/20 train_loss=0.5082 train_acc=0.8469 val_loss=0.0797 val_acc=0.9767 macro_f1=0.9766 micro_f1=0.9767 val_acc=0.9767 elapsed=198.1s
+2026-08-03 21:52:13,460 INFO New best checkpoint on val_acc=0.9767 at epoch 1
+2026-08-03 21:55:16,245 INFO Epoch 02/20 train_loss=0.3510 train_acc=0.9231 val_loss=0.1003 val_acc=0.9720 macro_f1=0.9720 micro_f1=0.9720 val_acc=0.9720 elapsed=182.8s
+2026-08-03 21:57:50,445 INFO Epoch 03/20 train_loss=0.2932 train_acc=0.9458 val_loss=0.1252 val_acc=0.9753 macro_f1=0.9753 micro_f1=0.9753 val_acc=0.9753 elapsed=154.2s
+2026-08-03 22:00:28,978 INFO Epoch 04/20 train_loss=0.2194 train_acc=0.9629 val_loss=0.1552 val_acc=0.9707 macro_f1=0.9706 micro_f1=0.9707 val_acc=0.9707 elapsed=158.5s
+2026-08-03 22:00:28,979 INFO Early stopping at epoch 4 (no improvement on val_acc for 3 epochs)

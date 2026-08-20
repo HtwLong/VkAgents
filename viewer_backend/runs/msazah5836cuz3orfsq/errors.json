@@ -1,0 +1,10 @@
+[
+  {
+    "timestamp": "2026-08-03T07:39:38.511615+00:00",
+    "job_id": "msazah5836cuz3orfsq",
+    "endpoint": "/api/v1/train/status/msazah5836cuz3orfsq",
+    "status_code": 404,
+    "error_type": "HTTPException",
+    "error": "Job ID msazah5836cuz3orfsq not found."
+  }
+]

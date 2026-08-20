@@ -1,0 +1,12 @@
+{
+  "job_id": "msye9u1pt248jisumxo",
+  "status": "running",
+  "downloaded": 5428,
+  "processed": 5428,
+  "failed": 0,
+  "failed_datasets": [],
+  "total": 9000,
+  "current_image": "objects365_det_train/patch30/objects365_v2_01472496.jpg",
+  "previous_downloaded": 0,
+  "updated_at": "2026-08-18T10:02:40.536982+00:00"
+}

@@ -1,0 +1,140 @@
+{
+  "task": "detection",
+  "train_annotations_json": "/app/runs/msyoe7fqn5hu2oqba2j/data/train_annotations.json",
+  "val_annotations_json": "/app/runs/msyoe7fqn5hu2oqba2j/data/val_annotations.json",
+  "test_annotations_json": "/app/runs/msyoe7fqn5hu2oqba2j/data/test_annotations.json",
+  "classes": [
+    "traffic light",
+    "traffic sign"
+  ],
+  "counts": {
+    "train": 4800,
+    "validation": 600,
+    "test": 600
+  },
+  "unique_images": {
+    "train": 4800,
+    "validation": 600,
+    "test": 600
+  },
+  "class_image_counts": {
+    "traffic light": {
+      "train": 2953,
+      "validation": 398,
+      "test": 479
+    },
+    "traffic sign": {
+      "train": 4429,
+      "validation": 551,
+      "test": 538
+    }
+  },
+  "instance_counts": {
+    "traffic light": 18289,
+    "traffic sign": 23309
+  },
+  "object_size_counts": {
+    "small": 33865,
+    "medium": 7397,
+    "large": 336
+  },
+  "annotation_statistics": {
+    "small_object_fraction_at_640": 0.9724746382037598,
+    "median_box_short_side_px_at_640": 7.335,
+    "fraction_below_8px_short_side_at_640": 0.5650512043848261
+  },
+  "coverage": {
+    "requirements": {
+      "target_unique_images": 6000,
+      "minimum_unique_images": 3000,
+      "target_unique_images_by_split": {
+        "train": 4800,
+        "validation": 600,
+        "test": 600
+      },
+      "minimum_images_per_class": {
+        "traffic light": 3000,
+        "traffic sign": 3000
+      },
+      "minimum_images_per_class_by_split": {
+        "traffic light": {
+          "train": 2400,
+          "validation": 300,
+          "test": 300
+        },
+        "traffic sign": {
+          "train": 2400,
+          "validation": 300,
+          "test": 300
+        }
+      }
+    },
+    "verified_unique_images": 6000,
+    "verified_unique_images_by_split": {
+      "train": 4800,
+      "validation": 600,
+      "test": 600
+    },
+    "verified_images_per_class": {
+      "traffic light": 3830,
+      "traffic sign": 5518
+    },
+    "verified_images_per_class_by_split": {
+      "traffic light": {
+        "train": 2953,
+        "validation": 398,
+        "test": 479
+      },
+      "traffic sign": {
+        "train": 4429,
+        "validation": 551,
+        "test": 538
+      }
+    },
+    "unique_image_shortfall": 0,
+    "minimum_unique_image_shortfall": 0,
+    "unique_coverage_ratio": 1.0,
+    "class_image_shortfalls": {
+      "traffic light": 0,
+      "traffic sign": 0
+    },
+    "class_split_image_shortfalls": {
+      "traffic light": {
+        "train": 0,
+        "validation": 0,
+        "test": 0
+      },
+      "traffic sign": {
+        "train": 0,
+        "validation": 0,
+        "test": 0
+      }
+    },
+    "class_split_coverage_satisfied": true,
+    "satisfied": true
+  },
+  "acceptance": {
+    "minimum_unique_coverage_ratio": 0.5,
+    "unique_coverage_ratio": 1.0,
+    "unique_target_satisfied": true,
+    "minimum_unique_target_satisfied": true,
+    "strict_target_satisfied": true,
+    "aspirational_unique_target_accepted": false,
+    "class_split_coverage_satisfied": true,
+    "transfer_failures": [],
+    "successfully_replaced_transfer_failures": [],
+    "unresolved_transfer_failures": [],
+    "cross_split_duplicates": [],
+    "accepted": true
+  },
+  "warnings": [],
+  "invalid_box_count": 0,
+  "content_isolation": {
+    "unique_content_hashes": 6000,
+    "duplicate_samples": 0,
+    "cross_split_duplicates": 0
+  },
+  "assignment_fingerprint": "6ca7d70bdfa4f7e7e89814a770189ae7470a6bd2045cc1c97426b3cb2a881df6",
+  "manifest_sha256": "1fff3607da29c4738b44b3bb3bc85e6a731e0f4f7d954ac7e4f61e38a81a6f97",
+  "preparation_summary": "/app/runs/msyoe7fqn5hu2oqba2j/data/preparation_summary.json"
+}

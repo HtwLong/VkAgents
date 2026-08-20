@@ -1,0 +1,13 @@
+id,type,property_name,value_type,aggregation_mode,activation_threshold,minimum_activation_confidence,description
+ClassImbalance,DatasetProperty,Class imbalance,boolean,weighted_threshold,0.30,High,The source has a materially long-tailed or imbalanced class distribution.
+TinyObjects,DatasetProperty,Tiny objects,boolean,weighted_threshold,0.30,High,The source contains a material share of very small annotated objects.
+CrowdedEnvironment,DatasetProperty,Crowded environment,boolean,weighted_threshold,0.30,High,Images commonly contain dense groups of object instances.
+OutdoorLightingVariation,DatasetProperty,Outdoor lighting variation,boolean,weighted_threshold,0.30,High,Images cover materially different outdoor illumination conditions.
+ObjectOrientationVariation,DatasetProperty,Object orientation variation,boolean,weighted_threshold,0.30,High,Objects occur at materially different orientations.
+ObjectScaleVariation,DatasetProperty,Object scale variation,boolean,weighted_threshold,0.30,High,Objects occur across materially different apparent scales.
+FrequentOcclusion,DatasetProperty,Frequent occlusion,boolean,weighted_threshold,0.30,High,Occlusion occurs often enough to influence training policy.
+HighAspectRatioVariance,DatasetProperty,High aspect-ratio variance,boolean,weighted_threshold,0.30,High,Source images have materially varied aspect ratios.
+LabelSensitiveGeometry,DatasetProperty,Label-sensitive geometry,boolean,any,0.0,High,Geometric transforms can change label semantics.
+FineGrainedRecognition,DatasetProperty,Fine-grained recognition,boolean,any,0.0,High,Classes distinguish visually similar subcategories.
+LowResolution,DatasetProperty,Low native resolution,boolean,weighted_threshold,0.30,High,Native images have unusually low spatial resolution.
+LongTailVocabulary,DatasetProperty,Long-tail vocabulary,boolean,weighted_threshold,0.30,High,The source contains a broad long-tail label vocabulary.

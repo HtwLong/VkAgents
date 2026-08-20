@@ -1,0 +1,348 @@
+{
+  "job_id": "msfxvu1ggfi62ehcnnp",
+  "task": "classification",
+  "model": {
+    "name": "mobilenet_v3_small",
+    "weights": "default",
+    "training_mode": "fine_tune_pretrained"
+  },
+  "classes": [
+    "0",
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+    "7",
+    "8",
+    "9"
+  ],
+  "dataset": {
+    "splits": {
+      "train": 12000,
+      "validation": 1500,
+      "test": 1500
+    },
+    "assignment_fingerprint": "dc3f8e1fb3bc5110393b9e202083bb32199708bcff9767f6b0e87391ef5b0535"
+  },
+  "configuration": {
+    "model_weights": "default",
+    "training_mode": "fine_tune_pretrained",
+    "image_size": 224,
+    "batch_size": 4,
+    "num_epochs": 20,
+    "optimizer_name": "sgd",
+    "learning_rate": 0.01,
+    "weight_decay": 0.0005,
+    "track_metric": "val_acc",
+    "precision": "fp32"
+  },
+  "training_history": [
+    {
+      "epoch": 1,
+      "train_loss": 1.153477,
+      "train_acc": 0.684417,
+      "val_loss": 0.430635,
+      "val_acc": 0.882,
+      "macro_f1": 0.87889,
+      "micro_f1": 0.882,
+      "tracked": 0.882
+    },
+    {
+      "epoch": 2,
+      "train_loss": 0.249029,
+      "train_acc": 0.925917,
+      "val_loss": 0.071882,
+      "val_acc": 0.981333,
+      "macro_f1": 0.981279,
+      "micro_f1": 0.981333,
+      "tracked": 0.981333
+    },
+    {
+      "epoch": 3,
+      "train_loss": 0.151485,
+      "train_acc": 0.9585,
+      "val_loss": 0.076313,
+      "val_acc": 0.980667,
+      "macro_f1": 0.980533,
+      "micro_f1": 0.980667,
+      "tracked": 0.980667
+    },
+    {
+      "epoch": 4,
+      "train_loss": 0.10616,
+      "train_acc": 0.971417,
+      "val_loss": 0.101839,
+      "val_acc": 0.968667,
+      "macro_f1": 0.968798,
+      "micro_f1": 0.968667,
+      "tracked": 0.968667
+    },
+    {
+      "epoch": 5,
+      "train_loss": 0.105051,
+      "train_acc": 0.971583,
+      "val_loss": 0.045566,
+      "val_acc": 0.988,
+      "macro_f1": 0.987972,
+      "micro_f1": 0.988,
+      "tracked": 0.988
+    },
+    {
+      "epoch": 6,
+      "train_loss": 0.105521,
+      "train_acc": 0.972083,
+      "val_loss": 0.094675,
+      "val_acc": 0.969333,
+      "macro_f1": 0.969542,
+      "micro_f1": 0.969333,
+      "tracked": 0.969333
+    },
+    {
+      "epoch": 7,
+      "train_loss": 0.116417,
+      "train_acc": 0.96875,
+      "val_loss": 0.09524,
+      "val_acc": 0.971333,
+      "macro_f1": 0.971467,
+      "micro_f1": 0.971333,
+      "tracked": 0.971333
+    },
+    {
+      "epoch": 8,
+      "train_loss": 0.117914,
+      "train_acc": 0.96875,
+      "val_loss": 0.059705,
+      "val_acc": 0.982667,
+      "macro_f1": 0.982707,
+      "micro_f1": 0.982667,
+      "tracked": 0.982667
+    },
+    {
+      "epoch": 9,
+      "train_loss": 0.116333,
+      "train_acc": 0.970417,
+      "val_loss": 0.050748,
+      "val_acc": 0.986667,
+      "macro_f1": 0.986692,
+      "micro_f1": 0.986667,
+      "tracked": 0.986667
+    },
+    {
+      "epoch": 10,
+      "train_loss": 0.122327,
+      "train_acc": 0.969833,
+      "val_loss": 0.082799,
+      "val_acc": 0.981333,
+      "macro_f1": 0.981351,
+      "micro_f1": 0.981333,
+      "tracked": 0.981333
+    }
+  ],
+  "metrics": {
+    "accuracy": 0.9866666666666667,
+    "loss": 0.03781158830153921,
+    "macro_precision": 0.9868230677881014,
+    "macro_recall": 0.9866666666666667,
+    "macro_f1": 0.9866425668317588,
+    "micro_precision": 0.9866666666666667,
+    "micro_recall": 0.9866666666666667,
+    "micro_f1": 0.9866666666666667,
+    "top5_acc": 1.0
+  },
+  "per_class": [
+    {
+      "class_name": "0",
+      "precision": 0.9932885906040269,
+      "recall": 0.9866666666666667,
+      "f1": 0.9899665551839465,
+      "support": 150
+    },
+    {
+      "class_name": "1",
+      "precision": 0.9738562091503268,
+      "recall": 0.9933333333333333,
+      "f1": 0.9834983498349835,
+      "support": 150
+    },
+    {
+      "class_name": "2",
+      "precision": 0.98,
+      "recall": 0.98,
+      "f1": 0.98,
+      "support": 150
+    },
+    {
+      "class_name": "3",
+      "precision": 0.9801324503311258,
+      "recall": 0.9866666666666667,
+      "f1": 0.9833887043189369,
+      "support": 150
+    },
+    {
+      "class_name": "4",
+      "precision": 0.974025974025974,
+      "recall": 1.0,
+      "f1": 0.9868421052631579,
+      "support": 150
+    },
+    {
+      "class_name": "5",
+      "precision": 0.9868421052631579,
+      "recall": 1.0,
+      "f1": 0.9933774834437086,
+      "support": 150
+    },
+    {
+      "class_name": "6",
+      "precision": 0.9868421052631579,
+      "recall": 1.0,
+      "f1": 0.9933774834437086,
+      "support": 150
+    },
+    {
+      "class_name": "7",
+      "precision": 1.0,
+      "recall": 0.9533333333333334,
+      "f1": 0.9761092150170648,
+      "support": 150
+    },
+    {
+      "class_name": "8",
+      "precision": 1.0,
+      "recall": 0.9866666666666667,
+      "f1": 0.9932885906040269,
+      "support": 150
+    },
+    {
+      "class_name": "9",
+      "precision": 0.9932432432432432,
+      "recall": 0.98,
+      "f1": 0.9865771812080537,
+      "support": 150
+    }
+  ],
+  "confusion_matrix": [
+    [
+      148,
+      0,
+      0,
+      0,
+      0,
+      0,
+      2,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      149,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      1,
+      0,
+      147,
+      2,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      148,
+      0,
+      2,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      150,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      0,
+      150,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      150,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      4,
+      2,
+      0,
+      1,
+      0,
+      0,
+      143,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      148,
+      1
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      3,
+      0,
+      0,
+      0,
+      0,
+      147
+    ]
+  ]
+}

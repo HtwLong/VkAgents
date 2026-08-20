@@ -1,0 +1,14 @@
+{
+  "task": "classification",
+  "train_csv": "/Users/longus/Studies/Masterthesis/vkg_llm_project/backend/runs/msdh2usbqiluok1561o/data/train_labels.csv",
+  "val_csv": "/Users/longus/Studies/Masterthesis/vkg_llm_project/backend/runs/msdh2usbqiluok1561o/data/val_labels.csv",
+  "test_csv": "/Users/longus/Studies/Masterthesis/vkg_llm_project/backend/runs/msdh2usbqiluok1561o/data/test_labels.csv",
+  "counts": {
+    "train": 12000,
+    "validation": 1500,
+    "test": 1500
+  },
+  "assignment_fingerprint": "dc3f8e1fb3bc5110393b9e202083bb32199708bcff9767f6b0e87391ef5b0535",
+  "manifest_sha256": "daac1aa09876ce062c67e9a77d35e6725a2df4b8cad6d251b118226e987116bc",
+  "preparation_summary": "/Users/longus/Studies/Masterthesis/vkg_llm_project/backend/runs/msdh2usbqiluok1561o/data/preparation_summary.json"
+}

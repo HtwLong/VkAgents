@@ -1,0 +1,96 @@
+{
+  "task": "detection",
+  "application_domain": "traffic",
+  "user_query": "I need a model for a traffic-monitoring system that detects cars in each image. The model will run locally on a MacBook Air with an Apple M4 chip and 16 GB of unified memory, using CPU or Metal acceleration. It should aim for a mAP@0.5:0.95 of around 0.30 or higher. Processing an image within roughly 500 milliseconds would be desirable, but reliable classification under different viewpoints, lighting conditions, weather conditions, and partial occlusion is more important than inference speed.",
+  "use_case_description": null,
+  "questions_list": null,
+  "classes": [
+    "car"
+  ],
+  "available_data": null,
+  "selected_data": null,
+  "performance_requirements": {
+    "primary_metric": "mAP@0.5:0.95",
+    "target_value": 0.3,
+    "target_is_hard": false,
+    "latency_category": "MediumHigh",
+    "accuracy_category": "MediumHigh",
+    "other_constraints": null
+  },
+  "constraint_strengths": {
+    "accuracy": "preference",
+    "latency": "preference",
+    "runtime_memory": "preference",
+    "model_size": "unspecified",
+    "training_time": "unspecified"
+  },
+  "robustness_requirements": {
+    "lighting": [],
+    "weather": [],
+    "object_scale": [],
+    "scene_density": [],
+    "motion_blur": false,
+    "occlusion": true,
+    "viewpoint": [],
+    "color_semantics": false,
+    "horizontal_flip_safe": null,
+    "text_or_symbols_present": false
+  },
+  "deployment_constraints": {
+    "memory_category": "Medium",
+    "max_runtime_memory_mb": null,
+    "max_model_size_mb": null,
+    "max_parameters_m": null,
+    "max_cpu_latency_ms": 500.0,
+    "hard_limits": []
+  },
+  "available_hardware": {
+    "hardware_category": "ConsumerCPU",
+    "cpu_cores": null,
+    "gpu_type": null,
+    "gpu_count": null,
+    "vram_gb": null,
+    "ram_gb": 16.0,
+    "storage_gb": null,
+    "details": "Apple M4 with integrated GPU; 16 GB unified memory; CPU/Metal acceleration"
+  },
+  "model_requirements": null,
+  "augmentation": null,
+  "preprocessing": null,
+  "num_qa_pairs": null,
+  "training_hardware": {
+    "profile_id": "rtx6000_48gb",
+    "accelerator": "cuda",
+    "hardware_category": "DataCenterGPU",
+    "gpu_type": "NVIDIA RTX 6000 Ada",
+    "gpu_count": 1,
+    "vram_gb": 48.0,
+    "ram_gb": null,
+    "unified_memory": false,
+    "training_memory_budget_gb": 44.0,
+    "max_batch_size": 16,
+    "workers": 8,
+    "supports_amp": true
+  },
+  "class_expansions": {},
+  "model_selection_graph_context": null,
+  "dataset_selection_graph_context": null,
+  "hyperparameter_graph_context": null,
+  "use_graphrag": true,
+  "selected_model_info": null,
+  "hpo_config": null,
+  "hpo_decision": null,
+  "model_selection_decision_evidence": null,
+  "dataset_selection_decision_evidence": null,
+  "hyperparameter_decision_evidence": null,
+  "dataset_profile": null,
+  "data_plan_constraints": null,
+  "step_history": [
+    "Task Interpretation Completed"
+  ],
+  "last_updated": "2026-08-20T11:15:35.033750",
+  "revision": {
+    "active": null,
+    "history": []
+  }
+}

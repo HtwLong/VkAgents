@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "job_id": "mt18hpy6l9wvwoixn99",
+  "scope": "planning",
+  "currency": "USD",
+  "totals": {
+    "requests": 4,
+    "input_tokens": 9135,
+    "cached_input_tokens": 0,
+    "output_tokens": 19456,
+    "reasoning_tokens": 0,
+    "total_tokens": 28591,
+    "calculated_cost_usd": "0.00823915"
+  },
+  "models": {
+    "gpt-5-nano": {
+      "requests": 4,
+      "input_tokens": 9135,
+      "cached_input_tokens": 0,
+      "output_tokens": 19456,
+      "reasoning_tokens": 0,
+      "total_tokens": 28591,
+      "calculated_cost_usd": "0.00823915"
+    }
+  },
+  "operations": {
+    "completeness_check": {
+      "requests": 1,
+      "input_tokens": 282,
+      "cached_input_tokens": 0,
+      "output_tokens": 984,
+      "reasoning_tokens": 0,
+      "total_tokens": 1266,
+      "calculated_cost_usd": "0.00040770"
+    },
+    "task_interpretation": {
+      "requests": 1,
+      "input_tokens": 3181,
+      "cached_input_tokens": 0,
+      "output_tokens": 7531,
+      "reasoning_tokens": 0,
+      "total_tokens": 10712,
+      "calculated_cost_usd": "0.00317145"
+    },
+    "model_selection": {
+      "requests": 2,
+      "input_tokens": 5672,
+      "cached_input_tokens": 0,
+      "output_tokens": 10941,
+      "reasoning_tokens": 0,
+      "total_tokens": 16613,
+      "calculated_cost_usd": "0.00466000"
+    }
+  },
+  "pricing": {
+    "gpt-5-nano": {
+      "input_per_million": "0.05",
+      "cached_input_per_million": "0.005",
+      "output_per_million": "0.40",
+      "effective_date": "2026-08-15",
+      "source": "https://developers.openai.com/api/docs/models/gpt-5-nano"
+    }
+  },
+  "usage_notes": [
+    "The installed Agents SDK reports aggregate input tokens without a cached-token breakdown; those calls are calculated at the standard input rate."
+  ]
+}

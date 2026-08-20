@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "job_id": "msyoe7fqn5hu2oqba2j",
+  "task": "detection",
+  "assignment_fingerprint": "6ca7d70bdfa4f7e7e89814a770189ae7470a6bd2045cc1c97426b3cb2a881df6",
+  "manifest_sha256": "1fff3607da29c4738b44b3bb3bc85e6a731e0f4f7d954ac7e4f61e38a81a6f97",
+  "official_counts": {
+    "train": 4800,
+    "validation": 600,
+    "test": 0
+  },
+  "derived_counts": {
+    "train": 0,
+    "validation": 0,
+    "test": 600
+  },
+  "stages": {
+    "training": {
+      "splits": {
+        "train": {
+          "path": "/app/runs/msyoe7fqn5hu2oqba2j/data/train_annotations.json",
+          "sha256": "bdf714eefc526929719926a6d509e9d05dd20cbe57ff33e460fff507ad1b3b82",
+          "sample_count": 4800
+        },
+        "validation": {
+          "path": "/app/runs/msyoe7fqn5hu2oqba2j/data/val_annotations.json",
+          "sha256": "53e2e30bb5c60d42e652257ea4cc64215ed05f3c7722d9c4deece949475a4b14",
+          "sample_count": 600
+        }
+      }
+    }
+  }
+}

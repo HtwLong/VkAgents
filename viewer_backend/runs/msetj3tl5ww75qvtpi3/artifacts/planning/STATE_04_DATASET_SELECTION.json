@@ -1,0 +1,302 @@
+{
+  "task": "detection",
+  "application_domain": "indoor photography",
+  "user_query": "I need an object detection model to locate furniture in indoor photographs. It should handle cluttered rooms, partial occlusion, varied lighting, and objects viewed from different angles. Inference will run on CPU-only backend servers with approximately 8 CPU cores and 16 GB of RAM. The model should aim for a mAP@0.5:0.95 of approximately 0.30 or higher, with typical inference latency below 500 milliseconds per image.",
+  "use_case_description": "Detect furniture in indoor photographs; robust to cluttered rooms, partial occlusion, varied lighting, and objects viewed from different angles.",
+  "questions_list": null,
+  "classes": [
+    "furniture"
+  ],
+  "available_data": [
+    {
+      "class_name": "furniture",
+      "sources": [
+        {
+          "dataset_name": "openimages_challenge_2019_det_train",
+          "count": 14698
+        },
+        {
+          "dataset_name": "openimages_challenge_2019_det_val",
+          "count": 1477
+        }
+      ]
+    }
+  ],
+  "selected_data": [
+    {
+      "class_name": "furniture",
+      "sources": [
+        {
+          "dataset_name": "openimages_challenge_2019_det_train",
+          "allocations": [
+            {
+              "split": "train",
+              "count": 1600,
+              "assignment_type": "official_split"
+            },
+            {
+              "split": "test",
+              "count": 200,
+              "assignment_type": "derived_from_train"
+            }
+          ]
+        },
+        {
+          "dataset_name": "openimages_challenge_2019_det_val",
+          "allocations": [
+            {
+              "split": "validation",
+              "count": 200,
+              "assignment_type": "official_split"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "performance_requirements": {
+    "primary_metric": "mAP@0.5:0.95",
+    "target_value": 0.3,
+    "target_is_hard": false,
+    "latency_category": "Medium",
+    "accuracy_category": "Medium",
+    "other_constraints": null
+  },
+  "deployment_constraints": {
+    "memory_category": null,
+    "max_runtime_memory_mb": null,
+    "max_model_size_mb": null,
+    "max_parameters_m": null,
+    "max_cpu_latency_ms": 500.0,
+    "hard_limits": [
+      "max_cpu_latency_ms"
+    ]
+  },
+  "available_hardware": {
+    "hardware_category": "ConsumerCPU",
+    "cpu_cores": 8,
+    "gpu_type": null,
+    "gpu_count": null,
+    "vram_gb": null,
+    "ram_gb": 16.0,
+    "storage_gb": null,
+    "details": "CPU-only inference target; indoor furniture object detection."
+  },
+  "model_requirements": null,
+  "augmentation": null,
+  "preprocessing": null,
+  "num_qa_pairs": null,
+  "training_hardware": {
+    "profile_id": "macbook_air_m4_16gb",
+    "accelerator": "mps",
+    "hardware_category": "ConsumerGPU",
+    "gpu_type": "Apple M4 10-core GPU",
+    "gpu_count": 1,
+    "vram_gb": null,
+    "ram_gb": 16.0,
+    "unified_memory": true,
+    "training_memory_budget_gb": 8.0,
+    "max_batch_size": 4,
+    "workers": 4,
+    "supports_amp": false
+  },
+  "class_expansions": {},
+  "model_selection_graph_context": null,
+  "dataset_selection_graph_context": null,
+  "hyperparameter_graph_context": null,
+  "hyperparameter_policy_context": null,
+  "use_graphrag": false,
+  "use_policy_registry": true,
+  "selected_model_info": {
+    "model": {
+      "model_architecture": "yolov8",
+      "loss_function_box": "giou",
+      "loss_function_cls": "focal",
+      "optimizer": "adamw",
+      "description": "CPU-friendly YOLOv8 detector selected to detect furniture in indoor scenes. Aims to balance accuracy and CPU latency on a 8-core, 16 GB RAM server. Trained or finetuned on furniture examples from openimages_challenge_2019_det_train/val. Uses data augmentation, multi_scale inputs, and non-maximum suppression. Target mAP@0.5:0.95 >= 0.3 with inference latency under 500 ms per image on CPU. Handles clutter, partial occlusion, lighting variation, and multi-angle views by training with occlusion and photometric jitter.",
+      "num_epochs": null,
+      "patience": null,
+      "architecture_family": "yolo"
+    }
+  },
+  "hpo_config": null,
+  "hpo_decision": null,
+  "model_selection_decision_evidence": {
+    "decision_type": "model_selection",
+    "decision": {
+      "model": {
+        "model_architecture": "yolov8",
+        "loss_function_box": "giou",
+        "loss_function_cls": "focal",
+        "optimizer": "adamw",
+        "description": "CPU-friendly YOLOv8 detector selected to detect furniture in indoor scenes. Aims to balance accuracy and CPU latency on a 8-core, 16 GB RAM server. Trained or finetuned on furniture examples from openimages_challenge_2019_det_train/val. Uses data augmentation, multi_scale inputs, and non-maximum suppression. Target mAP@0.5:0.95 >= 0.3 with inference latency under 500 ms per image on CPU. Handles clutter, partial occlusion, lighting variation, and multi-angle views by training with occlusion and photometric jitter.",
+        "num_epochs": null,
+        "patience": null,
+        "architecture_family": "yolo"
+      }
+    },
+    "rationale": "Rationale for architecture choice: The task requires detecting furniture in indoor scenes with clutter, partial occlusion, varied lighting, and viewing angles, using CPU-only inference on 8 cores with 16 GB RAM and a latency budget under 500 ms per image. Among the available architectures, yolov8 offers the best balance of accuracy and speed for CPU-based deployment in this family, especially when using a smaller variant or optimized CPU backends. RetinaNet R50 FPN and Faster R-CNN variants tend to be heavier on CPU and may struggle to meet the latency target, while SSD300_coco is lighter but typically underperforms on the asked mAP target for a furniture class in indoor scenes. RTDet HGNetv2 L is likely too large for the CPU budget. The chosen model should be trained/finetuned on the furniture subset of Open Images (as provided) with augmentation such as photometric jitter, random occlusion, and multi-scale inputs to improve robustness to clutter, occlusion, lighting, and angle variation. If measured latency on your hardware exceeds 500 ms per image, a practical fallback is SSD300_coco or Faster R-CNN R50 FPN_1x, with input resolution reduced to trade off speed for accuracy. The presence of Open Images furniture data supports learning to distinguish furniture from clutter and occluders in indoor environments. Latency feasibility and exact mAP must be validated on target CPUs; this patch provides a starting point with a CPU-friendly architecture and a clear fallback path.",
+    "selection_policy": null,
+    "retrieved_facts": [],
+    "evidence_sources": [],
+    "grounded": false,
+    "evidence_backed": false,
+    "match_scope": null,
+    "grounding": {
+      "status": "ungrounded",
+      "fact_count": 0,
+      "support_counts": {},
+      "evidence_coverage": 0
+    }
+  },
+  "dataset_selection_decision_evidence": {
+    "decision_type": "dataset_selection",
+    "decision": [
+      {
+        "class_name": "furniture",
+        "sources": [
+          {
+            "dataset_name": "openimages_challenge_2019_det_train",
+            "allocations": [
+              {
+                "split": "train",
+                "count": 1600,
+                "assignment_type": "official_split"
+              },
+              {
+                "split": "test",
+                "count": 200,
+                "assignment_type": "derived_from_train"
+              }
+            ]
+          },
+          {
+            "dataset_name": "openimages_challenge_2019_det_val",
+            "allocations": [
+              {
+                "split": "validation",
+                "count": 200,
+                "assignment_type": "official_split"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "rationale": "Class: furniture. Selected_source_count_per_class = 2000 (from openimages_challenge_2019_det_train). This provides a focused, sufficiently large training pool with robust furniture bounding boxes across varied indoor-like scenes, occlusion, and lighting variation, suitable for CPU-only inference on ~8-core CPUs with 16 GB RAM. The Open Images 2019 challenge detection train split is the canonical backbone (family: openimages_challenge_2019) with established annotation standards, aligning with the training/target distribution and domain needs for indoor furniture detection.\n\nDerived_holdouts_estimate: If we apply a standard 80/10/10 split to the 2000-image pool, expected holdouts are ~200 validation and ~200 test images (total ~400 holdouts) and ~1600 for training. This keeps the per-class pool balanced and representative of the training/target distribution while preserving training data diversity.\n\nTotal_download_estimate: ~2000 images (from the training split). This is well below the per-class budget cap (10,000) and reflects the target ~2k images per class for detection tasks.\n\nBudget_limitation: The default per-class download budget supports up to 10,000 images; the selected 2,000-images pool does not hit this limit, matching the stated performance target without overfitting risk from excessive data. If needed, we can scale up by including the validation split (openimages_challenge_2019_det_val) from the same family to increase diversity, keeping splits compatible and provenance clear.",
+    "retrieved_facts": [],
+    "evidence_sources": [],
+    "grounded": false,
+    "evidence_backed": false,
+    "grounding": {
+      "status": "ungrounded",
+      "fact_count": 0,
+      "support_counts": {},
+      "evidence_coverage": 0.0
+    },
+    "mode": "llm_validated",
+    "correctness_source": "local_registry",
+    "graphrag_requested": false,
+    "graphrag_used": false,
+    "guidance_source": "local_registry",
+    "validation_findings": [],
+    "dropped_inferred_classes": [],
+    "eligible_dataset_ids": [
+      "openimages_challenge_2019_det_train",
+      "openimages_challenge_2019_det_val"
+    ],
+    "selected_dataset_ids": [
+      "openimages_challenge_2019_det_train",
+      "openimages_challenge_2019_det_val"
+    ],
+    "dataset_profile": {
+      "total_selected_images": 2000,
+      "minimum_images_per_class": 2000,
+      "maximum_images_per_class": 2000,
+      "class_balance_ratio": 1.0,
+      "number_of_sources": 2,
+      "domains": [
+        "general_objects"
+      ],
+      "multi_domain": false,
+      "characteristics": [],
+      "characteristic_support": {},
+      "planned_counts": {
+        "train": 1600,
+        "validation": 200,
+        "test": 200
+      },
+      "official_counts": {
+        "train": 1600,
+        "validation": 200,
+        "test": 0
+      },
+      "derived_counts": {
+        "train": 0,
+        "validation": 0,
+        "test": 200
+      }
+    },
+    "assignments_authoritative": true,
+    "split_policy": {
+      "official_splits_preserved": true,
+      "missing_holdouts": "derived_from_train",
+      "derived_holdout_sizing": "adaptive_by_selected_training_pool",
+      "derived_holdouts_source_stratified": true,
+      "official_holdouts_require_selected_training_family": true,
+      "classification_default_pool_per_class": 1500,
+      "classification_max_pool_per_class": 10000,
+      "classification_max_selected_images": 50000,
+      "detection_default_pool_per_class": 2000,
+      "detection_max_pool_per_class": 10000,
+      "detection_max_selected_image_allocations": 50000,
+      "detection_max_instances_per_class": null,
+      "detection_instance_limit_enforced": false,
+      "detection_shared_backbone_required_when_available": true,
+      "detection_shared_backbone_min_available_images": 50,
+      "detection_shared_backbone_min_share": 0.25,
+      "detection_shared_backbone_target_images": 500,
+      "explicit_images_per_class": null,
+      "test_used_for_model_selection": false
+    }
+  },
+  "hyperparameter_decision_evidence": null,
+  "dataset_profile": {
+    "total_selected_images": 2000,
+    "minimum_images_per_class": 2000,
+    "maximum_images_per_class": 2000,
+    "class_balance_ratio": 1.0,
+    "number_of_sources": 2,
+    "domains": [
+      "general_objects"
+    ],
+    "multi_domain": false,
+    "characteristics": [],
+    "characteristic_support": {},
+    "planned_counts": {
+      "train": 1600,
+      "validation": 200,
+      "test": 200
+    },
+    "official_counts": {
+      "train": 1600,
+      "validation": 200,
+      "test": 0
+    },
+    "derived_counts": {
+      "train": 0,
+      "validation": 0,
+      "test": 200
+    }
+  },
+  "step_history": [
+    "Task Interpretation Completed",
+    "Data Availability Checked",
+    "GraphRAG Model Suggestions: disabled for this run.",
+    "Model Selection Rationale: Rationale for architecture choice: The task requires detecting furniture in indoor scenes with clutter, partial occlusion, varied lighting, and viewing angles, using CPU-only inference on 8 cores with 16 GB RAM and a latency budget under 500 ms per image. Among the available architectures, yolov8 offers the best balance of accuracy and speed for CPU-based deployment in this family, especially when using a smaller variant or optimized CPU backends. RetinaNet R50 FPN and Faster R-CNN variants tend to be heavier on CPU and may struggle to meet the latency target, while SSD300_coco is lighter but typically underperforms on the asked mAP target for a furniture class in indoor scenes. RTDet HGNetv2 L is likely too large for the CPU budget. The chosen model should be trained/finetuned on the furniture subset of Open Images (as provided) with augmentation such as photometric jitter, random occlusion, and multi-scale inputs to improve robustness to clutter, occlusion, lighting, and angle variation. If measured latency on your hardware exceeds 500 ms per image, a practical fallback is SSD300_coco or Faster R-CNN R50 FPN_1x, with input resolution reduced to trade off speed for accuracy. The presence of Open Images furniture data supports learning to distinguish furniture from clutter and occluders in indoor environments. Latency feasibility and exact mAP must be validated on target CPUs; this patch provides a starting point with a CPU-friendly architecture and a clear fallback path.",
+    "Model Selection Completed",
+    "Data Selection Rationale: Class: furniture. Selected_source_count_per_class = 2000 (from openimages_challenge_2019_det_train). This provides a focused, sufficiently large training pool with robust furniture bounding boxes across varied indoor-like scenes, occlusion, and lighting variation, suitable for CPU-only inference on ~8-core CPUs with 16 GB RAM. The Open Images 2019 challenge detection train split is the canonical backbone (family: openimages_challenge_2019) with established annotation standards, aligning with the training/target distribution and domain needs for indoor furniture detection.\n\nDerived_holdouts_estimate: If we apply a standard 80/10/10 split to the 2000-image pool, expected holdouts are ~200 validation and ~200 test images (total ~400 holdouts) and ~1600 for training. This keeps the per-class pool balanced and representative of the training/target distribution while preserving training data diversity.\n\nTotal_download_estimate: ~2000 images (from the training split). This is well below the per-class budget cap (10,000) and reflects the target ~2k images per class for detection tasks.\n\nBudget_limitation: The default per-class download budget supports up to 10,000 images; the selected 2,000-images pool does not hit this limit, matching the stated performance target without overfitting risk from excessive data. If needed, we can scale up by including the validation split (openimages_challenge_2019_det_val) from the same family to increase diversity, keeping splits compatible and provenance clear.",
+    "Dataset Selection Completed"
+  ],
+  "last_updated": "2026-08-04T17:36:28.055035"
+}

@@ -1,0 +1,212 @@
+{
+  "job_id": "msyoe7fqn5hu2oqba2j",
+  "task": "detection",
+  "sources": [
+    {
+      "class_name": "traffic light",
+      "dataset_name": "bdd_100k_det_train",
+      "source_role": "train",
+      "assigned_split": "train",
+      "assignment_type": "official_split",
+      "requested": 2400,
+      "candidates": 2400,
+      "downloaded": 2400,
+      "direct_allocation_downloaded": 2400,
+      "global_top_up_downloaded": 0,
+      "shortfall": 0,
+      "cross_split_conflicts": 0,
+      "content_duplicate_conflicts": 0,
+      "content_duplicates": [],
+      "failures": []
+    },
+    {
+      "class_name": "traffic light",
+      "dataset_name": "bdd_100k_det_train",
+      "source_role": "train",
+      "assigned_split": "test",
+      "assignment_type": "derived_from_train",
+      "requested": 300,
+      "candidates": 2700,
+      "downloaded": 300,
+      "direct_allocation_downloaded": 300,
+      "global_top_up_downloaded": 0,
+      "shortfall": 0,
+      "cross_split_conflicts": 2400,
+      "content_duplicate_conflicts": 0,
+      "content_duplicates": [],
+      "failures": []
+    },
+    {
+      "class_name": "traffic light",
+      "dataset_name": "bdd_100k_det_val",
+      "source_role": "validation",
+      "assigned_split": "validation",
+      "assignment_type": "official_split",
+      "requested": 300,
+      "candidates": 300,
+      "downloaded": 300,
+      "direct_allocation_downloaded": 300,
+      "global_top_up_downloaded": 0,
+      "shortfall": 0,
+      "cross_split_conflicts": 0,
+      "content_duplicate_conflicts": 0,
+      "content_duplicates": [],
+      "failures": []
+    },
+    {
+      "class_name": "traffic sign",
+      "dataset_name": "bdd_100k_det_train",
+      "source_role": "train",
+      "assigned_split": "train",
+      "assignment_type": "official_split",
+      "requested": 2400,
+      "candidates": 5100,
+      "downloaded": 4800,
+      "direct_allocation_downloaded": 2400,
+      "global_top_up_downloaded": 2400,
+      "shortfall": 0,
+      "cross_split_conflicts": 300,
+      "content_duplicate_conflicts": 0,
+      "content_duplicates": [],
+      "failures": []
+    },
+    {
+      "class_name": "traffic sign",
+      "dataset_name": "bdd_100k_det_train",
+      "source_role": "train",
+      "assigned_split": "test",
+      "assignment_type": "derived_from_train",
+      "requested": 300,
+      "candidates": 5400,
+      "downloaded": 600,
+      "direct_allocation_downloaded": 371,
+      "global_top_up_downloaded": 229,
+      "shortfall": 0,
+      "cross_split_conflicts": 4800,
+      "content_duplicate_conflicts": 0,
+      "content_duplicates": [],
+      "failures": []
+    },
+    {
+      "class_name": "traffic sign",
+      "dataset_name": "bdd_100k_det_val",
+      "source_role": "validation",
+      "assigned_split": "validation",
+      "assignment_type": "official_split",
+      "requested": 300,
+      "candidates": 600,
+      "downloaded": 600,
+      "direct_allocation_downloaded": 300,
+      "global_top_up_downloaded": 300,
+      "shortfall": 0,
+      "cross_split_conflicts": 0,
+      "content_duplicate_conflicts": 0,
+      "content_duplicates": [],
+      "failures": []
+    }
+  ],
+  "complete": true,
+  "coverage": {
+    "requirements": {
+      "target_unique_images": 6000,
+      "minimum_unique_images": 3000,
+      "target_unique_images_by_split": {
+        "train": 4800,
+        "validation": 600,
+        "test": 600
+      },
+      "minimum_images_per_class": {
+        "traffic light": 3000,
+        "traffic sign": 3000
+      },
+      "minimum_images_per_class_by_split": {
+        "traffic light": {
+          "train": 2400,
+          "validation": 300,
+          "test": 300
+        },
+        "traffic sign": {
+          "train": 2400,
+          "validation": 300,
+          "test": 300
+        }
+      }
+    },
+    "verified_unique_images": 6000,
+    "verified_unique_images_by_split": {
+      "train": 4800,
+      "validation": 600,
+      "test": 600
+    },
+    "verified_images_per_class": {
+      "traffic light": 3830,
+      "traffic sign": 5518
+    },
+    "verified_images_per_class_by_split": {
+      "traffic light": {
+        "train": 2953,
+        "validation": 398,
+        "test": 479
+      },
+      "traffic sign": {
+        "train": 4429,
+        "validation": 551,
+        "test": 538
+      }
+    },
+    "unique_image_shortfall": 0,
+    "minimum_unique_images": 3000,
+    "minimum_unique_image_shortfall": 0,
+    "unique_coverage_ratio": 1.0,
+    "class_image_shortfalls": {
+      "traffic light": 0,
+      "traffic sign": 0
+    },
+    "class_split_image_shortfalls": {
+      "traffic light": {
+        "train": 0,
+        "validation": 0,
+        "test": 0
+      },
+      "traffic sign": {
+        "train": 0,
+        "validation": 0,
+        "test": 0
+      }
+    },
+    "class_split_coverage_satisfied": true,
+    "satisfied": true
+  },
+  "allocation_shortfalls": [],
+  "acceptance": {
+    "minimum_unique_coverage_ratio": 0.5,
+    "unique_coverage_ratio": 1.0,
+    "unique_target_satisfied": true,
+    "minimum_unique_target_satisfied": true,
+    "strict_target_satisfied": true,
+    "aspirational_unique_target_accepted": false,
+    "class_split_coverage_satisfied": true,
+    "transfer_failures": [],
+    "successfully_replaced_transfer_failures": [],
+    "unresolved_transfer_failures": [],
+    "cross_split_duplicates": [],
+    "accepted": true
+  },
+  "warnings": [],
+  "requested": 6000,
+  "downloaded": 9000,
+  "unique_downloaded": 6000,
+  "performance": {
+    "elapsed_seconds": 1907.0012181799393,
+    "sparql_queries": 240,
+    "sparql_seconds": 195.18909214017913,
+    "download_batches": 90,
+    "cache_hits": 4338,
+    "cached_failures": 0,
+    "bytes_downloaded": 83939437,
+    "retries": 301,
+    "transfer_and_validation_seconds": 16833.80796731892
+  },
+  "manifest_path": "/app/runs/msyoe7fqn5hu2oqba2j/data/dataset_manifest.json",
+  "report_path": "/app/runs/msyoe7fqn5hu2oqba2j/artifacts/download_report.json"
+}

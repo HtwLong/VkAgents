@@ -1,0 +1,7 @@
+{
+  "job_id": "msyoe7fqn5hu2oqba2j",
+  "status": "running",
+  "active_step": "train-model",
+  "attempt": 4,
+  "updated_at": "2026-08-18T13:48:15.405860+00:00"
+}

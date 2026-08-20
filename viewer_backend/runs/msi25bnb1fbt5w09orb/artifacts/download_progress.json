@@ -1,0 +1,11 @@
+{
+  "job_id": "msi25bnb1fbt5w09orb",
+  "status": "stopped",
+  "downloaded": 1746,
+  "processed": 1853,
+  "failed": 107,
+  "failed_datasets": [],
+  "total": 6680,
+  "current_image": null,
+  "updated_at": "2026-08-07T15:25:55.522993+00:00"
+}

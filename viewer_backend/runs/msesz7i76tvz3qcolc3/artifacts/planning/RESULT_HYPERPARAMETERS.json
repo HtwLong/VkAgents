@@ -1,0 +1,86 @@
+{
+  "task_type": "detection",
+  "classes": [
+    "furniture"
+  ],
+  "selected_data": [
+    {
+      "class_name": "furniture",
+      "sources": [
+        {
+          "dataset_name": "openimages_challenge_2019_det_train",
+          "allocations": [
+            {
+              "split": "train",
+              "count": 1600,
+              "assignment_type": "official_split"
+            },
+            {
+              "split": "test",
+              "count": 200,
+              "assignment_type": "derived_from_train"
+            }
+          ]
+        },
+        {
+          "dataset_name": "openimages_challenge_2019_det_val",
+          "allocations": [
+            {
+              "split": "validation",
+              "count": 200,
+              "assignment_type": "official_split"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "train_data_ratio": 0.8,
+  "val_data_ratio": 0.1,
+  "test_data_ratio": 0.1,
+  "num_epochs": 100,
+  "patience": 20,
+  "batch_size": 4,
+  "input_size": 640,
+  "track_metric": "val_mAP",
+  "model_name": "yolov10_s",
+  "model_weights": "coco",
+  "training_recipe_id": "ultralytics_yolo_detection_finetune_balanced",
+  "scheduler_name": "linear",
+  "final_learning_rate_factor": 0.01,
+  "warmup_epochs": 3.0,
+  "warmup_momentum": 0.8,
+  "amp": false,
+  "lambda_box": 0.01,
+  "lambda_cls": 0.01,
+  "lambda_dfl": 0.0,
+  "mosaic": 1.0,
+  "mixup": 0.0,
+  "cutmix": 0.0,
+  "copy_paste": 0.0,
+  "degrees": 0.0,
+  "translate": 0.0,
+  "scale": 0.0,
+  "fliplr": 0.0,
+  "hsv_h": 0.015,
+  "hsv_s": 0.7,
+  "hsv_v": 0.4,
+  "close_mosaic": 10,
+  "single_cls": true,
+  "rect": false,
+  "multi_scale": 0.0,
+  "confidence_threshold": 0.25,
+  "nms_iou_threshold": 0.7,
+  "max_detections": 1000,
+  "workers": 4,
+  "seed": 0,
+  "freeze": 0,
+  "optimizer": {
+    "name": "adamw",
+    "params": {
+      "learning_rate": 0.001,
+      "weight_decay": 0.0005,
+      "beta1": 0.9
+    }
+  }
+}
