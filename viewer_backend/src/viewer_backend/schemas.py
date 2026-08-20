@@ -19,6 +19,24 @@ class StateRequest(BaseModel):
     use_graphrag: bool = True
 
 
+class PlanRevisionRequest(BaseModel):
+    context: dict[str, Any]
+    job_id: str = Field(min_length=1, max_length=160)
+    required_changes: str = ""
+    preferences: str = ""
+    requested_target: RevisionTarget | Literal["automatic"] = "automatic"
+
+
+class ActivateRevisionRequest(BaseModel):
+    context: dict[str, Any]
+    plan: "RevisionPlan"
+    job_id: str = Field(min_length=1, max_length=160)
+
+
+class VerifyRevisionRequest(BaseModel):
+    context: dict[str, Any]
+
+
 class CompletenessDecision(BaseModel):
     accept: bool
     reason: str | None = None
@@ -35,12 +53,12 @@ class PerformanceRequirements(BaseModel):
 
 
 class DeploymentConstraints(BaseModel):
-    deployment_target: str | None = None
+    memory_category: str | None = None
     max_runtime_memory_mb: float | None = None
     max_model_size_mb: float | None = None
     max_parameters_m: float | None = None
     max_cpu_latency_ms: float | None = None
-    details: str | None = None
+    hard_limits: list[str] = Field(default_factory=list)
 
 
 class AvailableHardware(BaseModel):
@@ -56,21 +74,49 @@ class AvailableHardware(BaseModel):
 
 class RobustnessRequirements(BaseModel):
     object_scale: list[str] = Field(default_factory=list)
-    lighting_conditions: list[str] = Field(default_factory=list)
-    weather_conditions: list[str] = Field(default_factory=list)
-    viewpoints: list[str] = Field(default_factory=list)
-    occlusion: bool | None = None
-    other_requirements: list[str] = Field(default_factory=list)
+    lighting: list[str] = Field(default_factory=list)
+    weather: list[str] = Field(default_factory=list)
+    scene_density: list[str] = Field(default_factory=list)
+    viewpoint: list[str] = Field(default_factory=list)
+    motion_blur: bool = False
+    occlusion: bool = False
+    color_semantics: bool = False
+    horizontal_flip_safe: bool | None = None
+    text_or_symbols_present: bool = False
+
+
+class ConstraintStrengths(BaseModel):
+    accuracy: Literal["hard", "soft", "preference", "unspecified"] = "unspecified"
+    latency: Literal["hard", "soft", "preference", "unspecified"] = "unspecified"
+    runtime_memory: Literal["hard", "soft", "preference", "unspecified"] = "unspecified"
+    model_size: Literal["hard", "soft", "preference", "unspecified"] = "unspecified"
+    training_time: Literal["hard", "soft", "preference", "unspecified"] = "unspecified"
+
+
+class ModelRequirement(BaseModel):
+    name: str | None = None
+    framework: str | None = None
+    backbone: str | None = None
+    description: str | None = None
+    requirement_strength: Literal["required", "preferred"] = "required"
+    training_mode: Literal["fine_tune_pretrained", "staged_fine_tune", "head_only", "lora", "train_from_scratch"] | None = None
 
 
 class TaskInterpretation(BaseModel):
     task: Literal["classification", "detection", "visual question answering"]
     classes: list[str] = Field(default_factory=list)
     application_domain: str | None = None
+    use_case_description: str | None = None
+    questions_list: list[str] | None = None
     performance_requirements: PerformanceRequirements = Field(default_factory=PerformanceRequirements)
     deployment_constraints: DeploymentConstraints = Field(default_factory=DeploymentConstraints)
     available_hardware: AvailableHardware = Field(default_factory=AvailableHardware)
     robustness_requirements: RobustnessRequirements = Field(default_factory=RobustnessRequirements)
+    constraint_strengths: ConstraintStrengths = Field(default_factory=ConstraintStrengths)
+    model_requirements: list[ModelRequirement] | None = None
+    augmentation: str | None = None
+    preprocessing: str | None = None
+    num_qa_pairs: int | None = None
 
 
 class ModelPlan(BaseModel):
@@ -126,6 +172,12 @@ class RevisionPlan(BaseModel):
     summary: str
     restart_from: RevisionTarget
     changes: list[RevisionChange] = Field(default_factory=list)
+
+
+class ForkRevisionRequest(BaseModel):
+    parent_job_id: str = Field(min_length=1, max_length=160)
+    assessment_id: str = Field(min_length=1)
+    plan: RevisionPlan
 
 
 class RequirementAssessment(BaseModel):

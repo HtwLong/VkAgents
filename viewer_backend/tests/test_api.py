@@ -123,6 +123,13 @@ def test_graphrag_planning_routes_ground_and_validate_decisions(tmp_path, monkey
         "user_query": "Detect traffic lights in urban street scenes with low latency.",
         "task": "detection",
         "classes": ["traffic light"],
+        "available_data": [{
+            "class_name": "traffic light",
+            "sources": [
+                {"dataset_name": "bdd_100k_det_train", "count": 5000},
+                {"dataset_name": "bdd_100k_det_val", "count": 500},
+            ],
+        }],
         "application_domain": "urban street scenes",
         "performance_requirements": {"latency_category": "Low"},
         "deployment_constraints": {"max_runtime_memory_mb": 6144},
@@ -133,20 +140,42 @@ def test_graphrag_planning_routes_ground_and_validate_decisions(tmp_path, monkey
     context = model_response.json()["context"]
     assert context["selected_model_info"]["id"] == "yolo11n"
     assert context["model_selection_graph_context"]["candidate_models"]
+    evidence = context["model_selection_decision_evidence"]
+    assert evidence["selected_id"] == "yolo11n"
+    assert evidence["evaluated_candidates"]
+    assert "active_filters" in evidence
 
     body["context"] = context
     dataset_response = client.post("/api/v1/planning/select-datasets", json=body)
     assert dataset_response.status_code == 200, dataset_response.text
     context = dataset_response.json()["context"]
-    assert context["selected_data"][0]["dataset_name"] == "bdd_100k_det_train"
+    assert context["selected_data"][0]["sources"][0]["dataset_name"] == "bdd_100k_det_train"
+    splits = {
+        allocation["split"]
+        for source in context["selected_data"][0]["sources"]
+        for allocation in source["allocations"]
+    }
+    assert splits == {"train", "validation", "test"}
+    assert context["dataset_profile"]["planned_counts"]["train"] > 0
+    assert context["preprocessing_plan"]["materialization_status"] == "planned_not_executed"
     assert context["dataset_selection_graph_context"]["matched_domains"]
 
     body["context"] = context
     hpo_response = client.post("/api/v1/planning/choose-hyperparameters", json=body)
     assert hpo_response.status_code == 200, hpo_response.text
     context = hpo_response.json()["context"]
-    assert context["hpo_config"]["ontology_recipe_id"] == "ultralytics_yolo_detection_finetune_balanced"
+    assert context["hpo_config"]["training_recipe_id"] == "ultralytics_yolo_detection_finetune_balanced"
+    assert len(context["hpo_config"]) == 70
+    assert hpo_response.json()["decision"]["accept"] is True
+    assert hpo_response.json()["field_provenance"]["selected_data"]["source"] == "pipeline_state"
     assert context["hyperparameter_graph_context"]["candidate_recipes"]
+    planning_dir = tmp_path / "graph-plan" / "artifacts" / "planning"
+    assert (planning_dir / "STATE_04_PREPROCESSING.json").is_file()
+    assert len(json.loads((planning_dir / "RESULT_HYPERPARAMETERS.json").read_text())) == 70
+    assert (planning_dir / "HYPERPARAMETER_PROPOSAL.json").is_file()
+    rationale = (planning_dir / "planning_rationales.txt").read_text()
+    assert "Model Selection Rationale" in rationale
+    assert "Hyperparameter decision" in rationale
 
 
 def test_ontology_recipe_bounds_reject_invalid_values():
@@ -159,6 +188,29 @@ def test_ontology_recipe_bounds_reject_invalid_values():
     assert store.validate_hyperparameters({"learning_rate": 2.0}, recipe) == [
         "learning_rate=2 is above ontology maximum 0.01"
     ]
+
+
+def test_check_data_queries_visionkg_and_persists_sparql(tmp_path, monkeypatch):
+    client = make_client(tmp_path, monkeypatch)
+    planning = sys.modules["viewer_backend.routers.planning"]
+
+    def fake_availability(classes, *, query_output_path):
+        query_output_path.write_text("SELECT ?datasetName WHERE {}\n", encoding="utf-8")
+        return [{
+            "class_name": classes[0],
+            "sources": [{"dataset_name": "coco2017_det_train", "count": 64115}],
+        }]
+
+    monkeypatch.setattr(planning, "query_class_availability", fake_availability)
+    response = client.post("/api/v1/planning/check-data", json={
+        "job_id": "sparql-plan",
+        "context": {"task": "detection", "classes": ["person"]},
+        "use_graphrag": True,
+    })
+    assert response.status_code == 200, response.text
+    assert response.json()["context"]["available_data"][0]["sources"][0]["count"] == 64115
+    query = tmp_path / "sparql-plan" / "artifacts" / "planning" / "DATA_CHECK_QUERY.sparql"
+    assert query.read_text(encoding="utf-8").startswith("SELECT")
 
 
 def test_all_llm_response_models_have_strict_openai_schemas():
@@ -182,6 +234,7 @@ def test_all_llm_response_models_have_strict_openai_schemas():
         schemas.ModelPlan,
         schemas.DatasetPlan,
         schemas.HyperparameterPlan,
+        schemas.RevisionPlan,
         schemas.AssessmentDraft,
     ):
         assert_strict(to_strict_json_schema(model))
