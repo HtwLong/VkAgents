@@ -11,6 +11,12 @@ ONTOLOGY_ROOT = Path(
 ).expanduser().resolve()
 PLANNING_MODEL = os.getenv("PLANNING_LLM_MODEL", "gpt-5-nano")
 ASSESSMENT_MODEL = os.getenv("ASSESSMENT_LLM_MODEL", PLANNING_MODEL)
+VISIONKG_SPARQL_ENDPOINT = os.getenv(
+    "VISIONKG_SPARQL_ENDPOINT", "https://vision.semkg.org/sparql"
+)
+VISIONKG_SPARQL_TOKEN = os.getenv("VISIONKG_SPARQL_TOKEN", "")
+VISIONKG_SPARQL_TIMEOUT = max(1, int(os.getenv("VISIONKG_SPARQL_TIMEOUT", "90")))
+VISIONKG_SPARQL_ATTEMPTS = max(1, int(os.getenv("VISIONKG_SPARQL_ATTEMPTS", "3")))
 ALLOWED_ORIGINS = [
     item.strip()
     for item in os.getenv(
