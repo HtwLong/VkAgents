@@ -16,7 +16,7 @@ export function ExamplePrompts({
       <span className="ui-subsection-title mb-1.5 block">
         Example prompts
       </span>
-      <div className="flex max-h-[17.5rem] flex-col gap-2 overflow-y-auto rounded-md border border-border bg-card/50 p-2 lg:max-h-none lg:h-44">
+      <div className="flex h-[312] flex-col gap-2 overflow-y-auto rounded-md border border-border bg-card/50 p-2">
         {EXAMPLE_PROMPTS.map((p) => (
           <button
             key={p.id}

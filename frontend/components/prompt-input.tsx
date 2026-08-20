@@ -58,7 +58,7 @@ export function PromptInput({
           onChange={(e) => onChange(e.target.value)}
           placeholder="Describe the computer vision model you want to build — the data, the goal, and any constraints. Or drag in an example prompt."
           className={cn(
-            "h-44 w-full resize-none rounded-md bg-transparent px-3.5 py-3 text-sm leading-relaxed text-foreground",
+            "h-[312] w-full resize-none rounded-md bg-transparent px-3.5 py-3 text-sm leading-relaxed text-foreground",
             "placeholder:text-muted-foreground/70 focus:outline-none",
             "overflow-y-auto",
             disabled && "cursor-not-allowed opacity-60",

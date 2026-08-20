@@ -181,21 +181,20 @@ export interface ExamplePrompt {
   task: TaskType
   domain: DomainType
   text: string
+  jobIds?: {
+    withGraphRag: string
+    withoutGraphRag: string
+  }
 }
 
 export const EXAMPLE_PROMPTS: ExamplePrompt[] = [
-  {
-    id: "traffic-participant-detection",
-    name: "Traffic Participant Detection",
-    task: "detection",
-    domain: "traffic",
-    text: "I need a model for a traffic-monitoring system that detects the traffic participants in each image. The model will run locally on a MacBook Air with an Apple M4 chip and 16 GB of unified memory, using CPU or Metal acceleration. It should aim for a mAP@0.5:0.95 of around 0.30 or higher.",
-  },
+
   {
     id: "robust-car-detection",
     name: "Robust Car Detection",
     task: "detection",
     domain: "traffic",
+    jobIds: { withGraphRag: "mszbxhnsawnuh2q9v7b", withoutGraphRag: "mt07r82094wrr9tqjhr" },
     text: "I need a model for a traffic-monitoring system that detects cars in each image. The model will run locally on a MacBook Air with an Apple M4 chip and 16 GB of unified memory, using CPU or Metal acceleration. It should aim for a mAP@0.5:0.95 of around 0.30 or higher. Processing an image within roughly 500 milliseconds would be desirable, but reliable classification under different viewpoints, lighting conditions, weather conditions, and partial occlusion is more important than inference speed.",
   },
   {
@@ -203,6 +202,7 @@ export const EXAMPLE_PROMPTS: ExamplePrompt[] = [
     name: "Small Traffic Object Detection (MacBook M4)",
     task: "detection",
     domain: "traffic",
+    jobIds: { withGraphRag: "msr0azgi8u5pr87dcjm", withoutGraphRag: "msrci6iveee7o687mp" },
     text: "I need an object detection model to identify traffic lights and traffic signs in dense urban street scenes. The objects may be small and far away in the image. The model will run locally on a MacBook Air with an Apple M4 chip and 16 GB of unified memory, using Metal acceleration where supported. It should aim for a mAP@0.5:0.95 of around 0.30 or higher. An inference time of approximately 500 milliseconds or less per frame would be desirable, although somewhat slower processing is acceptable when it improves detection quality in difficult conditions. Memory usage during inference should preferably remain below 6 GB.",
   },
   {
@@ -213,17 +213,20 @@ export const EXAMPLE_PROMPTS: ExamplePrompt[] = [
     text: "I need an object detection model to identify traffic lights and traffic signs in dense urban street scenes. The objects may be small and far away in the image. The model will run inference locally on a server with an RTX 2060 GPU with 6 GB of memory. It should aim for a mAP@0.5:0.95 of around 0.35 or higher. Inference time is not important. Memory usage during inference should preferably remain below 6 GB.",
   },
   {
-    id: "traffic-scene-vqa",
-    name: "Traffic Scene Visual Question Answering",
-    task: "vqa",
+    id: "traffic-participant-detection",
+    name: "Traffic Participant Detection",
+    task: "detection",
     domain: "traffic",
-    text: "I need a compact visual question answering model for traffic images that analyzes real-world road scenarios, answers user questions, and recommends appropriate actions for traffic participants. It should be possible to fine-tune and run the model locally on a MacBook Air with an Apple M4 chip and 16 GB of unified memory, using lightweight fine-tuning and a compact or quantized model where necessary. The model should aim for an overall answer accuracy of around 70% or higher on a representative traffic VQA validation set. A typical response time below 5 seconds would be desirable, with memory usage preferably below 10 GB.",
+    jobIds: { withGraphRag: "mst3uy143htxxjankgq", withoutGraphRag: "msvyd5u86mvsgvu1q1r" },
+    text: "I need a model for a traffic-monitoring system that detects the traffic participants in each image. The model will run locally on a MacBook Air with an Apple M4 chip and 16 GB of unified memory, using CPU or Metal acceleration. It should aim for a mAP@0.5:0.95 of around 0.30 or higher.",
   },
+
   {
     id: "people-and-pets-detection",
     name: "People and Pet Detection",
     task: "detection",
     domain: "animals",
+    jobIds: { withGraphRag: "msrwyja5s33562dchpf", withoutGraphRag: "mswbpv2kqpngtg30fcn" },
     text: "I need an object detection model to locate people, dogs, and cats in indoor and outdoor photographs. The objects may appear at different scales, under varied lighting, and may be partially occluded by furniture or other people. The model will run locally on a MacBook Air with an Apple M4 chip and 16 GB of unified memory, using Metal acceleration where supported. It should aim for a mAP@0.5:0.95 of approximately 0.40 or higher and recall of at least 0.75 for each class. Processing an image within roughly 500 milliseconds would be desirable.",
   },
   {
@@ -231,6 +234,7 @@ export const EXAMPLE_PROMPTS: ExamplePrompt[] = [
     name: "Indoor Furniture Detection",
     task: "detection",
     domain: "interiors",
+    jobIds: { withGraphRag: "msvaygk2gl7vr3g2dp8", withoutGraphRag: "msvobf1f06rnq66kns1w" },
     text: "I need an object detection model to locate nightstands, coffee tables and desks in indoor photographs. It should handle cluttered rooms, partial occlusion, varied lighting, and objects viewed from different angles. Inference will run on CPU-only backend servers with approximately 8 CPU cores and 16 GB of RAM. The model should aim for a mAP@0.5:0.95 of approximately 0.30 or higher.",
   },
   {
@@ -238,6 +242,7 @@ export const EXAMPLE_PROMPTS: ExamplePrompt[] = [
     name: "Furniture Image Classification",
     task: "classification",
     domain: "retail",
+    jobIds: { withGraphRag: "msv1q3snpanlby2ggg", withoutGraphRag: "msv5h81m1g4n4njm519" },
     text: "I need an image classification model for a furniture marketplace that categorizes the primary product in an uploaded photo as a chair, sofa, table, cabinet and or lamp. Each image should primarily contain one product. Inference will run on CPU-only backend servers with approximately 4 CPU cores and 8 GB of RAM. The model should aim for a macro-F1 score of at least 0.85, use less than approximately 1.5 GB of runtime memory, and preferably classify an image within 500 milliseconds."
   },
   {
@@ -245,6 +250,7 @@ export const EXAMPLE_PROMPTS: ExamplePrompt[] = [
     name: "Handwritten Digit Classification",
     task: "classification",
     domain: "handwriting",
+    jobIds: { withGraphRag: "msub5ygmp5k8bqzmyy", withoutGraphRag: "msv79iyn3i08zj6kk1k" },
     text: "I need a lightweight image classification model that recognizes handwritten numbers. The model will run on a CPU-only system with 4 GB of RAM. It should aim for accuracy of at least 95%, use less than approximately 500 MB of runtime memory, and process an image within 200 milliseconds.",
   },
   {
@@ -252,7 +258,15 @@ export const EXAMPLE_PROMPTS: ExamplePrompt[] = [
     name: "DINOv2 LoRA Furniture Classification",
     task: "classification",
     domain: "retail",
+    jobIds: { withGraphRag: "msvvqswq41mnpnomt4o", withoutGraphRag: "msvxocrspokt7p7in4t" },
     text: "I need an image classification model for a furniture marketplace that categorizes the primary product in an uploaded photo as a chair, sofa, table, cabinet and or lamp. Please use the dinov2 vits14 and LoRA. The model will run on a CPU-only system with 8 GB of RAM.",
+  },
+    {
+    id: "traffic-scene-vqa",
+    name: "Traffic Scene Visual Question Answering",
+    task: "vqa",
+    domain: "traffic",
+    text: "I need a compact visual question answering model for traffic images that analyzes real-world road scenarios, answers user questions, and recommends appropriate actions for traffic participants. It should be possible to fine-tune and run the model locally on a MacBook Air with an Apple M4 chip and 16 GB of unified memory, using lightweight fine-tuning and a compact or quantized model where necessary. The model should aim for an overall answer accuracy of around 70% or higher on a representative traffic VQA validation set. A typical response time below 5 seconds would be desirable, with memory usage preferably below 10 GB.",
   },
 ]
 

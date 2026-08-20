@@ -12,7 +12,7 @@ import { PostTrainingAssessmentSection } from "@/components/post-training-assess
 import { EvaluationResults } from "@/components/evaluation-results"
 import { PlanningPerformance } from "@/components/planning-performance"
 import { usePipeline } from "@/hooks/use-pipeline"
-import type { RevisionScope } from "@/lib/pipeline"
+import type { ExamplePrompt, RevisionScope } from "@/lib/pipeline"
 
 type InferenceTask = "classification" | "detection" | "vqa"
 
@@ -31,6 +31,7 @@ export default function Page() {
   const [revisionScope, setRevisionScope] = useState<RevisionScope>("automatic")
   const [useGraphRag, setUseGraphRag] = useState(true)
   const [runToLoad, setRunToLoad] = useState("")
+  const [selectedExampleJobIds, setSelectedExampleJobIds] = useState<ExamplePrompt["jobIds"]>()
 
   const {
     pipeline,
@@ -89,6 +90,20 @@ export default function Page() {
     setPreferences("")
   }
 
+  const toggleGraphRag = () => {
+    const nextUseGraphRag = !useGraphRag
+    if (selectedExampleJobIds) {
+      const previousSuggestion = useGraphRag
+        ? selectedExampleJobIds.withGraphRag
+        : selectedExampleJobIds.withoutGraphRag
+      const nextSuggestion = nextUseGraphRag
+        ? selectedExampleJobIds.withGraphRag
+        : selectedExampleJobIds.withoutGraphRag
+      setRunToLoad((current) => current === previousSuggestion ? nextSuggestion : current)
+    }
+    setUseGraphRag(nextUseGraphRag)
+  }
+
   return (
     <main
       suppressHydrationWarning
@@ -125,6 +140,10 @@ export default function Page() {
             disabled={!canEditPrompt}
             onUse={(p) => {
               setPrompt(p.text)
+              setSelectedExampleJobIds(p.jobIds)
+              if (p.jobIds) {
+                setRunToLoad(useGraphRag ? p.jobIds.withGraphRag : p.jobIds.withoutGraphRag)
+              }
             }}
           />
         </div>
@@ -134,7 +153,7 @@ export default function Page() {
           role="switch"
           aria-checked={useGraphRag}
           disabled={!canEditPrompt}
-          onClick={() => setUseGraphRag((enabled) => !enabled)}
+          onClick={toggleGraphRag}
           className="flex items-center justify-between gap-4 rounded-lg border border-border bg-card px-3 py-2.5 text-left transition-colors hover:border-primary/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
         >
           <span className="flex items-center gap-3">
