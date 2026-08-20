@@ -34,11 +34,44 @@ def test_materializes_complete_classification_proposal():
 def test_materializes_complete_vqa_proposal_without_ml_imports():
     config, _ = materialize_hpo(
         {"task": "visual question answering", "classes": ["cat"],
-         "selected_data": ASSIGNMENTS, "selected_model_info": {"id": "qwen", "family": "Qwen-VL"}},
-        {"model_name": "qwen", "epochs": 2, "batch_size": 2,
+         "selected_data": ASSIGNMENTS, "selected_model_info": {"id": "Qwen3-VL-2B-Instruct", "family": "Qwen-VL"}},
+        {"model_name": "Qwen3-VL-2B-Instruct", "epochs": 2, "batch_size": 2,
          "learning_rate": 0.00002, "optimizer": "adamw", "rationale": "Use LoRA."},
         None,
     )
     assert len(config) == 28
     assert config["use_lora"] is True
     assert {"torch", "torchvision", "ultralytics"}.isdisjoint(sys.modules)
+
+
+def test_materializes_original_detection_contract_and_canonicalizes_model_id():
+    config, _ = materialize_hpo(
+        {"task": "detection", "classes": ["cat"], "selected_data": ASSIGNMENTS,
+         "selected_model_info": {"id": "yolov11", "family": "YOLO"}},
+        {"model_name": "yolov11", "epochs": 50, "batch_size": -1,
+         "learning_rate": 0.01, "optimizer": "auto", "image_size": 640,
+         "rationale": "Use the small YOLO variant."},
+        None,
+    )
+    assert len(config) == 70
+    assert config["model_name"] == "yolov11_n"
+    assert config["batch_size"] == -1
+    assert config["scheduler_name"] == "linear"
+    assert config["loss_box"] == "ciou"
+    assert config["aspect_ratio_range"] is None
+
+
+def test_materializes_ssd_with_original_backend_specific_sentinels():
+    config, _ = materialize_hpo(
+        {"task": "detection", "classes": ["cat"], "selected_data": ASSIGNMENTS,
+         "selected_model_info": {"id": "ssd300_coco", "family": "SSD"}},
+        {"model_name": "ssd300_coco", "epochs": 30, "batch_size": 4,
+         "learning_rate": 0.001, "optimizer": "sgd", "image_size": 300,
+         "rationale": "Use SSD300."},
+        None,
+    )
+    assert config["model_name"] == "ssd300"
+    assert config["model_weights"] == "imagenet_backbone"
+    assert config["input_size"] == config["max_size"] == 300
+    assert config["augmentation_policy"] == "ssd"
+    assert config["mosaic"] == 0

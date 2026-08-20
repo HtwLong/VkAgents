@@ -4,7 +4,18 @@ from datetime import datetime, timezone
 from typing import Any, Literal
 from uuid import uuid4
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator, model_validator
+
+from .planning_contracts import (
+    ClassDataAssignment,
+    ClassDataSelection,
+    ConstraintStrengths as ContractConstraintStrengths,
+    DeploymentConstraints as ContractDeploymentConstraints,
+    HardwareSpec as ContractHardwareSpec,
+    PerformanceSpec as ContractPerformanceSpec,
+    RevisionPlan as ContractRevisionPlan,
+    RobustnessSpec as ContractRobustnessSpec,
+)
 
 
 class CompletenessRequest(BaseModel):
@@ -15,26 +26,43 @@ class CompletenessRequest(BaseModel):
 
 class StateRequest(BaseModel):
     job_id: str = Field(min_length=1, max_length=160)
-    context: dict[str, Any]
+    context: str | dict[str, Any]
     use_graphrag: bool = True
+
+    @field_validator("context", mode="after")
+    @classmethod
+    def deserialize_context(cls, value: str | dict[str, Any]) -> dict[str, Any]:
+        if isinstance(value, str):
+            import json
+            parsed = json.loads(value)
+            if not isinstance(parsed, dict):
+                raise ValueError("context JSON must contain an object")
+            return parsed
+        return value
 
 
 class PlanRevisionRequest(BaseModel):
-    context: dict[str, Any]
+    context: str | dict[str, Any]
     job_id: str = Field(min_length=1, max_length=160)
     required_changes: str = ""
     preferences: str = ""
     requested_target: RevisionTarget | Literal["automatic"] = "automatic"
 
+    _deserialize_context = field_validator("context", mode="after")(StateRequest.deserialize_context.__func__)
+
 
 class ActivateRevisionRequest(BaseModel):
-    context: dict[str, Any]
-    plan: "RevisionPlan"
+    context: str | dict[str, Any]
+    plan: ContractRevisionPlan
     job_id: str = Field(min_length=1, max_length=160)
+
+    _deserialize_context = field_validator("context", mode="after")(StateRequest.deserialize_context.__func__)
 
 
 class VerifyRevisionRequest(BaseModel):
-    context: dict[str, Any]
+    context: str | dict[str, Any]
+
+    _deserialize_context = field_validator("context", mode="after")(StateRequest.deserialize_context.__func__)
 
 
 class CompletenessDecision(BaseModel):
@@ -103,16 +131,22 @@ class ModelRequirement(BaseModel):
 
 
 class TaskInterpretation(BaseModel):
-    task: Literal["classification", "detection", "visual question answering"]
+    model_config = {"extra": "forbid"}
+    task: Literal["classification", "detection", "visual question answering"] | None = None
     classes: list[str] = Field(default_factory=list)
     application_domain: str | None = None
     use_case_description: str | None = None
     questions_list: list[str] | None = None
-    performance_requirements: PerformanceRequirements = Field(default_factory=PerformanceRequirements)
-    deployment_constraints: DeploymentConstraints = Field(default_factory=DeploymentConstraints)
-    available_hardware: AvailableHardware = Field(default_factory=AvailableHardware)
-    robustness_requirements: RobustnessRequirements = Field(default_factory=RobustnessRequirements)
-    constraint_strengths: ConstraintStrengths = Field(default_factory=ConstraintStrengths)
+    available_data: list[ClassDataSelection] | None = None
+    selected_data: list[ClassDataAssignment] | None = None
+    performance_requirements: ContractPerformanceSpec | None = None
+    deployment_constraints: ContractDeploymentConstraints | None = None
+    available_hardware: ContractHardwareSpec | None = None
+    robustness_requirements: ContractRobustnessSpec = Field(default_factory=ContractRobustnessSpec)
+    constraint_strengths: ContractConstraintStrengths = Field(default_factory=ContractConstraintStrengths)
+    # OpenAI strict structured outputs cannot represent the original contract's
+    # arbitrary hyperparameters dictionary. The persisted PipelineState validates
+    # against ContractModelRequirement after extraction.
     model_requirements: list[ModelRequirement] | None = None
     augmentation: str | None = None
     preprocessing: str | None = None
@@ -157,27 +191,35 @@ RevisionTarget = Literal[
 
 
 class RevisionChange(BaseModel):
-    id: str
+    id: str = Field(min_length=1)
     target_step: RevisionTarget
-    field: str
+    field: str = Field(min_length=1)
     operation: Literal["set", "include", "exclude", "prefer", "avoid"] = "set"
     value: str | int | float | bool | list[str] | None = None
     strength: Literal["required", "preferred"]
-    summary: str
+    summary: str = Field(min_length=1)
 
 
 class RevisionPlan(BaseModel):
     required_text: str = ""
     preferred_text: str = ""
-    summary: str
+    summary: str = Field(min_length=1)
     restart_from: RevisionTarget
     changes: list[RevisionChange] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def require_content(self):
+        if not self.required_text.strip() and not self.preferred_text.strip():
+            raise ValueError("At least one required change or preference is required.")
+        if not self.changes:
+            raise ValueError("The request did not produce any actionable changes.")
+        return self
 
 
 class ForkRevisionRequest(BaseModel):
     parent_job_id: str = Field(min_length=1, max_length=160)
     assessment_id: str = Field(min_length=1)
-    plan: RevisionPlan
+    plan: ContractRevisionPlan
 
 
 class RequirementAssessment(BaseModel):

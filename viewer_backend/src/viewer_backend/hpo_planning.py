@@ -15,6 +15,21 @@ def _recipe_number(recipe: dict[str, Any] | None, field: str, fallback: float | 
     return int(number) if isinstance(fallback, int) else number
 
 
+def _detection_hpo_model_id(value: str) -> str:
+    """Translate selection-layer IDs/aliases to the original HPO registry ID."""
+    normalized = value.strip().lower().replace("-", "_")
+    aliases = {
+        "yolov8": "yolov8_n", "yolov8n": "yolov8_n",
+        "yolov10": "yolov10_n", "yolov10n": "yolov10_n",
+        "yolov11": "yolov11_n", "yolo11": "yolov11_n", "yolo11n": "yolov11_n",
+        "yolov12": "yolov12_n", "yolov12n": "yolov12_n",
+        "retinanet_r50_fpn_1x_coco": "retinanet_r50",
+        "faster_rcnn_r50_fpn_1x_coco": "faster_rcnn_r50",
+        "ssd300_coco": "ssd300",
+    }
+    return aliases.get(normalized, normalized)
+
+
 def materialize_hpo(
     context: dict[str, Any], core: dict[str, Any], recipe: dict[str, Any] | None,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
@@ -45,20 +60,33 @@ def materialize_hpo(
         })
     elif task == "detection":
         family = str((context.get("selected_model_info") or {}).get("family") or "").lower()
-        is_rtdetr = "rtdetr" in family.replace("-", "")
+        model_id = _detection_hpo_model_id(str(common["model_name"]))
+        is_rtdetr = model_id == "rtdetr_hgnetv2_l" or "rtdetr" in family.replace("-", "")
+        is_retinanet = model_id == "retinanet_r50"
+        is_faster_rcnn = model_id == "faster_rcnn_r50"
+        is_ssd = model_id == "ssd300"
+        input_size = 300 if is_ssd else int(
+            core.get("image_size") or _recipe_number(recipe, "image_size_default", 640)
+        )
         candidate = DetectionHPOConfig.model_validate({
             **common,
-            "input_size": int(core.get("image_size") or _recipe_number(recipe, "image_size_default", 640)),
-            "model_weights": "coco",
+            "model_name": model_id,
+            "task_type": "detection",
+            "input_size": input_size,
+            "model_weights": "imagenet_backbone" if is_ssd else "coco",
             "training_recipe_id": (recipe or {}).get("id", ""),
-            "scheduler_name": "linear" if is_rtdetr else "cosine",
-            "loss_box": "l1_giou" if is_rtdetr else "ciou_dfl",
-            "loss_cls": "varifocal" if is_rtdetr else "bce",
-            "lambda_box": 5.0 if is_rtdetr else 7.5,
+            "scheduler_name": "multistep" if (is_retinanet or is_faster_rcnn or is_ssd) else "linear",
+            "loss_box": "l1_giou" if is_rtdetr else "l1" if is_retinanet else "smooth_l1" if (is_faster_rcnn or is_ssd) else "ciou",
+            "loss_cls": "varifocal" if is_rtdetr else "focal" if is_retinanet else "cross_entropy" if (is_faster_rcnn or is_ssd) else "bce",
+            "lambda_box": 5.0 if is_rtdetr else 1.0 if (is_retinanet or is_faster_rcnn or is_ssd) else 7.5,
             "lambda_giou": 2.0 if is_rtdetr else 0.0,
-            "lambda_cls": 1.0 if is_rtdetr else 0.5,
-            "lambda_dfl": 0.0 if is_rtdetr else 1.5,
-            "max_size": int(core.get("image_size") or _recipe_number(recipe, "image_size_default", 640)),
+            "lambda_cls": 1.0 if (is_rtdetr or is_retinanet or is_faster_rcnn or is_ssd) else 0.5,
+            "lambda_dfl": 0.0 if (is_rtdetr or is_retinanet or is_faster_rcnn or is_ssd) else 1.5,
+            "max_size": 300 if is_ssd else 640 if is_rtdetr else 1333,
+            "aspect_ratio_range": None if (is_rtdetr or is_retinanet or is_faster_rcnn or is_ssd) else [0.5, 2.0],
+            "augmentation_policy": "ssd" if is_ssd else "basic",
+            "amp": not is_rtdetr,
+            "nms_iou_threshold": 0.0 if is_rtdetr else 0.7,
             "llm_field_rationales": [],
         })
     else:

@@ -11,11 +11,11 @@
   "num_epochs": 100,
   "patience": 20,
   "batch_size": 16,
-  "model_name": "yolo11n",
+  "model_name": "yolov11_n",
   "optimizer_name": "auto",
   "learning_rate": 0.01,
   "weight_decay": 0.0005,
-  "loss_box": "ciou_dfl",
+  "loss_box": "ciou",
   "loss_cls": "bce",
   "rationale": "Use the ontology-backed balanced fine-tuning recipe."
 }

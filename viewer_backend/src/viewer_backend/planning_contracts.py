@@ -7,9 +7,36 @@ datasets, or any other execution object.
 
 from __future__ import annotations
 
+import math
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+
+
+HardwareCategory = Literal[
+    "ConsumerCPU", "ConsumerGPU", "EdgeDevice", "DataCenterGPU",
+    "ConsumerCPU | EdgeDevice",
+]
+PerformanceCategory = Literal["VeryLow", "Low", "Medium", "MediumHigh", "High"]
+DeploymentLimit = Literal[
+    "max_runtime_memory_mb", "max_model_size_mb", "max_parameters_m", "max_cpu_latency_ms",
+]
+ClassificationModelId = Literal[
+    "resnet50", "mobilenet_v2", "mobilenet_v3_large", "mobilenet_v3_small",
+    "efficientnet_b0", "efficientnet_b1", "efficientnet_b2", "efficientnet_b3",
+    "efficientnet_b4", "efficientnet_b5", "efficientnet_b6", "efficientnet_b7",
+    "densenet121", "convnext_tiny", "clip_vit_b16", "dinov2_vits14",
+    "dinov2_vitb14", "vit_b_16", "swin_v2_t", "swin_v2_s",
+]
+VQAModelId = Literal["Qwen3-VL-2B-Instruct"]
+DetectionHPOModelId = Literal[
+    "yolov8_n", "yolov8_s", "yolov8_m", "yolov8_l", "yolov8_x",
+    "yolov10_n", "yolov10_s", "yolov10_m", "yolov10_l", "yolov10_x",
+    "yolov11_n", "yolov11_s", "yolov11_m", "yolov11_l", "yolov11_x",
+    "yolov12_n", "yolov12_s", "yolov12_m", "yolov12_l", "yolov12_x",
+    "retinanet_r50", "faster_rcnn_r50", "ssd300", "rtdetr_hgnetv2_l",
+]
+MAX_IMAGE_SIDE = 4096
 
 
 class StrictModel(BaseModel):
@@ -49,7 +76,7 @@ class DatasetSplitCounts(StrictModel):
 
 
 class HardwareSpec(StrictModel):
-    hardware_category: str | None = None
+    hardware_category: HardwareCategory | None = None
     cpu_cores: int | None = Field(None, ge=1)
     gpu_type: str | None = None
     gpu_count: int | None = Field(None, ge=0)
@@ -58,11 +85,31 @@ class HardwareSpec(StrictModel):
     storage_gb: float | None = Field(None, ge=1)
     details: str | None = None
 
+    @field_validator("hardware_category", mode="before")
+    @classmethod
+    def normalize_hardware_category(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        normalized = str(value).strip().replace("-", "_").replace(" ", "_").lower()
+        return {
+            "consumer_cpu": "ConsumerCPU", "consumercpu": "ConsumerCPU", "cpu": "ConsumerCPU",
+            "cpu_only": "ConsumerCPU", "consumer_gpu": "ConsumerGPU",
+            "consumergpu": "ConsumerGPU", "gpu": "ConsumerGPU", "edge_device": "EdgeDevice",
+            "edgedevice": "EdgeDevice", "edge": "EdgeDevice", "mobile": "EdgeDevice",
+            "embedded": "EdgeDevice", "data_center_gpu": "DataCenterGPU",
+            "datacenter_gpu": "DataCenterGPU", "datacentergpu": "DataCenterGPU",
+            "data_center": "DataCenterGPU", "datacenter": "DataCenterGPU",
+            "server_gpu": "DataCenterGPU",
+            "consumer_cpu_|_edge_device": "ConsumerCPU | EdgeDevice",
+            "consumercpu|edgedevice": "ConsumerCPU | EdgeDevice",
+            "consumer_cpu_edge_device": "ConsumerCPU | EdgeDevice",
+        }.get(normalized, value)
+
 
 class TrainingHardwareSpec(StrictModel):
     profile_id: str
     accelerator: Literal["cpu", "mps", "cuda"]
-    hardware_category: str
+    hardware_category: HardwareCategory
     gpu_type: str | None = None
     gpu_count: int = Field(0, ge=0)
     vram_gb: float | None = Field(None, ge=0)
@@ -78,9 +125,18 @@ class PerformanceSpec(StrictModel):
     primary_metric: str | None
     target_value: float | None = Field(None, ge=0, le=1)
     target_is_hard: bool = False
-    latency_category: str | None = None
-    accuracy_category: str | None = None
+    latency_category: PerformanceCategory | None = None
+    accuracy_category: PerformanceCategory | None = None
     other_constraints: list[str] | None = None
+
+    @field_validator("latency_category", "accuracy_category", mode="before")
+    @classmethod
+    def normalize_performance_category(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        normalized = str(value).strip().replace("-", "").replace("_", "").replace(" ", "").lower()
+        return {"verylow": "VeryLow", "low": "Low", "medium": "Medium",
+                "mediumhigh": "MediumHigh", "high": "High"}.get(normalized, value)
 
 
 class ConstraintStrengths(StrictModel):
@@ -105,12 +161,21 @@ class RobustnessSpec(StrictModel):
 
 
 class DeploymentConstraints(StrictModel):
-    memory_category: str | None = None
+    memory_category: PerformanceCategory | None = None
     max_runtime_memory_mb: float | None = Field(None, gt=0)
     max_model_size_mb: float | None = Field(None, gt=0)
     max_parameters_m: float | None = Field(None, gt=0)
     max_cpu_latency_ms: float | None = Field(None, gt=0)
-    hard_limits: list[str] = Field(default_factory=list)
+    hard_limits: list[DeploymentLimit] = Field(default_factory=list)
+
+    @field_validator("memory_category", mode="before")
+    @classmethod
+    def normalize_memory_category(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        normalized = str(value).strip().replace("-", "").replace("_", "").replace(" ", "").lower()
+        return {"verylow": "VeryLow", "low": "Low", "medium": "Medium",
+                "mediumhigh": "MediumHigh", "high": "High"}.get(normalized, value)
 
 
 class ModelRequirement(StrictModel):
@@ -128,29 +193,43 @@ class ModelRequirement(StrictModel):
     lora_dropout: float | None = Field(None, ge=0, lt=1)
 
 
-class RevisionChange(StrictModel):
-    id: str
+RevisionValue = (
+    str | int | float | bool | list[str]
+    | dict[str, str | int | float | bool | list[str]] | None
+)
+
+
+class RevisionChange(BaseModel):
+    id: str = Field(min_length=1)
     target_step: Literal[
         "task-interpretation", "model-selection", "dataset-selection", "choose-hyperparameters"
     ]
-    field: str
+    field: str = Field(min_length=1)
     operation: Literal["set", "include", "exclude", "prefer", "avoid"] = "set"
-    value: Any = None
+    value: RevisionValue = None
     strength: Literal["required", "preferred"]
-    summary: str
+    summary: str = Field(min_length=1)
 
 
-class RevisionPlan(StrictModel):
+class RevisionPlan(BaseModel):
     required_text: str = ""
     preferred_text: str = ""
-    summary: str
+    summary: str = Field(min_length=1)
     restart_from: Literal[
         "task-interpretation", "model-selection", "dataset-selection", "choose-hyperparameters"
     ]
     changes: list[RevisionChange] = Field(default_factory=list)
 
+    @model_validator(mode="after")
+    def require_content(self):
+        if not self.required_text.strip() and not self.preferred_text.strip():
+            raise ValueError("At least one required change or preference is required.")
+        if not self.changes:
+            raise ValueError("The request did not produce any actionable changes.")
+        return self
 
-class RevisionState(StrictModel):
+
+class RevisionState(BaseModel):
     active: RevisionPlan | None = None
     history: list[RevisionPlan] = Field(default_factory=list)
 
@@ -177,10 +256,7 @@ class DatasetProfile(StrictModel):
     derived_counts: DatasetSplitCounts = Field(default_factory=DatasetSplitCounts)
 
 
-class PipelineState(BaseModel):
-    """Full, extensible planning state used by the original API contract."""
-
-    model_config = ConfigDict(extra="allow")
+class InterpretationRequirements(StrictModel):
     task: Literal["classification", "detection", "visual question answering"] | None = None
     application_domain: str | None = None
     user_query: str | None = None
@@ -198,14 +274,23 @@ class PipelineState(BaseModel):
     augmentation: str | None = None
     preprocessing: str | None = None
     num_qa_pairs: int | None = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def normalize_legacy_selected_data(cls, value: Any) -> Any:
+        return _normalize_legacy_selected_data(value)
+
+
+class PipelineState(InterpretationRequirements):
+    """Full, extensible planning state used by the original API contract."""
+
+    model_config = ConfigDict(extra="allow")
     training_hardware: TrainingHardwareSpec | None = None
     class_expansions: dict[str, list[str]] = Field(default_factory=dict)
     model_selection_graph_context: dict[str, Any] | None = None
     dataset_selection_graph_context: dict[str, Any] | None = None
     hyperparameter_graph_context: dict[str, Any] | None = None
-    hyperparameter_policy_context: dict[str, Any] | None = None
     use_graphrag: bool = True
-    use_policy_registry: bool = False
     selected_model_info: dict[str, Any] | None = None
     hpo_config: dict[str, Any] | None = None
     hpo_decision: dict[str, Any] | None = None
@@ -226,55 +311,64 @@ class PipelineState(BaseModel):
         Full split assignment is performed by dataset planning later. At the
         contract boundary, legacy selections remain valid planning evidence.
         """
-        if not isinstance(value, dict) or value.get("selected_data") is None:
-            return value
-        document = dict(value)
-        converted = []
-        for item in document["selected_data"]:
-            if all("allocations" in source for source in item.get("sources", [])):
-                converted.append(item)
-                continue
-            converted.append({
-                "class_name": item["class_name"],
-                "sources": [
-                    {
-                        "dataset_name": source["dataset_name"],
-                        "allocations": [{
-                            "split": "train",
-                            "count": source["count"],
-                            "assignment_type": "official_split",
-                        }],
-                    }
-                    for source in item.get("sources", []) if source.get("count", 0) > 0
-                ],
-            })
-        document["selected_data"] = converted
-        return document
+        return _normalize_legacy_selected_data(value)
+
+
+def _normalize_legacy_selected_data(value: Any) -> Any:
+    if not isinstance(value, dict) or value.get("selected_data") is None:
+        return value
+    document = dict(value)
+    converted = []
+    for item in document["selected_data"]:
+        if all("allocations" in source for source in item.get("sources", [])):
+            converted.append(item)
+            continue
+        converted.append({
+            "class_name": item["class_name"],
+            "sources": [{
+                "dataset_name": source["dataset_name"],
+                "allocations": [{"split": "train", "count": source["count"],
+                                 "assignment_type": "official_split"}],
+            } for source in item.get("sources", []) if source.get("count", 0) > 0],
+        })
+    document["selected_data"] = converted
+    return document
 
 
 class LLMFieldRationale(StrictModel):
-    field: str
-    reason: str
+    field: str = Field(min_length=1)
+    reason: str = Field(min_length=1)
 
 
 class CommonHPOConfig(StrictModel):
-    classes: list[str]
-    selected_data: list[ClassDataAssignment]
-    train_data_ratio: float = 0.8
-    val_data_ratio: float = 0.1
-    test_data_ratio: float = 0.1
+    classes: list[str] = Field(min_length=1)
+    selected_data: list[ClassDataAssignment] = Field(min_length=1)
+    train_data_ratio: float = Field(0.8, ge=0, lt=1)
+    val_data_ratio: float = Field(0.1, ge=0, lt=1)
+    test_data_ratio: float = Field(0.1, ge=0, lt=1)
     num_epochs: int = Field(ge=1)
     patience: int = Field(ge=0)
-    batch_size: int
+    batch_size: int = Field(ge=1)
     model_name: str
     optimizer_name: str
     learning_rate: float = Field(gt=0)
-    weight_decay: float = Field(ge=0)
+    weight_decay: float = Field(0, ge=0)
     rationale: str
+
+    @model_validator(mode="before")
+    @classmethod
+    def normalize_legacy_selected_data(cls, value: Any) -> Any:
+        return _normalize_legacy_selected_data(value)
 
 
 class ClassificationHPOConfig(CommonHPOConfig):
-    image_size: int = Field(224, ge=32)
+    train_data_ratio: float = Field(0.8, gt=0, lt=1)
+    val_data_ratio: float = Field(0.1, gt=0, lt=1)
+    test_data_ratio: float = Field(0.1, gt=0, lt=1)
+    batch_size: int = Field(32, ge=1)
+    model_name: ClassificationModelId
+    optimizer_name: Literal["adamw", "sgd", "rmsprop"]
+    image_size: int = Field(224, ge=32, le=MAX_IMAGE_SIDE)
     precision: Literal["fp32", "mixed"] = "fp32"
     scheduler_name: Literal["none", "cosine", "step"] = "none"
     min_learning_rate: float = Field(0, ge=0)
@@ -299,100 +393,192 @@ class ClassificationHPOConfig(CommonHPOConfig):
     use_activation_checkpointing: bool = False
     track_metric: Literal["val_acc", "val_loss", "macro_f1", "micro_f1"]
     model_weights: Literal["default", "none"] = "default"
-    training_mode: str = "fine_tune_pretrained"
+    training_mode: Literal[
+        "fine_tune_pretrained", "staged_fine_tune", "head_only", "lora", "train_from_scratch"
+    ] = "fine_tune_pretrained"
     training_recipe_id: str = ""
-    lora_rank: int = 8
-    lora_alpha: int = 16
-    lora_dropout: float = 0.05
-    eps: float = 1e-8
-    beta1: float = 0.9
-    beta2: float = 0.999
+    lora_rank: int = Field(8, ge=1, le=256)
+    lora_alpha: int = Field(16, ge=1, le=1024)
+    lora_dropout: float = Field(0.05, ge=0, lt=1)
+    eps: float = Field(1e-8, gt=0, le=1e-2)
+    beta1: float = Field(0.9, gt=0, lt=1)
+    beta2: float = Field(0.999, gt=0, lt=1)
     nesterov: bool = False
-    momentum: float = 0
-    alpha: float = 0.99
+    momentum: float = Field(0, ge=0)
+    alpha: float = Field(0.99, gt=0, lt=1)
     centered: bool = False
     criterion_name: Literal["cross_entropy", "bce_with_logit"]
-    label_smoothing: float = 0
-    pos_weight: float = 1
+    label_smoothing: float = Field(0, ge=0, le=1)
+    pos_weight: float = Field(1, gt=0)
     llm_field_rationales: list[LLMFieldRationale] = Field(default_factory=list)
+
+
+class DetectionDataPlanConstraints(StrictModel):
+    minimum_unique_pool_images: int = Field(0, ge=0)
+    preferred_unique_pool_images: int = Field(0, ge=0)
+    preferred_target_is_strict: bool = False
+    group_isolation_keys: list[str] = Field(default_factory=list)
+
+    @model_validator(mode="before")
+    @classmethod
+    def accept_legacy_aliases(cls, value: Any) -> Any:
+        if not isinstance(value, dict):
+            return value
+        normalized = dict(value)
+        if "minimum_unique_pool_images" not in normalized and "minimum_unique_images" in normalized:
+            normalized["minimum_unique_pool_images"] = normalized.pop("minimum_unique_images")
+        if "preferred_unique_pool_images" not in normalized and "preferred_unique_images" in normalized:
+            normalized["preferred_unique_pool_images"] = normalized.pop("preferred_unique_images")
+        return normalized
+
+
+def _normalize_detection_inactive_fields(value: Any) -> Any:
+    if not isinstance(value, dict):
+        return value
+    normalized = dict(value)
+    model_name = str(normalized.get("model_name", ""))
+    if model_name.startswith(("yolov8_", "yolov10_", "yolov11_", "yolov12_")):
+        normalized.update({
+            "aspect_ratio_range": None, "lr_milestones": [], "lambda_giou": 0.0,
+            "max_size": 1333, "trainable_backbone_layers": 0,
+            "horizontal_flip_probability": 0.0, "augmentation_policy": "basic",
+            "topk_candidates": 400, "positive_fraction": 0.25,
+            "matching_iou_threshold": 0.5,
+        })
+        if normalized.get("scheduler_name", "linear") != "multistep":
+            normalized["scheduler_gamma"] = 0.1
+    elif model_name == "rtdetr_hgnetv2_l":
+        normalized.update({
+            "lr_milestones": [], "scheduler_gamma": 1.0,
+            "trainable_backbone_layers": 0, "horizontal_flip_probability": 0.0,
+            "augmentation_policy": "basic", "topk_candidates": 400,
+            "positive_fraction": 0.25, "matching_iou_threshold": 0.5,
+        })
+    elif model_name in {"retinanet_r50", "faster_rcnn_r50", "ssd300"}:
+        normalized.update({
+            "final_learning_rate_factor": 0.01, "warmup_momentum": 0.8,
+            "lambda_giou": 0.0, "single_cls": False, "rect": False,
+            "multi_scale": 0.0, "freeze": None, "mosaic": 0.0, "mixup": 0.0,
+            "cutmix": 0.0, "copy_paste": 0.0, "degrees": 0.0, "translate": 0.0,
+            "scale": 0.0, "fliplr": 0.0, "hsv_h": 0.0, "hsv_s": 0.0,
+            "hsv_v": 0.0, "close_mosaic": 0,
+        })
+    if str(normalized.get("optimizer_name", "adamw")) != "adamw":
+        normalized["beta1"] = 0.9
+    if normalized.get("scheduler_name", "linear") != "multistep":
+        gamma = normalized.get("scheduler_gamma", 0.1)
+        if not isinstance(gamma, (int, float)) or isinstance(gamma, bool) or gamma <= 0:
+            normalized["scheduler_gamma"] = 0.1
+    return normalized
 
 
 class DetectionHPOConfig(CommonHPOConfig):
-    task_type: Literal["detection"] = "detection"
-    input_size: int = Field(640, ge=32)
+    task_type: Literal["detection"]
+    model_name: DetectionHPOModelId
+    batch_size: int = Field(16, ge=-1)
+    input_size: int = Field(640, ge=32, le=MAX_IMAGE_SIDE)
     aspect_ratio_range: list[float] | None = Field(default_factory=lambda: [0.5, 2.0])
-    track_metric: str = "val_mAP"
-    model_weights: str = "coco"
+    track_metric: Literal["val_mAP", "val_mAP_50", "val_mAP_75", "val_loss"] = "val_mAP"
+    model_weights: Literal["default", "none", "coco", "imagenet_backbone"] = "coco"
     training_recipe_id: str = ""
-    beta1: float = 0.9
-    momentum: float = 0.937
-    scheduler_name: str = "cosine"
-    lr_milestones: list[int] = Field(default_factory=list)
-    scheduler_gamma: float = 0.1
-    final_learning_rate_factor: float = 0.01
-    data_plan_constraints: dict[str, Any] = Field(default_factory=dict)
-    training_mode: str = "fine_tune_pretrained"
-    lora_rank: int = 8
-    lora_alpha: int = 16
-    lora_dropout: float = 0.05
-    lora_target_profile: str = "decoder_attention"
+    optimizer_name: Literal["auto", "adamw", "sgd", "rmsprop"] = "adamw"
+    learning_rate: float = Field(0.01, gt=0)
+    weight_decay: float = Field(0.0005, ge=0)
+    beta1: float = Field(0.9, gt=0, lt=1)
+    momentum: float = Field(0.9, ge=0)
+    scheduler_name: Literal["none", "linear", "multistep"] = "linear"
+    lr_milestones: list[int] = Field(default_factory=lambda: [16, 22])
+    scheduler_gamma: float = Field(0.1, gt=0, le=1)
+    final_learning_rate_factor: float = Field(0.01, gt=0, le=1)
+    data_plan_constraints: DetectionDataPlanConstraints = Field(default_factory=DetectionDataPlanConstraints)
+    training_mode: Literal["full_finetune", "lora"] = "full_finetune"
+    lora_rank: int = Field(8, ge=1, le=64)
+    lora_alpha: int = Field(16, ge=1, le=256)
+    lora_dropout: float = Field(0.05, ge=0, lt=1)
+    lora_target_profile: Literal["decoder_attention", "decoder_attention_and_ffn"] = "decoder_attention"
     train_detection_head: bool = True
-    warmup_epochs: int = 0
-    warmup_momentum: float = 0.8
-    amp: bool = False
-    loss_box: str
-    loss_cls: str
-    lambda_box: float = 1
-    lambda_cls: float = 1
-    lambda_giou: float = 0
-    lambda_dfl: float = 0
-    mosaic: float = 0
-    mixup: float = 0
-    cutmix: float = 0
-    copy_paste: float = 0
-    degrees: float = 0
-    translate: float = 0
-    scale: float = 0
-    fliplr: float = 0
-    hsv_h: float = 0
-    hsv_s: float = 0
-    hsv_v: float = 0
-    close_mosaic: int = 0
+    warmup_epochs: float = Field(3.0, ge=0)
+    warmup_momentum: float = Field(0.8, ge=0, lt=1)
+    amp: bool = True
+    loss_box: Literal["l1", "l1_giou", "smooth_l1", "giou", "diou", "ciou"] = "ciou"
+    loss_cls: Literal["cross_entropy", "bce", "focal", "varifocal"] = "bce"
+    lambda_box: float = Field(7.5, gt=0)
+    lambda_cls: float = Field(0.5, gt=0)
+    lambda_giou: float = Field(0, ge=0)
+    lambda_dfl: float = Field(1.5, ge=0)
+    mosaic: float = Field(1, ge=0, le=1)
+    mixup: float = Field(0, ge=0, le=1)
+    cutmix: float = Field(0, ge=0, le=1)
+    copy_paste: float = Field(0, ge=0, le=1)
+    degrees: float = Field(0, ge=0, le=180)
+    translate: float = Field(0.1, ge=0, le=1)
+    scale: float = Field(0.5, ge=0)
+    fliplr: float = Field(0.5, ge=0, le=1)
+    hsv_h: float = Field(0.015, ge=0, le=1)
+    hsv_s: float = Field(0.7, ge=0, le=1)
+    hsv_v: float = Field(0.4, ge=0, le=1)
+    close_mosaic: int = Field(10, ge=0)
     single_cls: bool = False
     rect: bool = False
-    multi_scale: float = 0
-    confidence_threshold: float = 0.25
-    nms_iou_threshold: float = 0.7
-    max_detections: int = 300
-    workers: int = 0
-    seed: int = 0
-    max_size: int = 640
-    trainable_backbone_layers: int = 0
-    horizontal_flip_probability: float = 0
-    augmentation_policy: str = "basic"
-    topk_candidates: int = 400
-    positive_fraction: float = 0.25
-    matching_iou_threshold: float = 0.5
-    freeze: int | None = None
+    multi_scale: float = Field(0, ge=0, le=1)
+    confidence_threshold: float = Field(0.25, ge=0, le=1)
+    nms_iou_threshold: float = Field(0.7, ge=0, le=1)
+    max_detections: int = Field(300, ge=1)
+    workers: int = Field(8, ge=0)
+    seed: int = Field(0, ge=0)
+    max_size: int = Field(1333, ge=32, le=MAX_IMAGE_SIDE)
+    trainable_backbone_layers: int = Field(3, ge=0, le=5)
+    horizontal_flip_probability: float = Field(0.5, ge=0, le=1)
+    augmentation_policy: Literal["basic", "ssd"] = "basic"
+    topk_candidates: int = Field(400, ge=1)
+    positive_fraction: float = Field(0.25, gt=0, lt=1)
+    matching_iou_threshold: float = Field(0.5, gt=0, lt=1)
+    freeze: int | None = Field(None, ge=0)
     llm_field_rationales: list[LLMFieldRationale] = Field(default_factory=list)
+
+    @model_validator(mode="before")
+    @classmethod
+    def normalize_detection_draft(cls, value: Any) -> Any:
+        return _normalize_detection_inactive_fields(_normalize_legacy_selected_data(value))
 
 
 class VQAHPOConfig(CommonHPOConfig):
     task_type: Literal["visual question answering"] = "visual question answering"
+    classes: list[str]
+    batch_size: int = Field(2, ge=1)
+    model_name: VQAModelId
+    optimizer_name: Literal["adamw", "paged_adamw_8bit", "rmsprop", "sgd"] = "adamw"
+    learning_rate: float = Field(2e-5, gt=0)
+    weight_decay: float = Field(0.01, ge=0)
     max_seq_length: int = Field(2048, ge=128)
-    track_metric: str = "val_loss"
+    track_metric: Literal["val_loss", "exact_match", "f1", "meteor", "rouge", "cider"] = "val_loss"
     precision: Literal["bf16", "fp16", "fp32", "fp8"] = "bf16"
     use_lora: bool = True
     lora_r: int = Field(16, ge=1)
     lora_alpha: int = Field(32, ge=1)
     lora_dropout: float = Field(0.05, ge=0, lt=1)
-    eps: float = 1e-8
-    beta1: float = 0.9
-    beta2: float = 0.999
+    eps: float = Field(1e-8, gt=0, lt=0.01)
+    beta1: float = Field(0.9, gt=0, lt=1)
+    beta2: float = Field(0.999, gt=0, lt=1)
     nesterov: bool = False
-    momentum: float = 0
-    alpha: float = 0.99
+    momentum: float = Field(0, ge=0)
+    alpha: float = Field(0.99, gt=0, lt=1)
     centered: bool = False
+
+    @model_validator(mode="after")
+    def validate_combinations(self):
+        total_ratio = self.train_data_ratio + self.val_data_ratio + self.test_data_ratio
+        if not math.isclose(total_ratio, 1.0, rel_tol=1e-5):
+            raise ValueError(
+                "train_data_ratio, val_data_ratio, and test_data_ratio must sum to 1.0. "
+                f"Current sum: {total_ratio}"
+            )
+        if self.learning_rate > 1e-3:
+            raise ValueError(
+                "Learning rate is suspiciously high for a pre-trained VLM. It should "
+                "typically be <= 1e-3 to avoid catastrophic forgetting."
+            )
+        return self
 
 
 class HPOFinding(StrictModel):
