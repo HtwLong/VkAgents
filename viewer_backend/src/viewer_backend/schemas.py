@@ -25,14 +25,52 @@ class CompletenessDecision(BaseModel):
     suggestions: list[str] = Field(default_factory=list)
 
 
+class PerformanceRequirements(BaseModel):
+    primary_metric: str | None = None
+    target_value: float | None = None
+    target_is_hard: bool = False
+    latency_category: str | None = None
+    accuracy_category: str | None = None
+    other_constraints: list[str] = Field(default_factory=list)
+
+
+class DeploymentConstraints(BaseModel):
+    deployment_target: str | None = None
+    max_runtime_memory_mb: float | None = None
+    max_model_size_mb: float | None = None
+    max_parameters_m: float | None = None
+    max_cpu_latency_ms: float | None = None
+    details: str | None = None
+
+
+class AvailableHardware(BaseModel):
+    hardware_category: str | None = None
+    cpu_cores: int | None = None
+    gpu_type: str | None = None
+    gpu_count: int | None = None
+    vram_gb: float | None = None
+    ram_gb: float | None = None
+    storage_gb: float | None = None
+    details: str | None = None
+
+
+class RobustnessRequirements(BaseModel):
+    object_scale: list[str] = Field(default_factory=list)
+    lighting_conditions: list[str] = Field(default_factory=list)
+    weather_conditions: list[str] = Field(default_factory=list)
+    viewpoints: list[str] = Field(default_factory=list)
+    occlusion: bool | None = None
+    other_requirements: list[str] = Field(default_factory=list)
+
+
 class TaskInterpretation(BaseModel):
     task: Literal["classification", "detection", "visual question answering"]
     classes: list[str] = Field(default_factory=list)
     application_domain: str | None = None
-    performance_requirements: dict[str, Any] = Field(default_factory=dict)
-    deployment_constraints: dict[str, Any] = Field(default_factory=dict)
-    available_hardware: dict[str, Any] = Field(default_factory=dict)
-    robustness_requirements: dict[str, Any] = Field(default_factory=dict)
+    performance_requirements: PerformanceRequirements = Field(default_factory=PerformanceRequirements)
+    deployment_constraints: DeploymentConstraints = Field(default_factory=DeploymentConstraints)
+    available_hardware: AvailableHardware = Field(default_factory=AvailableHardware)
+    robustness_requirements: RobustnessRequirements = Field(default_factory=RobustnessRequirements)
 
 
 class ModelPlan(BaseModel):
@@ -77,7 +115,7 @@ class RevisionChange(BaseModel):
     target_step: RevisionTarget
     field: str
     operation: Literal["set", "include", "exclude", "prefer", "avoid"] = "set"
-    value: Any = None
+    value: str | int | float | bool | list[str] | None = None
     strength: Literal["required", "preferred"]
     summary: str
 
@@ -116,4 +154,3 @@ class AssessmentDraft(BaseModel):
 class StepTimingUpdate(BaseModel):
     duration_ms: int = Field(ge=0)
     status: str
-

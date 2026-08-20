@@ -159,3 +159,29 @@ def test_ontology_recipe_bounds_reject_invalid_values():
     assert store.validate_hyperparameters({"learning_rate": 2.0}, recipe) == [
         "learning_rate=2 is above ontology maximum 0.01"
     ]
+
+
+def test_all_llm_response_models_have_strict_openai_schemas():
+    from openai.lib._pydantic import to_strict_json_schema
+
+    schemas = importlib.import_module("viewer_backend.schemas")
+
+    def assert_strict(node, path="$"):
+        if isinstance(node, dict):
+            if node.get("type") == "object":
+                assert node.get("additionalProperties") is False, path
+            for key, value in node.items():
+                assert_strict(value, f"{path}.{key}")
+        elif isinstance(node, list):
+            for index, value in enumerate(node):
+                assert_strict(value, f"{path}[{index}]")
+
+    for model in (
+        schemas.CompletenessDecision,
+        schemas.TaskInterpretation,
+        schemas.ModelPlan,
+        schemas.DatasetPlan,
+        schemas.HyperparameterPlan,
+        schemas.AssessmentDraft,
+    ):
+        assert_strict(to_strict_json_schema(model))
