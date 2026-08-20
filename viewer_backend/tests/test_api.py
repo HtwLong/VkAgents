@@ -100,7 +100,7 @@ def test_graphrag_planning_routes_ground_and_validate_decisions(tmp_path, monkey
         if model is schemas.DatasetPlan:
             return model(
                 sources=[{
-                    "dataset_name": "bdd_100k_det_train",
+                    "dataset_name": "BDD100K detection train",
                     "classes": ["traffic light"],
                     "rationale": "Ontology-aligned street-scene source.",
                 }],

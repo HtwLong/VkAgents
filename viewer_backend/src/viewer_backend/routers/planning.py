@@ -61,6 +61,10 @@ def _evidence(title: str, rationale: str, candidates: list[dict] | None = None, 
     }
 
 
+def _canonical_reference(value: str) -> str:
+    return "".join(character for character in value.lower() if character.isalnum())
+
+
 @router.post("/completenesscheck")
 async def completeness_check(request: CompletenessRequest):
     decision = await structured_call(
@@ -186,13 +190,25 @@ async def select_datasets(request: StateRequest):
         ),
     )
     if graph_context:
-        allowed = {item["dataset_id"] for item in graph_context["candidate_datasets"]}
-        unknown = sorted({item.dataset_name for item in plan.sources} - allowed)
+        candidates = graph_context["candidate_datasets"]
+        references: dict[str, set[str]] = {}
+        for item in candidates:
+            for reference in (item["dataset_id"], item.get("display_name") or ""):
+                references.setdefault(_canonical_reference(reference), set()).add(item["dataset_id"])
+        normalized_sources = []
+        unknown = []
+        for source in plan.sources:
+            matches = references.get(_canonical_reference(source.dataset_name), set())
+            if len(matches) != 1:
+                unknown.append(source.dataset_name)
+                continue
+            normalized_sources.append(source.model_copy(update={"dataset_name": next(iter(matches))}))
         if unknown:
             raise HTTPException(
                 status_code=502,
                 detail={"message": "Planning model selected datasets outside the GraphRAG candidates.", "dataset_ids": unknown},
             )
+        plan = plan.model_copy(update={"sources": normalized_sources})
     selected = [item.model_dump(mode="json") for item in plan.sources]
     context["selected_data"] = selected
     if graph_context:
