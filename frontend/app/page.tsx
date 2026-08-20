@@ -35,6 +35,8 @@ export default function Page() {
 
   const {
     pipeline,
+    capabilities,
+    executionAvailable,
     status,
     isLoadedRun,
     activeStepId,
@@ -73,6 +75,7 @@ export default function Page() {
   const cancelling = status === "cancelling"
   const waiting = status === "waiting"
   const done = status === "done"
+  const viewerMode = capabilities.mode === "viewer"
   const task = inferredTask(context) ?? evaluationReport?.task ?? null
   const canEditPrompt = !running && !cancelling && !waiting
 
@@ -119,17 +122,25 @@ export default function Page() {
               Adaptive Vision
             </span>
             <span className="size-1 rounded-full bg-primary/40" aria-hidden />
-            <span className="text-xs text-muted-foreground">Model workspace</span>
+            <span className="text-xs text-muted-foreground">
+              {viewerMode ? "Planning and results viewer" : "Model workspace"}
+            </span>
           </div>
         </div>
         <h1 className="text-pretty text-2xl font-semibold leading-tight tracking-[-0.025em] sm:text-3xl">
           LLM-based Adaptive CV Model Learning Pipeline
         </h1>
         <p className="max-w-2xl text-pretty text-sm leading-6 text-muted-foreground">
-          Describe the computer vision model you need in natural language. The
-          pipeline plans the approach, trains a candidate model, evaluates it,
-          and hands you a deployable model with a full report.
+          {viewerMode
+            ? "Explore historical training results, create lightweight computer-vision plans, and assess completed runs. Dataset download, training, evaluation execution, and inference are disabled."
+            : "Describe the computer vision model you need in natural language. The pipeline plans the approach, trains a candidate model, evaluates it, and hands you a deployable model with a full report."}
         </p>
+        {viewerMode && (
+          <div className="rounded-lg border border-primary/25 bg-primary/5 px-3 py-2 text-xs leading-5 text-muted-foreground">
+            Hosted viewer mode · Planning and post-training assessment use background LLM calls.
+            No model or dataset execution is possible on this deployment.
+          </div>
+        )}
       </header>
 
       {/* Configuration */}
@@ -148,7 +159,7 @@ export default function Page() {
           />
         </div>
 
-        <button
+        {capabilities.graphrag && <button
           type="button"
           role="switch"
           aria-checked={useGraphRag}
@@ -177,7 +188,7 @@ export default function Page() {
               }`}
             />
           </span>
-        </button>
+        </button>}
 
         {clarification && (
           <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-sm text-amber-950 dark:text-amber-100">
@@ -223,7 +234,7 @@ export default function Page() {
             <>
               {!done && (
                 <Button onClick={continueRun} disabled={cancelling}>
-                  <Play className="size-4" aria-hidden /> Continue pipeline
+                  <Play className="size-4" aria-hidden /> {executionAvailable ? "Continue pipeline" : "Continue planning"}
                 </Button>
               )}
               <Button variant="outline" onClick={startNewPipeline} className="bg-transparent">
@@ -309,6 +320,8 @@ export default function Page() {
         onCancelRevision={cancelRevision}
         onRevisionStrength={updateRevisionStrength}
         onConfirm={confirmPlan}
+        executionAvailable={executionAvailable}
+        planningRevisionAvailable={capabilities.planning_revisions}
       />
 
       <PlanningPerformance usage={planningLLMUsage} getStepDuration={getStepDuration} />
@@ -319,7 +332,7 @@ export default function Page() {
       <PipelineOutputs ready={done} artifacts={artifacts} />
 
       {/* Inference */}
-      <InferenceSection task={task} jobId={jobId} enabled={done} />
+      {capabilities.inference && <InferenceSection task={task} jobId={jobId} enabled={done} />}
 
       <PostTrainingAssessmentSection
         assessment={postTrainingAssessment}
@@ -328,6 +341,7 @@ export default function Page() {
         onAnalyze={requestAssessment}
         onRegenerate={redoRecommendation}
         onApprove={approveAssessment}
+        allowRevisionApproval={capabilities.assessment_revision}
       />
     </main>
   )

@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
   buildPipeline,
   type DeliverableArtifact,
@@ -17,6 +17,51 @@ import {
 import type { DecisionEvidence } from "@/components/decision-evidence"
 
 export type RunStatus = "idle" | "running" | "cancelling" | "stopped" | "waiting" | "done" | "failed"
+
+export interface BackendCapabilities {
+  mode: "full" | "viewer"
+  planning: boolean
+  graphrag: boolean
+  planning_revisions: boolean
+  assessment_revision: boolean
+  post_training_assessment: boolean
+  run_viewing: boolean
+  artifact_downloads: boolean
+  data_download: boolean
+  data_preparation: boolean
+  training: boolean
+  evaluation_execution: boolean
+  inference: boolean
+}
+
+const FULL_CAPABILITIES: BackendCapabilities = {
+  mode: "full",
+  planning: true,
+  graphrag: true,
+  planning_revisions: true,
+  assessment_revision: true,
+  post_training_assessment: true,
+  run_viewing: true,
+  artifact_downloads: true,
+  data_download: true,
+  data_preparation: true,
+  training: true,
+  evaluation_execution: true,
+  inference: true,
+}
+
+const VIEWER_CAPABILITIES: BackendCapabilities = {
+  ...FULL_CAPABILITIES,
+  mode: "viewer",
+  graphrag: false,
+  planning_revisions: false,
+  assessment_revision: false,
+  data_download: false,
+  data_preparation: false,
+  training: false,
+  evaluation_execution: false,
+  inference: false,
+}
 
 type PipelineContext = Record<string, unknown> | string
 
@@ -176,6 +221,10 @@ async function readError(response: Response) {
 
 /** Drives the real FastAPI pipeline and stores per-step backend output. */
 export function usePipeline() {
+  const configuredViewer = process.env.NEXT_PUBLIC_DEPLOYMENT_MODE === "viewer"
+  const [capabilities, setCapabilities] = useState<BackendCapabilities>(
+    configuredViewer ? VIEWER_CAPABILITIES : FULL_CAPABILITIES,
+  )
   const [stepStatuses, setStepStatuses] = useState<Record<string, StepStatus>>({})
   const [stepOutputs, setStepOutputs] = useState<Record<string, string[]>>({})
   const [stepDurations, setStepDurations] = useState<Record<string, number>>({})
@@ -205,8 +254,26 @@ export function usePipeline() {
   const stepStartedAtRef = useRef<Record<string, number>>({})
   const stepStatusesRef = useRef<Record<string, StepStatus>>({})
 
+  const executionAvailable = capabilities.training && capabilities.evaluation_execution
+
+  useEffect(() => {
+    const controller = new AbortController()
+    void fetch(`${API_BASE}/api/v1/capabilities`, { signal: controller.signal })
+      .then(async (response) => {
+        if (!response.ok) throw new Error(`${response.status} ${response.statusText}`)
+        return response.json() as Promise<BackendCapabilities>
+      })
+      .then(setCapabilities)
+      .catch((error) => {
+        if (!(error instanceof DOMException && error.name === "AbortError") && configuredViewer) {
+          setCapabilities(VIEWER_CAPABILITIES)
+        }
+      })
+    return () => controller.abort()
+  }, [configuredViewer])
+
   const pipeline = useMemo<PipelineStage[]>(() => {
-    const base = buildPipeline()
+    const base = buildPipeline().filter((stage) => executionAvailable || stage.id === "planning")
     return base.map((stage) => ({
       ...stage,
       steps: stage.steps.map((step) => ({
@@ -214,7 +281,7 @@ export function usePipeline() {
         outputs: stepOutputs[step.id] ?? step.outputs,
       })),
     }))
-  }, [stepOutputs])
+  }, [executionAvailable, stepOutputs])
 
   const setCurrentContext = useCallback((next: PipelineContext) => {
     contextRef.current = next
@@ -737,10 +804,15 @@ export function usePipeline() {
       setPlanningLLMUsage(snapshot.planning_llm_usage)
 
       markStep("ask-change-requests", "running")
-      appendOutput("ask-change-requests", "Submit change requests or continue to execution.")
+      appendOutput(
+        "ask-change-requests",
+        executionAvailable
+          ? "Submit change requests or continue to execution."
+          : "Review the proposed plan. Execution is intentionally unavailable in viewer mode.",
+      )
       setStatus("waiting")
     },
-    [appendOutput, finishStep, markStep, requestJson, runContextStep, setCurrentContext],
+    [appendOutput, executionAvailable, finishStep, markStep, requestJson, runContextStep, setCurrentContext],
   )
 
   const start = useCallback(
@@ -945,6 +1017,12 @@ export function usePipeline() {
   )
 
   const confirmPlan = useCallback(async () => {
+    if (!executionAvailable) {
+      await finishStep("ask-change-requests", "done")
+      appendOutput("ask-change-requests", "Planning completed. No execution was started.")
+      setStatus("done")
+      return
+    }
     const controller = new AbortController()
     abortRef.current = controller
     setStatus("running")
@@ -956,7 +1034,7 @@ export function usePipeline() {
       setError(err instanceof Error ? err.message : String(err))
       setStatus("failed")
     }
-  }, [runExecutionAndEvaluation])
+  }, [appendOutput, executionAvailable, finishStep, runExecutionAndEvaluation])
 
   const requestAssessment = useCallback(async () => {
     const currentJobId = jobIdRef.current
@@ -997,6 +1075,10 @@ export function usePipeline() {
   }, [postTrainingAssessment, requestJson])
 
   const approveAssessment = useCallback(async () => {
+    if (!capabilities.assessment_revision) {
+      setError("Starting an improved execution run is unavailable in viewer mode.")
+      return
+    }
     const parentJobId = jobIdRef.current
     const plan = postTrainingAssessment?.recommended_plan
     if (!parentJobId || !postTrainingAssessment || !plan) return
@@ -1042,7 +1124,7 @@ export function usePipeline() {
       setError(err instanceof Error ? err.message : String(err))
       setStatus("failed")
     }
-  }, [markStep, postTrainingAssessment, requestJson, runContextStep, runExecutionAndEvaluation, setCurrentContext])
+  }, [capabilities.assessment_revision, markStep, postTrainingAssessment, requestJson, runContextStep, runExecutionAndEvaluation, setCurrentContext])
 
   const continueRun = useCallback(
     async () => {
@@ -1054,12 +1136,14 @@ export function usePipeline() {
       setError(null)
 
       try {
-        await requestJson(
-          `/api/v1/runs/${encodeURIComponent(currentJobId)}/errors`,
-          undefined,
-          controller.signal,
-          "DELETE",
-        )
+        if (executionAvailable) {
+          await requestJson(
+            `/api/v1/runs/${encodeURIComponent(currentJobId)}/errors`,
+            undefined,
+            controller.signal,
+            "DELETE",
+          )
+        }
         // Re-read durable state: a backend worker may have completed after the UI
         // was stopped, in which case its validated artifact must be skipped.
         const snapshot = await requestJson<RunSnapshotResponse>(
@@ -1105,6 +1189,11 @@ export function usePipeline() {
           return
         }
 
+        if (!executionAvailable) {
+          if (stepId === "ask-change-requests") markStep("ask-change-requests", "done")
+          setStatus("done")
+          return
+        }
         const executionStart = stepId === "ask-change-requests" ? "download-data" : stepId
         await runExecutionAndEvaluation(controller.signal, executionStart)
       } catch (err) {
@@ -1115,7 +1204,7 @@ export function usePipeline() {
         if (failedStepId) markStep(failedStepId, "failed")
       }
     },
-    [markStep, requestJson, runContextStep, runExecutionAndEvaluation],
+    [executionAvailable, markStep, requestJson, runContextStep, runExecutionAndEvaluation],
   )
 
   const getStepStatus = useCallback(
@@ -1135,6 +1224,8 @@ export function usePipeline() {
 
   return {
     pipeline,
+    capabilities,
+    executionAvailable,
     status,
     isLoadedRun,
     activeStepId,

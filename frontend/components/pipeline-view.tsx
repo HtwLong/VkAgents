@@ -42,6 +42,8 @@ export function PipelineView({
   onCancelRevision,
   onRevisionStrength,
   onConfirm,
+  executionAvailable,
+  planningRevisionAvailable,
 }: {
   pipeline: PipelineStage[]
   status: RunStatus
@@ -66,6 +68,8 @@ export function PipelineView({
   onCancelRevision: () => void
   onRevisionStrength: (changeId: string, strength: "required" | "preferred") => void
   onConfirm: () => void
+  executionAvailable: boolean
+  planningRevisionAvailable: boolean
 }) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set())
 
@@ -190,7 +194,7 @@ export function PipelineView({
                           </pre>
                         </div>
 
-                        {status === "waiting" && (
+                        {status === "waiting" && planningRevisionAvailable && (
                           <>
                             <label className="flex flex-col gap-1.5 text-xs font-medium text-foreground">
                               Change scope
@@ -279,7 +283,7 @@ export function PipelineView({
                             <div className="flex flex-col gap-2 sm:flex-row">
                               <Button onClick={onConfirm} disabled={revisionVerification?.satisfied === false}>
                                 <Check className="size-4" aria-hidden />
-                                Confirm
+                                {executionAvailable ? "Confirm and execute" : "Finish planning"}
                               </Button>
                               <Button
                                 variant="outline"
@@ -292,6 +296,17 @@ export function PipelineView({
                               </Button>
                             </div>
                           </>
+                        )}
+                        {status === "waiting" && !planningRevisionAvailable && (
+                          <div className="flex flex-col gap-2">
+                            <p className="text-xs leading-5 text-muted-foreground">
+                              This hosted viewer can create and save the plan, but it cannot download data,
+                              train models, evaluate models, or run inference.
+                            </p>
+                            <Button onClick={onConfirm}>
+                              <Check className="size-4" aria-hidden /> Finish planning
+                            </Button>
+                          </div>
                         )}
                       </div>
                     )}

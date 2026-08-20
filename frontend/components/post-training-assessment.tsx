@@ -11,6 +11,7 @@ export function PostTrainingAssessmentSection({
   onAnalyze,
   onRegenerate,
   onApprove,
+  allowRevisionApproval,
 }: {
   assessment: PostTrainingAssessment | null
   eligibility: AssessmentEligibility | null
@@ -18,6 +19,7 @@ export function PostTrainingAssessmentSection({
   onAnalyze: () => void
   onRegenerate: () => void
   onApprove: () => void
+  allowRevisionApproval: boolean
 }) {
   if (!eligibility?.eligible) {
     return (
@@ -85,14 +87,21 @@ export function PostTrainingAssessmentSection({
             {assessment.recommended_plan.changes.map((change) => <li key={change.id}>{change.summary}</li>)}
           </ul>
           <div className="mt-3 flex flex-wrap gap-2">
-            <Button onClick={onApprove} disabled={busy || !eligibility.can_create_revision}>
-              <RotateCcw className="size-4" aria-hidden /> Approve and start improved run
-            </Button>
+            {allowRevisionApproval && (
+              <Button onClick={onApprove} disabled={busy || !eligibility.can_create_revision}>
+                <RotateCcw className="size-4" aria-hidden /> Approve and start improved run
+              </Button>
+            )}
             <Button variant="outline" className="bg-transparent" onClick={onRegenerate} disabled={busy}>
               <RefreshCw className={`size-4 ${busy ? "animate-spin" : ""}`} aria-hidden /> Redo recommendation
             </Button>
           </div>
           {!eligibility.can_create_revision && <p className="mt-2 text-xs text-amber-700">{eligibility.revision_reason}</p>}
+          {!allowRevisionApproval && (
+            <p className="mt-2 text-xs text-muted-foreground">
+              The recommendation is informational in viewer mode; starting a training run is disabled.
+            </p>
+          )}
         </div>
       )}
 
