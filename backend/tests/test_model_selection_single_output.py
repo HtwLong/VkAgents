@@ -967,6 +967,35 @@ def _detection_selection_output(*, selected_candidate_id=None):
     return DetectionModelPatch.model_validate(payload)
 
 
+def test_small_object_detection_can_run_without_graphrag(monkeypatch):
+    import routers.planning as planning
+
+    async def fake_run(_agent, input):
+        return SimpleNamespace(final_output=_detection_selection_output())
+
+    monkeypatch.setattr(
+        planning,
+        "build_model_selection_context",
+        lambda *_args: pytest.fail("GraphRAG context should not be built"),
+    )
+    monkeypatch.setattr(planning.Runner, "run", fake_run)
+    monkeypatch.setattr(planning, "save_checkpoint", lambda *_args: None)
+
+    result = asyncio.run(planning.select_model(planning.StateRequest(
+        context={
+            "task": "detection",
+            "robustness_requirements": {"object_scale": ["small"]},
+        },
+        job_id="small-object-graph-disabled",
+        use_graphrag=False,
+    )))
+
+    assert result["context"]["use_graphrag"] is False
+    assert result["context"]["model_selection_graph_context"] is None
+    assert result["decision_evidence"]["grounded"] is False
+    assert result["decision_evidence"]["selection_confidence"] == "standard"
+
+
 def test_detection_endpoint_preserves_exact_graphrag_variant(monkeypatch):
     import routers.planning as planning
 

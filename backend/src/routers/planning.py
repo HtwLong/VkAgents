@@ -1192,6 +1192,7 @@ async def select_model(request: StateRequest):
         "use_graphrag": use_graphrag,
     })
 
+    graph_context: dict[str, Any] = {}
     if use_graphrag:
         graph_context = build_model_selection_context(state)
         candidates = graph_context.get("candidate_models") or []
@@ -1470,7 +1471,8 @@ async def select_model(request: StateRequest):
         decision_evidence["comparison_warnings"] = comparison_warnings
         decision_evidence["selection_confidence"] = (
             "conditional"
-            if state.task == "detection"
+            if use_graphrag
+            and state.task == "detection"
             and _small_objects_requested(state)
             and graph_context.get("filters", {}).get("small_object_benchmark_status")
             == "unverified_without_ap_small"
