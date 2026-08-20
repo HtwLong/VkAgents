@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react"
 import { ImageUp, Loader2, Send, Sparkles, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "/api/backend"
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL?.trim() || "/api/backend"
 
 type InferenceTask = "classification" | "detection" | "vqa"
 

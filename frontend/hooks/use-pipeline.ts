@@ -107,7 +107,10 @@ interface RunSnapshotResponse {
   } | null
 }
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "/api/backend"
+// Vercel commonly exposes optional variables as an empty string. Treat that the
+// same as an unset value so browser requests continue through our same-origin
+// Next.js proxy instead of incorrectly targeting `/api/v1/...` on Vercel.
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL?.trim() || "/api/backend"
 const TRAINING_POLL_MS = 10_000
 const DOWNLOAD_POLL_MS = 500
 

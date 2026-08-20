@@ -6,7 +6,7 @@ import { Activity, BarChart3, Database, Maximize2, Target, X } from "lucide-reac
 import Image from "next/image"
 import type { EvaluationReport } from "@/lib/pipeline"
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "/api/backend"
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL?.trim() || "/api/backend"
 
 const METRIC_LABELS: Record<string, string> = {
   accuracy: "Accuracy",
