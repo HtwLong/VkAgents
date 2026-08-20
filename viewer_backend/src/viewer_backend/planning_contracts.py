@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class StrictModel(BaseModel):
@@ -203,7 +203,9 @@ class PipelineState(BaseModel):
     model_selection_graph_context: dict[str, Any] | None = None
     dataset_selection_graph_context: dict[str, Any] | None = None
     hyperparameter_graph_context: dict[str, Any] | None = None
+    hyperparameter_policy_context: dict[str, Any] | None = None
     use_graphrag: bool = True
+    use_policy_registry: bool = False
     selected_model_info: dict[str, Any] | None = None
     hpo_config: dict[str, Any] | None = None
     hpo_decision: dict[str, Any] | None = None
@@ -215,6 +217,39 @@ class PipelineState(BaseModel):
     step_history: list[str] = Field(default_factory=list)
     last_updated: str | None = None
     revision: RevisionState = Field(default_factory=RevisionState)
+
+    @model_validator(mode="before")
+    @classmethod
+    def normalize_legacy_selected_data(cls, value: Any) -> Any:
+        """Accept historical count-only selections without discarding them.
+
+        Full split assignment is performed by dataset planning later. At the
+        contract boundary, legacy selections remain valid planning evidence.
+        """
+        if not isinstance(value, dict) or value.get("selected_data") is None:
+            return value
+        document = dict(value)
+        converted = []
+        for item in document["selected_data"]:
+            if all("allocations" in source for source in item.get("sources", [])):
+                converted.append(item)
+                continue
+            converted.append({
+                "class_name": item["class_name"],
+                "sources": [
+                    {
+                        "dataset_name": source["dataset_name"],
+                        "allocations": [{
+                            "split": "train",
+                            "count": source["count"],
+                            "assignment_type": "official_split",
+                        }],
+                    }
+                    for source in item.get("sources", []) if source.get("count", 0) > 0
+                ],
+            })
+        document["selected_data"] = converted
+        return document
 
 
 class LLMFieldRationale(StrictModel):
@@ -384,4 +419,3 @@ class HyperparameterProposal(StrictModel):
     graph_context: dict[str, Any] | None = None
     decision_evidence: dict[str, Any] | None = None
     field_provenance: dict[str, Any] = Field(default_factory=dict)
-

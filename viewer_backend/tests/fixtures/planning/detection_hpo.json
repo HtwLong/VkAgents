@@ -1,0 +1,21 @@
+{
+  "task_type": "detection",
+  "classes": ["person"],
+  "selected_data": [{
+    "class_name": "person",
+    "sources": [{
+      "dataset_name": "coco2017_det_train",
+      "allocations": [{"split": "train", "count": 1000, "assignment_type": "official_split"}]
+    }]
+  }],
+  "num_epochs": 100,
+  "patience": 20,
+  "batch_size": 16,
+  "model_name": "yolo11n",
+  "optimizer_name": "auto",
+  "learning_rate": 0.01,
+  "weight_decay": 0.0005,
+  "loss_box": "ciou_dfl",
+  "loss_cls": "bce",
+  "rationale": "Use the ontology-backed balanced fine-tuning recipe."
+}

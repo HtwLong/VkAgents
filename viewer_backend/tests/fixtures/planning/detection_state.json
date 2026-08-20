@@ -1,0 +1,29 @@
+{
+  "task": "detection",
+  "user_query": "Detect people in street scenes.",
+  "classes": ["person"],
+  "available_data": [
+    {"class_name": "person", "sources": [{"dataset_name": "coco2017_det_train", "count": 64115}]}
+  ],
+  "performance_requirements": {
+    "primary_metric": "mAP@0.5:0.95",
+    "target_value": 0.4,
+    "target_is_hard": false,
+    "latency_category": "Medium",
+    "accuracy_category": "Medium",
+    "other_constraints": ["recall>=0.75"]
+  },
+  "constraint_strengths": {"accuracy": "soft", "latency": "preference"},
+  "robustness_requirements": {"lighting": ["low_light"], "occlusion": true},
+  "deployment_constraints": {"max_cpu_latency_ms": 500, "hard_limits": []},
+  "available_hardware": {"hardware_category": "ConsumerCPU", "ram_gb": 16},
+  "model_selection_graph_context": {"candidate_models": [{"id": "yolo11n"}]},
+  "dataset_selection_graph_context": {"candidate_datasets": [{"dataset_id": "coco2017_det_train"}]},
+  "hyperparameter_graph_context": {"candidate_recipes": [{"id": "yolo-balanced"}]},
+  "selected_model_info": {"id": "yolo11n", "family": "YOLO11"},
+  "model_selection_decision_evidence": {"summary": "Latency-compatible candidate."},
+  "dataset_selection_decision_evidence": {"summary": "Class coverage is available."},
+  "hyperparameter_decision_evidence": {"summary": "Recipe-grounded values."},
+  "step_history": ["Task Interpretation Completed", "Data Availability Checked"],
+  "revision": {"active": null, "history": []}
+}

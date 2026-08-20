@@ -1,4 +1,6 @@
 import sys
+import json
+from pathlib import Path
 
 from viewer_backend.planning_contracts import (
     ClassificationHPOConfig,
@@ -34,3 +36,21 @@ def test_hpo_contracts_are_not_reduced_to_basic_fields():
 def test_planning_contracts_do_not_import_execution_frameworks():
     forbidden = {"torch", "torchvision", "ultralytics"}
     assert forbidden.isdisjoint(sys.modules)
+
+
+def test_sanitized_original_planning_documents_validate():
+    fixtures = Path(__file__).parent / "fixtures" / "planning"
+    state = PipelineState.model_validate_json((fixtures / "detection_state.json").read_text())
+    hpo = DetectionHPOConfig.model_validate_json((fixtures / "detection_hpo.json").read_text())
+    assert state.available_data[0].sources[0].count == 64115
+    assert state.hyperparameter_graph_context["candidate_recipes"]
+    assert hpo.model_name == "yolo11n"
+    assert hpo.model_dump()["nms_iou_threshold"] == 0.7
+
+
+def test_pipeline_state_round_trip_does_not_drop_planning_sections():
+    fixture = Path(__file__).parent / "fixtures" / "planning" / "detection_state.json"
+    source = json.loads(fixture.read_text())
+    round_tripped = PipelineState.model_validate(source).model_dump(mode="json")
+    for field in source:
+        assert field in round_tripped
