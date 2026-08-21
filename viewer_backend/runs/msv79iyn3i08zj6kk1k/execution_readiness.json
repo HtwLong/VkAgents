@@ -1,0 +1,41 @@
+{
+  "ready": true,
+  "errors": [],
+  "warnings": [],
+  "checks": {
+    "saved_config_valid": true,
+    "prepared_dataset_matches_plan": true,
+    "splits_non_empty": true,
+    "content_isolation_valid": true,
+    "annotations_valid": true,
+    "resource_preflight_valid": true,
+    "training_memory_assessment": "fits"
+  },
+  "training_memory_estimate": {
+    "supported": true,
+    "assessment": "fits",
+    "lower_gb": 0.185,
+    "upper_gb": 0.257,
+    "budget_gb": 5.0,
+    "model_name": "mobilenet_v2",
+    "batch_size": 4,
+    "image_size": 32,
+    "mixed_precision": false,
+    "components_gb": {
+      "parameters_gradients_optimizer": 0.052,
+      "activations": 0.004,
+      "input_batch": 0.0,
+      "family_overhead": 0.15
+    },
+    "reason": null
+  },
+  "materialized_dataset": {
+    "counts": {
+      "train": 12000,
+      "validation": 1500,
+      "test": 1500
+    },
+    "assignment_fingerprint": "dc3f8e1fb3bc5110393b9e202083bb32199708bcff9767f6b0e87391ef5b0535",
+    "manifest_sha256": "a87e7c29cda393155e7f0c9ff020135e16d45c0eff7dfb91e380977af85026b5"
+  }
+}

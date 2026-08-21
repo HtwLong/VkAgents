@@ -1,0 +1,109 @@
+PREFIX cv: <http://vision.semkg.org/onto/v0.1/>
+        PREFIX schema: <http://schema.org/>
+
+        SELECT ?datasetName (COUNT(DISTINCT ?image) AS ?count)
+        WHERE {
+            ?image cv:hasAnnotation/cv:hasLabel/cv:label "0" .
+            ?image schema:isPartOf / schema:name ?datasetName .
+        }
+        GROUP BY ?datasetName
+        ORDER BY DESC(?count)
+
+PREFIX cv: <http://vision.semkg.org/onto/v0.1/>
+        PREFIX schema: <http://schema.org/>
+
+        SELECT ?datasetName (COUNT(DISTINCT ?image) AS ?count)
+        WHERE {
+            ?image cv:hasAnnotation/cv:hasLabel/cv:label "1" .
+            ?image schema:isPartOf / schema:name ?datasetName .
+        }
+        GROUP BY ?datasetName
+        ORDER BY DESC(?count)
+
+PREFIX cv: <http://vision.semkg.org/onto/v0.1/>
+        PREFIX schema: <http://schema.org/>
+
+        SELECT ?datasetName (COUNT(DISTINCT ?image) AS ?count)
+        WHERE {
+            ?image cv:hasAnnotation/cv:hasLabel/cv:label "2" .
+            ?image schema:isPartOf / schema:name ?datasetName .
+        }
+        GROUP BY ?datasetName
+        ORDER BY DESC(?count)
+
+PREFIX cv: <http://vision.semkg.org/onto/v0.1/>
+        PREFIX schema: <http://schema.org/>
+
+        SELECT ?datasetName (COUNT(DISTINCT ?image) AS ?count)
+        WHERE {
+            ?image cv:hasAnnotation/cv:hasLabel/cv:label "3" .
+            ?image schema:isPartOf / schema:name ?datasetName .
+        }
+        GROUP BY ?datasetName
+        ORDER BY DESC(?count)
+
+PREFIX cv: <http://vision.semkg.org/onto/v0.1/>
+        PREFIX schema: <http://schema.org/>
+
+        SELECT ?datasetName (COUNT(DISTINCT ?image) AS ?count)
+        WHERE {
+            ?image cv:hasAnnotation/cv:hasLabel/cv:label "4" .
+            ?image schema:isPartOf / schema:name ?datasetName .
+        }
+        GROUP BY ?datasetName
+        ORDER BY DESC(?count)
+
+PREFIX cv: <http://vision.semkg.org/onto/v0.1/>
+        PREFIX schema: <http://schema.org/>
+
+        SELECT ?datasetName (COUNT(DISTINCT ?image) AS ?count)
+        WHERE {
+            ?image cv:hasAnnotation/cv:hasLabel/cv:label "5" .
+            ?image schema:isPartOf / schema:name ?datasetName .
+        }
+        GROUP BY ?datasetName
+        ORDER BY DESC(?count)
+
+PREFIX cv: <http://vision.semkg.org/onto/v0.1/>
+        PREFIX schema: <http://schema.org/>
+
+        SELECT ?datasetName (COUNT(DISTINCT ?image) AS ?count)
+        WHERE {
+            ?image cv:hasAnnotation/cv:hasLabel/cv:label "6" .
+            ?image schema:isPartOf / schema:name ?datasetName .
+        }
+        GROUP BY ?datasetName
+        ORDER BY DESC(?count)
+
+PREFIX cv: <http://vision.semkg.org/onto/v0.1/>
+        PREFIX schema: <http://schema.org/>
+
+        SELECT ?datasetName (COUNT(DISTINCT ?image) AS ?count)
+        WHERE {
+            ?image cv:hasAnnotation/cv:hasLabel/cv:label "7" .
+            ?image schema:isPartOf / schema:name ?datasetName .
+        }
+        GROUP BY ?datasetName
+        ORDER BY DESC(?count)
+
+PREFIX cv: <http://vision.semkg.org/onto/v0.1/>
+        PREFIX schema: <http://schema.org/>
+
+        SELECT ?datasetName (COUNT(DISTINCT ?image) AS ?count)
+        WHERE {
+            ?image cv:hasAnnotation/cv:hasLabel/cv:label "8" .
+            ?image schema:isPartOf / schema:name ?datasetName .
+        }
+        GROUP BY ?datasetName
+        ORDER BY DESC(?count)
+
+PREFIX cv: <http://vision.semkg.org/onto/v0.1/>
+        PREFIX schema: <http://schema.org/>
+
+        SELECT ?datasetName (COUNT(DISTINCT ?image) AS ?count)
+        WHERE {
+            ?image cv:hasAnnotation/cv:hasLabel/cv:label "9" .
+            ?image schema:isPartOf / schema:name ?datasetName .
+        }
+        GROUP BY ?datasetName
+        ORDER BY DESC(?count)

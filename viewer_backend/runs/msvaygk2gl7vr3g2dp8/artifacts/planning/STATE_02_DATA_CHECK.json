@@ -1,0 +1,169 @@
+{
+  "task": "detection",
+  "application_domain": "indoor",
+  "user_query": "I need an object detection model to locate nightstands, coffee tables and desks in indoor photographs. It should handle cluttered rooms, partial occlusion, varied lighting, and objects viewed from different angles. Inference will run on CPU-only backend servers with approximately 8 CPU cores and 16 GB of RAM. The model should aim for a mAP@0.5:0.95 of approximately 0.30 or higher.",
+  "use_case_description": "Object detection in indoor scenes to locate furniture items (nightstand, coffee table, desk) under clutter, varying illumination, and different viewing angles.",
+  "questions_list": null,
+  "classes": [
+    "nightstand",
+    "coffee table",
+    "desk"
+  ],
+  "available_data": [
+    {
+      "class_name": "nightstand",
+      "sources": [
+        {
+          "dataset_name": "objects365_det_train",
+          "count": 14101
+        },
+        {
+          "dataset_name": "openimages_challenge_2019_det_train",
+          "count": 773
+        },
+        {
+          "dataset_name": "objects365_det_val",
+          "count": 759
+        },
+        {
+          "dataset_name": "openimages_challenge_2019_det_val",
+          "count": 45
+        }
+      ]
+    },
+    {
+      "class_name": "coffee table",
+      "sources": [
+        {
+          "dataset_name": "objects365_det_train",
+          "count": 6959
+        },
+        {
+          "dataset_name": "openimages_challenge_2019_det_train",
+          "count": 2840
+        },
+        {
+          "dataset_name": "LVIS_det_train",
+          "count": 592
+        },
+        {
+          "dataset_name": "objects365_det_val",
+          "count": 307
+        },
+        {
+          "dataset_name": "openimages_challenge_2019_det_val",
+          "count": 45
+        }
+      ]
+    },
+    {
+      "class_name": "desk",
+      "sources": [
+        {
+          "dataset_name": "objects365_det_train",
+          "count": 324466
+        },
+        {
+          "dataset_name": "objects365_det_val",
+          "count": 14423
+        },
+        {
+          "dataset_name": "openimages_challenge_2019_det_train",
+          "count": 9464
+        },
+        {
+          "dataset_name": "LVIS_det_train",
+          "count": 1100
+        },
+        {
+          "dataset_name": "openimages_challenge_2019_det_val",
+          "count": 133
+        }
+      ]
+    }
+  ],
+  "selected_data": null,
+  "performance_requirements": {
+    "primary_metric": "mAP@0.5:0.95",
+    "target_value": 0.3,
+    "target_is_hard": false,
+    "latency_category": null,
+    "accuracy_category": "MediumHigh",
+    "other_constraints": null
+  },
+  "constraint_strengths": {
+    "accuracy": "preference",
+    "latency": "unspecified",
+    "runtime_memory": "preference",
+    "model_size": "unspecified",
+    "training_time": "unspecified"
+  },
+  "robustness_requirements": {
+    "lighting": [
+      "varied"
+    ],
+    "weather": [],
+    "object_scale": [],
+    "scene_density": [
+      "dense"
+    ],
+    "motion_blur": false,
+    "occlusion": true,
+    "viewpoint": [
+      "different angles"
+    ],
+    "color_semantics": false,
+    "horizontal_flip_safe": null,
+    "text_or_symbols_present": false
+  },
+  "deployment_constraints": null,
+  "available_hardware": {
+    "hardware_category": "ConsumerCPU",
+    "cpu_cores": 8,
+    "gpu_type": null,
+    "gpu_count": null,
+    "vram_gb": null,
+    "ram_gb": 16.0,
+    "storage_gb": null,
+    "details": null
+  },
+  "model_requirements": null,
+  "augmentation": null,
+  "preprocessing": null,
+  "num_qa_pairs": null,
+  "training_hardware": {
+    "profile_id": "rtx2060_6gb_ryzen5600x_16gb",
+    "accelerator": "cuda",
+    "hardware_category": "ConsumerGPU",
+    "gpu_type": "ASUS Dual NVIDIA GeForce RTX 2060 EVO 6GB",
+    "gpu_count": 1,
+    "vram_gb": 6.0,
+    "ram_gb": 16.0,
+    "unified_memory": false,
+    "training_memory_budget_gb": 5.0,
+    "max_batch_size": 4,
+    "workers": 4,
+    "supports_amp": true
+  },
+  "class_expansions": {},
+  "model_selection_graph_context": null,
+  "dataset_selection_graph_context": null,
+  "hyperparameter_graph_context": null,
+  "use_graphrag": true,
+  "selected_model_info": null,
+  "hpo_config": null,
+  "hpo_decision": null,
+  "model_selection_decision_evidence": null,
+  "dataset_selection_decision_evidence": null,
+  "hyperparameter_decision_evidence": null,
+  "dataset_profile": null,
+  "step_history": [
+    "Task Interpretation Completed",
+    "Data Availability Checked"
+  ],
+  "last_updated": "2026-08-16T06:26:52.773975",
+  "revision": {
+    "active": null,
+    "history": []
+  }
+}

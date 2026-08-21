@@ -1,0 +1,8 @@
+{
+  "job_id": "msub5ygmp5k8bqzmyy",
+  "status": "failed",
+  "active_step": "preparing-pretrained-model",
+  "attempt": 5,
+  "updated_at": "2026-08-15T12:42:15.951236+00:00",
+  "error": "name 'split_frames' is not defined"
+}

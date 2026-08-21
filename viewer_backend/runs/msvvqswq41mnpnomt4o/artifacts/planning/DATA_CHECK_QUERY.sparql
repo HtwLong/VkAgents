@@ -1,0 +1,54 @@
+PREFIX cv: <http://vision.semkg.org/onto/v0.1/>
+        PREFIX schema: <http://schema.org/>
+
+        SELECT ?datasetName (COUNT(DISTINCT ?image) AS ?count)
+        WHERE {
+            ?image cv:hasAnnotation/cv:hasLabel/cv:label "chair" .
+            ?image schema:isPartOf / schema:name ?datasetName .
+        }
+        GROUP BY ?datasetName
+        ORDER BY DESC(?count)
+
+PREFIX cv: <http://vision.semkg.org/onto/v0.1/>
+        PREFIX schema: <http://schema.org/>
+
+        SELECT ?datasetName (COUNT(DISTINCT ?image) AS ?count)
+        WHERE {
+            ?image cv:hasAnnotation/cv:hasLabel/cv:label "sofa" .
+            ?image schema:isPartOf / schema:name ?datasetName .
+        }
+        GROUP BY ?datasetName
+        ORDER BY DESC(?count)
+
+PREFIX cv: <http://vision.semkg.org/onto/v0.1/>
+        PREFIX schema: <http://schema.org/>
+
+        SELECT ?datasetName (COUNT(DISTINCT ?image) AS ?count)
+        WHERE {
+            ?image cv:hasAnnotation/cv:hasLabel/cv:label "table" .
+            ?image schema:isPartOf / schema:name ?datasetName .
+        }
+        GROUP BY ?datasetName
+        ORDER BY DESC(?count)
+
+PREFIX cv: <http://vision.semkg.org/onto/v0.1/>
+        PREFIX schema: <http://schema.org/>
+
+        SELECT ?datasetName (COUNT(DISTINCT ?image) AS ?count)
+        WHERE {
+            ?image cv:hasAnnotation/cv:hasLabel/cv:label "cabinet" .
+            ?image schema:isPartOf / schema:name ?datasetName .
+        }
+        GROUP BY ?datasetName
+        ORDER BY DESC(?count)
+
+PREFIX cv: <http://vision.semkg.org/onto/v0.1/>
+        PREFIX schema: <http://schema.org/>
+
+        SELECT ?datasetName (COUNT(DISTINCT ?image) AS ?count)
+        WHERE {
+            ?image cv:hasAnnotation/cv:hasLabel/cv:label "lamp" .
+            ?image schema:isPartOf / schema:name ?datasetName .
+        }
+        GROUP BY ?datasetName
+        ORDER BY DESC(?count)

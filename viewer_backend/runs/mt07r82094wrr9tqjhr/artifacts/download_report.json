@@ -1,0 +1,143 @@
+{
+  "job_id": "mt07r82094wrr9tqjhr",
+  "task": "detection",
+  "sources": [
+    {
+      "class_name": "car",
+      "dataset_name": "bdd_100k_det_train",
+      "source_role": "train",
+      "assigned_split": "train",
+      "assignment_type": "official_split",
+      "requested": 1800,
+      "candidates": 1800,
+      "downloaded": 1800,
+      "direct_allocation_downloaded": 1800,
+      "global_top_up_downloaded": 0,
+      "shortfall": 0,
+      "cross_split_conflicts": 0,
+      "content_duplicate_conflicts": 0,
+      "content_duplicates": [],
+      "failures": []
+    },
+    {
+      "class_name": "car",
+      "dataset_name": "bdd_100k_det_train",
+      "source_role": "train",
+      "assigned_split": "test",
+      "assignment_type": "derived_from_train",
+      "requested": 225,
+      "candidates": 2025,
+      "downloaded": 225,
+      "direct_allocation_downloaded": 225,
+      "global_top_up_downloaded": 0,
+      "shortfall": 0,
+      "cross_split_conflicts": 1800,
+      "content_duplicate_conflicts": 0,
+      "content_duplicates": [],
+      "failures": []
+    },
+    {
+      "class_name": "car",
+      "dataset_name": "bdd_100k_det_val",
+      "source_role": "validation",
+      "assigned_split": "validation",
+      "assignment_type": "official_split",
+      "requested": 225,
+      "candidates": 225,
+      "downloaded": 225,
+      "direct_allocation_downloaded": 225,
+      "global_top_up_downloaded": 0,
+      "shortfall": 0,
+      "cross_split_conflicts": 0,
+      "content_duplicate_conflicts": 0,
+      "content_duplicates": [],
+      "failures": []
+    }
+  ],
+  "complete": true,
+  "coverage": {
+    "requirements": {
+      "target_unique_images": 2250,
+      "minimum_unique_images": 2250,
+      "target_unique_images_by_split": {
+        "train": 1800,
+        "validation": 225,
+        "test": 225
+      },
+      "minimum_images_per_class": {
+        "car": 2250
+      },
+      "minimum_images_per_class_by_split": {
+        "car": {
+          "train": 1800,
+          "validation": 225,
+          "test": 225
+        }
+      }
+    },
+    "verified_unique_images": 2250,
+    "verified_unique_images_by_split": {
+      "train": 1800,
+      "validation": 225,
+      "test": 225
+    },
+    "verified_images_per_class": {
+      "car": 2250
+    },
+    "verified_images_per_class_by_split": {
+      "car": {
+        "train": 1800,
+        "validation": 225,
+        "test": 225
+      }
+    },
+    "unique_image_shortfall": 0,
+    "minimum_unique_images": 2250,
+    "minimum_unique_image_shortfall": 0,
+    "unique_coverage_ratio": 1.0,
+    "class_image_shortfalls": {
+      "car": 0
+    },
+    "class_split_image_shortfalls": {
+      "car": {
+        "train": 0,
+        "validation": 0,
+        "test": 0
+      }
+    },
+    "class_split_coverage_satisfied": true,
+    "satisfied": true
+  },
+  "allocation_shortfalls": [],
+  "acceptance": {
+    "minimum_unique_coverage_ratio": 1.0,
+    "unique_coverage_ratio": 1.0,
+    "unique_target_satisfied": true,
+    "minimum_unique_target_satisfied": true,
+    "strict_target_satisfied": true,
+    "aspirational_unique_target_accepted": false,
+    "class_split_coverage_satisfied": true,
+    "transfer_failures": [],
+    "successfully_replaced_transfer_failures": [],
+    "unresolved_transfer_failures": [],
+    "cross_split_duplicates": [],
+    "accepted": true
+  },
+  "warnings": [],
+  "requested": 2250,
+  "downloaded": 2250,
+  "unique_downloaded": 2250,
+  "performance": {
+    "elapsed_seconds": 28.672003799991217,
+    "sparql_queries": 42,
+    "sparql_seconds": 15.4411513999803,
+    "download_batches": 24,
+    "cache_hits": 2250,
+    "cached_failures": 0,
+    "bytes_downloaded": 0,
+    "retries": 0,
+    "transfer_and_validation_seconds": 0.0
+  },
+  "manifest_path": "C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\runs\\mt07r82094wrr9tqjhr\\data\\dataset_manifest.json",
+  "report_path": "C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\runs\\mt07r82094wrr9tqjhr\\artifacts\\download_report.json"
+}

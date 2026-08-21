@@ -1,0 +1,74 @@
+{
+  "ready": true,
+  "errors": [],
+  "warnings": [],
+  "checks": {
+    "saved_config_valid": true,
+    "prepared_dataset_matches_plan": true,
+    "splits_non_empty": true,
+    "content_isolation_valid": true,
+    "annotations_valid": true,
+    "resource_preflight_valid": true,
+    "training_memory_assessment": "fits"
+  },
+  "training_memory_estimate": {
+    "supported": true,
+    "assessment": "fits",
+    "lower_gb": 1.911,
+    "upper_gb": 2.655,
+    "budget_gb": 5.0,
+    "model_name": "yolov11_s",
+    "batch_size": 4,
+    "image_size": 640,
+    "mixed_precision": true,
+    "components_gb": {
+      "parameters_gradients_optimizer": 0.129,
+      "activations": 1.736,
+      "input_batch": 0.009,
+      "family_overhead": 0.25
+    },
+    "reason": null
+  },
+  "materialized_dataset": {
+    "counts": {
+      "train": 4200,
+      "validation": 525,
+      "test": 525
+    },
+    "class_image_counts": {
+      "cat": {
+        "train": 1502,
+        "validation": 183,
+        "test": 199
+      },
+      "dog": {
+        "train": 1434,
+        "validation": 175,
+        "test": 192
+      },
+      "person": {
+        "train": 1462,
+        "validation": 203,
+        "test": 184
+      }
+    },
+    "instance_counts": {
+      "dog": 2525,
+      "person": 6956,
+      "cat": 2231
+    },
+    "object_size_counts": {
+      "small": 666,
+      "medium": 2636,
+      "large": 8410
+    },
+    "content_isolation": {
+      "unique_content_hashes": 5250,
+      "duplicate_samples": 0,
+      "cross_split_duplicates": 0
+    },
+    "invalid_box_count": 0,
+    "assignment_fingerprint": "cf98a509dadb6b9f4837f2dd0fb9c6b8544fc8b7caede79f15f9a60ebd5e22c4",
+    "manifest_sha256": "ca99a5b6b13995ac1fa5c91972b1866c19c5bc64552268b9d0b82f2df6238443"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "job_id": "mst3uy143htxxjankgq",
+  "status": "completed",
+  "downloaded": 12000,
+  "processed": 12000,
+  "failed": 0,
+  "failed_datasets": [],
+  "total": 12000,
+  "current_image": null,
+  "previous_downloaded": 0,
+  "updated_at": "2026-08-14T15:57:11.465699+00:00"
+}

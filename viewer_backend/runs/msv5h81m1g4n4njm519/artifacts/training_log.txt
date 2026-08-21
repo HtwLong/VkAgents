@@ -1,0 +1,31 @@
+2026-08-16 04:11:04,350 INFO Logging initialized
+2026-08-16 04:11:04,461 INFO Configured precision=fp32; effective precision=fp32 on cuda
+2026-08-16 04:11:04,492 INFO Starting training
+2026-08-16 04:11:56,057 INFO Epoch 01/25 train_loss=1.2718 train_acc=0.4985 val_loss=0.9369 val_acc=0.6453 macro_f1=0.6260 micro_f1=0.6453 macro_f1=0.6260 elapsed=51.6s
+2026-08-16 04:11:56,157 INFO New best checkpoint on macro_f1=0.6260 at epoch 1
+2026-08-16 04:12:44,943 INFO Epoch 02/25 train_loss=0.9832 train_acc=0.6188 val_loss=0.7777 val_acc=0.7093 macro_f1=0.7102 micro_f1=0.7093 macro_f1=0.7102 elapsed=48.8s
+2026-08-16 04:12:45,015 INFO New best checkpoint on macro_f1=0.7102 at epoch 2
+2026-08-16 04:13:34,078 INFO Epoch 03/25 train_loss=0.9117 train_acc=0.6572 val_loss=0.7443 val_acc=0.7253 macro_f1=0.7241 micro_f1=0.7253 macro_f1=0.7241 elapsed=49.1s
+2026-08-16 04:13:34,146 INFO New best checkpoint on macro_f1=0.7241 at epoch 3
+2026-08-16 04:14:22,544 INFO Epoch 04/25 train_loss=0.8023 train_acc=0.6973 val_loss=0.7275 val_acc=0.7373 macro_f1=0.7329 micro_f1=0.7373 macro_f1=0.7329 elapsed=48.4s
+2026-08-16 04:14:22,614 INFO New best checkpoint on macro_f1=0.7329 at epoch 4
+2026-08-16 04:15:12,805 INFO Epoch 05/25 train_loss=0.7182 train_acc=0.7293 val_loss=0.7230 val_acc=0.7373 macro_f1=0.7325 micro_f1=0.7373 macro_f1=0.7325 elapsed=50.2s
+2026-08-16 04:15:58,869 INFO Epoch 06/25 train_loss=0.6761 train_acc=0.7457 val_loss=0.7264 val_acc=0.7400 macro_f1=0.7350 micro_f1=0.7400 macro_f1=0.7350 elapsed=46.1s
+2026-08-16 04:15:58,938 INFO New best checkpoint on macro_f1=0.7350 at epoch 6
+2026-08-16 04:16:45,101 INFO Epoch 07/25 train_loss=0.6144 train_acc=0.7673 val_loss=0.7362 val_acc=0.7373 macro_f1=0.7321 micro_f1=0.7373 macro_f1=0.7321 elapsed=46.2s
+2026-08-16 04:17:31,478 INFO Epoch 08/25 train_loss=0.5738 train_acc=0.7823 val_loss=0.7490 val_acc=0.7347 macro_f1=0.7290 micro_f1=0.7347 macro_f1=0.7290 elapsed=46.4s
+2026-08-16 04:18:18,279 INFO Epoch 09/25 train_loss=0.5118 train_acc=0.8070 val_loss=0.7629 val_acc=0.7360 macro_f1=0.7304 micro_f1=0.7360 macro_f1=0.7304 elapsed=46.8s
+2026-08-16 04:18:18,281 INFO Early stopping at epoch 9 (no improvement on macro_f1 for 3 epochs)
+2026-08-16 04:42:54,374 INFO HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2026-08-16 04:42:57,395 INFO HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2026-08-16 04:43:00,402 INFO HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2026-08-16 04:43:34,669 INFO HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2026-08-16 04:43:36,066 INFO HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2026-08-16 04:43:42,045 INFO HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2026-08-16 04:44:05,049 INFO HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2026-08-16 04:44:07,452 INFO HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2026-08-16 04:44:28,638 INFO HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2026-08-16 04:44:32,828 INFO HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2026-08-16 04:45:22,137 INFO HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-16 04:46:15,987 INFO HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-16 04:46:54,856 INFO HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"

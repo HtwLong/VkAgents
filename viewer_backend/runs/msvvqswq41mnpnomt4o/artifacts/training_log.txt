@@ -1,0 +1,30 @@
+2026-08-16 16:45:53,545 INFO Logging initialized
+2026-08-16 16:45:53,776 INFO Loading pretrained weights from Hugging Face hub (timm/vit_small_patch14_dinov2.lvd142m)
+2026-08-16 16:45:53,995 INFO [timm/vit_small_patch14_dinov2.lvd142m] Safe alternative available for 'pytorch_model.bin' (as 'model.safetensors'). Loading weights using safetensors.
+2026-08-16 16:45:54,027 INFO Resized position embedding: (37, 37) to (16, 16).
+2026-08-16 16:45:54,145 INFO Missing keys (head.weight, head.bias) discovered while loading pretrained weights. This is expected if model is being adapted.
+2026-08-16 16:45:54,307 INFO Configured precision=fp32; effective precision=fp32 on cuda
+2026-08-16 16:45:54,310 INFO Starting training
+2026-08-16 16:47:42,322 INFO Epoch 01/3 train_loss=0.6491 train_acc=0.7510 val_loss=0.4553 val_acc=0.8320 macro_f1=0.8291 micro_f1=0.8320 val_acc=0.8320 elapsed=108.0s
+2026-08-16 16:47:42,354 INFO New best checkpoint on val_acc=0.8320 at epoch 1
+2026-08-16 16:49:16,437 INFO Epoch 02/3 train_loss=0.3799 train_acc=0.8637 val_loss=0.4475 val_acc=0.8453 macro_f1=0.8424 micro_f1=0.8453 val_acc=0.8453 elapsed=94.1s
+2026-08-16 16:49:16,461 INFO New best checkpoint on val_acc=0.8453 at epoch 2
+2026-08-16 16:50:51,155 INFO Epoch 03/3 train_loss=0.3157 train_acc=0.8883 val_loss=0.4237 val_acc=0.8547 macro_f1=0.8536 micro_f1=0.8547 val_acc=0.8547 elapsed=94.7s
+2026-08-16 16:50:51,180 INFO New best checkpoint on val_acc=0.8547 at epoch 3
+2026-08-16 16:51:01,032 INFO Loading pretrained weights from Hugging Face hub (timm/vit_small_patch14_dinov2.lvd142m)
+2026-08-16 16:51:01,245 INFO [timm/vit_small_patch14_dinov2.lvd142m] Safe alternative available for 'pytorch_model.bin' (as 'model.safetensors'). Loading weights using safetensors.
+2026-08-16 16:51:01,252 INFO Resized position embedding: (37, 37) to (16, 16).
+2026-08-16 16:51:01,294 INFO Missing keys (head.weight, head.bias) discovered while loading pretrained weights. This is expected if model is being adapted.
+2026-08-16 17:02:15,215 INFO HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2026-08-16 17:02:19,343 INFO HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2026-08-16 17:02:20,557 INFO HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2026-08-16 17:02:53,650 INFO HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2026-08-16 17:02:56,446 INFO HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2026-08-16 17:03:25,656 INFO HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2026-08-16 17:03:26,860 INFO HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2026-08-16 17:04:08,231 INFO HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2026-08-16 17:04:12,325 INFO HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2026-08-16 17:05:06,197 INFO HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-16 17:05:40,375 INFO HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-16 17:06:16,156 INFO HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-16 17:06:59,646 INFO HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"

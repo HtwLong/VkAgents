@@ -1,0 +1,101 @@
+{
+  "job_id": "msrci6iveee7o687mpl",
+  "task": "detection",
+  "sources": [
+    {
+      "class_name": "traffic light",
+      "dataset_name": "bdd_100k_det_train",
+      "source_role": "train",
+      "assigned_split": "train",
+      "assignment_type": "official_split",
+      "requested": 2400,
+      "candidates": 2400,
+      "downloaded": 2400,
+      "shortfall": 0,
+      "cross_split_conflicts": 0,
+      "failures": []
+    },
+    {
+      "class_name": "traffic light",
+      "dataset_name": "bdd_100k_det_train",
+      "source_role": "train",
+      "assigned_split": "test",
+      "assignment_type": "derived_from_train",
+      "requested": 300,
+      "candidates": 2700,
+      "downloaded": 300,
+      "shortfall": 0,
+      "cross_split_conflicts": 2400,
+      "failures": []
+    },
+    {
+      "class_name": "traffic light",
+      "dataset_name": "bdd_100k_det_val",
+      "source_role": "validation",
+      "assigned_split": "validation",
+      "assignment_type": "official_split",
+      "requested": 300,
+      "candidates": 300,
+      "downloaded": 300,
+      "shortfall": 0,
+      "cross_split_conflicts": 0,
+      "failures": []
+    },
+    {
+      "class_name": "traffic sign",
+      "dataset_name": "bdd_100k_det_train",
+      "source_role": "train",
+      "assigned_split": "train",
+      "assignment_type": "official_split",
+      "requested": 2400,
+      "candidates": 2400,
+      "downloaded": 2400,
+      "shortfall": 0,
+      "cross_split_conflicts": 0,
+      "failures": []
+    },
+    {
+      "class_name": "traffic sign",
+      "dataset_name": "bdd_100k_det_train",
+      "source_role": "train",
+      "assigned_split": "test",
+      "assignment_type": "derived_from_train",
+      "requested": 300,
+      "candidates": 3175,
+      "downloaded": 300,
+      "shortfall": 0,
+      "cross_split_conflicts": 2875,
+      "failures": []
+    },
+    {
+      "class_name": "traffic sign",
+      "dataset_name": "bdd_100k_det_val",
+      "source_role": "validation",
+      "assigned_split": "validation",
+      "assignment_type": "official_split",
+      "requested": 300,
+      "candidates": 300,
+      "downloaded": 300,
+      "shortfall": 0,
+      "cross_split_conflicts": 0,
+      "failures": []
+    }
+  ],
+  "complete": true,
+  "requested": 6000,
+  "downloaded": 6000,
+  "unique_downloaded": 4351,
+  "performance": {
+    "elapsed_seconds": 79.08649990000413,
+    "sparql_queries": 118,
+    "sparql_seconds": 60.04323699991801,
+    "download_batches": 70,
+    "cache_hits": 4351,
+    "cached_failures": 0,
+    "bytes_downloaded": 0,
+    "retries": 0,
+    "transfer_and_validation_seconds": 0.0
+  },
+  "manifest_path": "C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\runs\\msrci6iveee7o687mpl\\data\\dataset_manifest.json",
+  "report_path": "C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\runs\\msrci6iveee7o687mpl\\artifacts\\download_report.json"
+}

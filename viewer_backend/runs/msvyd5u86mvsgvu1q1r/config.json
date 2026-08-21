@@ -1,0 +1,252 @@
+{
+  "task_type": "detection",
+  "classes": [
+    "car",
+    "bus",
+    "truck",
+    "motorcycle",
+    "bicycle",
+    "pedestrian"
+  ],
+  "selected_data": [
+    {
+      "class_name": "car",
+      "sources": [
+        {
+          "dataset_name": "bdd_100k_det_train",
+          "allocations": [
+            {
+              "split": "train",
+              "count": 2000,
+              "assignment_type": "official_split"
+            },
+            {
+              "split": "test",
+              "count": 250,
+              "assignment_type": "derived_from_train"
+            }
+          ]
+        },
+        {
+          "dataset_name": "bdd_100k_det_val",
+          "allocations": [
+            {
+              "split": "validation",
+              "count": 250,
+              "assignment_type": "official_split"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "class_name": "bus",
+      "sources": [
+        {
+          "dataset_name": "bdd_100k_det_train",
+          "allocations": [
+            {
+              "split": "train",
+              "count": 2000,
+              "assignment_type": "official_split"
+            },
+            {
+              "split": "test",
+              "count": 250,
+              "assignment_type": "derived_from_train"
+            }
+          ]
+        },
+        {
+          "dataset_name": "bdd_100k_det_val",
+          "allocations": [
+            {
+              "split": "validation",
+              "count": 250,
+              "assignment_type": "official_split"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "class_name": "truck",
+      "sources": [
+        {
+          "dataset_name": "bdd_100k_det_train",
+          "allocations": [
+            {
+              "split": "train",
+              "count": 2000,
+              "assignment_type": "official_split"
+            },
+            {
+              "split": "test",
+              "count": 250,
+              "assignment_type": "derived_from_train"
+            }
+          ]
+        },
+        {
+          "dataset_name": "bdd_100k_det_val",
+          "allocations": [
+            {
+              "split": "validation",
+              "count": 250,
+              "assignment_type": "official_split"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "class_name": "motorcycle",
+      "sources": [
+        {
+          "dataset_name": "bdd_100k_det_train",
+          "allocations": [
+            {
+              "split": "train",
+              "count": 1861,
+              "assignment_type": "official_split"
+            },
+            {
+              "split": "validation",
+              "count": 233,
+              "assignment_type": "derived_from_train"
+            },
+            {
+              "split": "test",
+              "count": 233,
+              "assignment_type": "derived_from_train"
+            }
+          ]
+        },
+        {
+          "dataset_name": "LVIS_det_train",
+          "allocations": [
+            {
+              "split": "train",
+              "count": 400,
+              "assignment_type": "official_split"
+            },
+            {
+              "split": "validation",
+              "count": 50,
+              "assignment_type": "derived_from_train"
+            },
+            {
+              "split": "test",
+              "count": 50,
+              "assignment_type": "derived_from_train"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "class_name": "bicycle",
+      "sources": [
+        {
+          "dataset_name": "bdd_100k_det_train",
+          "allocations": [
+            {
+              "split": "train",
+              "count": 2000,
+              "assignment_type": "official_split"
+            },
+            {
+              "split": "test",
+              "count": 250,
+              "assignment_type": "derived_from_train"
+            }
+          ]
+        },
+        {
+          "dataset_name": "bdd_100k_det_val",
+          "allocations": [
+            {
+              "split": "validation",
+              "count": 250,
+              "assignment_type": "official_split"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "class_name": "pedestrian",
+      "sources": [
+        {
+          "dataset_name": "bdd_100k_det_train",
+          "allocations": [
+            {
+              "split": "train",
+              "count": 2000,
+              "assignment_type": "official_split"
+            },
+            {
+              "split": "test",
+              "count": 250,
+              "assignment_type": "derived_from_train"
+            }
+          ]
+        },
+        {
+          "dataset_name": "bdd_100k_det_val",
+          "allocations": [
+            {
+              "split": "validation",
+              "count": 250,
+              "assignment_type": "official_split"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "train_data_ratio": 0.7999608533959679,
+  "val_data_ratio": 0.10001957330201605,
+  "test_data_ratio": 0.10001957330201605,
+  "num_epochs": 25,
+  "patience": 5,
+  "batch_size": 4,
+  "input_size": 640,
+  "track_metric": "val_mAP",
+  "model_name": "yolov8_n",
+  "model_weights": "default",
+  "training_recipe_id": "",
+  "scheduler_name": "linear",
+  "final_learning_rate_factor": 0.01,
+  "warmup_epochs": 2.0,
+  "warmup_momentum": 0.9,
+  "amp": false,
+  "lambda_box": 1.0,
+  "lambda_cls": 1.0,
+  "lambda_dfl": 0.0,
+  "mosaic": 0.0,
+  "mixup": 0.0,
+  "cutmix": 0.0,
+  "copy_paste": 0.0,
+  "degrees": 0.0,
+  "translate": 0.0,
+  "scale": 0.0,
+  "fliplr": 0.0,
+  "hsv_h": 0.0,
+  "hsv_s": 0.0,
+  "hsv_v": 0.0,
+  "close_mosaic": 0,
+  "single_cls": false,
+  "rect": false,
+  "multi_scale": 0.0,
+  "confidence_threshold": 0.25,
+  "nms_iou_threshold": 0.65,
+  "max_detections": 100,
+  "workers": 4,
+  "seed": 42,
+  "freeze": 0,
+  "optimizer_name": "sgd",
+  "learning_rate": 0.01,
+  "weight_decay": 0.0005,
+  "momentum": 0.9
+}

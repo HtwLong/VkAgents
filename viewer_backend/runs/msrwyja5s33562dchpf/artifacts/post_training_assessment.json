@@ -1,0 +1,50 @@
+{
+  "assessment_id": "pta_msrwyja5s33562dchpf",
+  "job_id": "msrwyja5s33562dchpf",
+  "created_at": "unknown",
+  "verdict": "not_satisfied",
+  "summary": "The run did not satisfy the primary and most of the per-class requirements. The reported mAP@0.5:0.95 is 0.38326940458118486, which is below the target of 0.40. Per-class recall values are dog 0.6629, person 0.4173, cat 0.7585, meaning recall targets (\u22650.75 for each class) are not met for two classes. Latency and memory constraints are not measured in the supplied evidence, so those requirements remain unassessed (unknown). Based on the evidence, the overall requirement set is not satisfied.",
+  "requirements": [
+    {
+      "requirement": "Detect persons, dogs, and cats in indoor/outdoor photos with mAP@0.5:0.95 \u2265 0.40 and per-class recall \u2265 0.75",
+      "status": "not_satisfied",
+      "evidence": [
+        "map = 0.38326940458118486",
+        "dog recall = 0.6628787878787878",
+        "person recall = 0.41731066460587324",
+        "cat recall = 0.7584745762711864"
+      ],
+      "explanation": "Primary metric below target (0.383 < 0.40). Recall targets not met for dog and person (dog 0.663, person 0.417 < 0.75); cat meets recall target."
+    },
+    {
+      "requirement": "Latency per image \u2264 500 ms (on MacBook Air with Apple M4 and Metal acceleration)",
+      "status": "unknown",
+      "evidence": [
+        "latency data not reported in evaluation_report"
+      ],
+      "explanation": "No latency measurements are provided in the supplied evidence."
+    }
+  ],
+  "recommended_plan": {
+    "required_text": "model-selection: set model_name to faster-rcnn_r50_fpn_1x_coco",
+    "preferred_text": "Model selection: adopt Faster R-CNN with ResNet-50 backbone and FPN (1x COCO) to potentially improve recall for persons and dogs and raise overall mAP, while maintaining similar data and training setup.",
+    "summary": "Proposed model swap to a robust two-stage detector to address the observed misses (dog and person recalls) and drive the primary metric (mAP@0.5:0.95) above the target, using the existing dataset and hardware constraints.",
+    "restart_from": "model-selection",
+    "changes": [
+      {
+        "id": "change-model-1",
+        "target_step": "model-selection",
+        "field": "model_name",
+        "operation": "set",
+        "value": "faster-rcnn_r50_fpn_1x_coco",
+        "strength": "required",
+        "summary": "Switch from YOLOv11_s to Faster R-CNN R50 FPN 1x COCO to potentially improve per-class recall and overall AP without expanding data, epochs, batch size, or model capacity."
+      }
+    ]
+  },
+  "limitations": [
+    "Evidence pertains to a single run on a specific OpenImages-based dataset; results may not generalize to other datasets or conditions.",
+    "Latency/memory deployment constraints are not measured/reported in the evidence; cannot assess feasibility on target hardware.",
+    "Two classes fail the per-class recall requirement (dog and person); only cat meets recall target."
+  ]
+}

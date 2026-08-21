@@ -1,0 +1,11 @@
+{
+  "job_id": "mt07r82094wrr9tqjhr",
+  "summary": {
+    "model_name": "yolov8_n",
+    "trainer_type": "yolo",
+    "agent_output_message": "\u2705 Successfully trained yolov8_n (Job ID: mt07r82094wrr9tqjhr).",
+    "best_model_path": "C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\runs\\mt07r82094wrr9tqjhr\\artifacts\\best_model.pt",
+    "training_log_path": "C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\runs\\mt07r82094wrr9tqjhr\\artifacts\\training_log.txt",
+    "data_provenance": "C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\runs\\mt07r82094wrr9tqjhr\\artifacts\\data_provenance.json"
+  }
+}

@@ -1,0 +1,10 @@
+PREFIX cv: <http://vision.semkg.org/onto/v0.1/>
+        PREFIX schema: <http://schema.org/>
+
+        SELECT ?datasetName (COUNT(DISTINCT ?image) AS ?count)
+        WHERE {
+            ?image cv:hasAnnotation/cv:hasLabel/cv:label "car" .
+            ?image schema:isPartOf / schema:name ?datasetName .
+        }
+        GROUP BY ?datasetName
+        ORDER BY DESC(?count)

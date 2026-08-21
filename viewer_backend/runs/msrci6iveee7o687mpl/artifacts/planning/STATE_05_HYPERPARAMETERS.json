@@ -1,0 +1,1043 @@
+{
+  "task": "detection",
+  "application_domain": "urban street scenes",
+  "user_query": "I need an object detection model to identify traffic lights and traffic signs in dense urban street scenes. The objects may be small and far away in the image. The model will run locally on a MacBook Air with an Apple M4 chip and 16 GB of unified memory, using Metal acceleration where supported. It should aim for a mAP@0.5:0.95 of around 0.30 or higher. An inference time of approximately 500 milliseconds or less per frame would be desirable, although somewhat slower processing is acceptable when it improves detection quality in difficult conditions. Memory usage during inference should preferably remain below 6 GB.",
+  "use_case_description": null,
+  "questions_list": null,
+  "classes": [
+    "traffic light",
+    "traffic sign"
+  ],
+  "available_data": [
+    {
+      "class_name": "traffic light",
+      "sources": [
+        {
+          "dataset_name": "bdd_100k_det_train",
+          "count": 39401
+        },
+        {
+          "dataset_name": "bdd100k_UNIT_day2night_det_train",
+          "count": 18240
+        },
+        {
+          "dataset_name": "bdd_100k_det_val",
+          "count": 5651
+        },
+        {
+          "dataset_name": "coco2017_det_train",
+          "count": 4139
+        },
+        {
+          "dataset_name": "LVIS_det_train",
+          "count": 1890
+        },
+        {
+          "dataset_name": "openimages_challenge_2019_det_train",
+          "count": 1773
+        },
+        {
+          "dataset_name": "objects365_det_val",
+          "count": 1014
+        },
+        {
+          "dataset_name": "coco2017_det_val",
+          "count": 191
+        },
+        {
+          "dataset_name": "openimages_challenge_2019_det_val",
+          "count": 22
+        }
+      ]
+    },
+    {
+      "class_name": "traffic sign",
+      "sources": [
+        {
+          "dataset_name": "bdd_100k_det_train",
+          "count": 57188
+        },
+        {
+          "dataset_name": "bdd100k_UNIT_day2night_det_train",
+          "count": 30377
+        },
+        {
+          "dataset_name": "bdd_100k_det_val",
+          "count": 8211
+        },
+        {
+          "dataset_name": "openimages_challenge_2019_det_train",
+          "count": 2813
+        },
+        {
+          "dataset_name": "objects365_det_val",
+          "count": 547
+        },
+        {
+          "dataset_name": "openimages_challenge_2019_det_val",
+          "count": 38
+        }
+      ]
+    }
+  ],
+  "selected_data": [
+    {
+      "class_name": "traffic light",
+      "sources": [
+        {
+          "dataset_name": "bdd_100k_det_train",
+          "allocations": [
+            {
+              "split": "train",
+              "count": 2400,
+              "assignment_type": "official_split"
+            },
+            {
+              "split": "test",
+              "count": 300,
+              "assignment_type": "derived_from_train"
+            }
+          ]
+        },
+        {
+          "dataset_name": "bdd_100k_det_val",
+          "allocations": [
+            {
+              "split": "validation",
+              "count": 300,
+              "assignment_type": "official_split"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "class_name": "traffic sign",
+      "sources": [
+        {
+          "dataset_name": "bdd_100k_det_train",
+          "allocations": [
+            {
+              "split": "train",
+              "count": 2400,
+              "assignment_type": "official_split"
+            },
+            {
+              "split": "test",
+              "count": 300,
+              "assignment_type": "derived_from_train"
+            }
+          ]
+        },
+        {
+          "dataset_name": "bdd_100k_det_val",
+          "allocations": [
+            {
+              "split": "validation",
+              "count": 300,
+              "assignment_type": "official_split"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "performance_requirements": {
+    "primary_metric": "mAP@0.5:0.95",
+    "target_value": 0.3,
+    "target_is_hard": false,
+    "latency_category": "Medium",
+    "accuracy_category": "Medium",
+    "other_constraints": []
+  },
+  "constraint_strengths": {
+    "accuracy": "preference",
+    "latency": "preference",
+    "runtime_memory": "preference",
+    "model_size": "unspecified",
+    "training_time": "unspecified"
+  },
+  "robustness_requirements": {
+    "lighting": [],
+    "weather": [],
+    "object_scale": [
+      "small"
+    ],
+    "scene_density": [
+      "dense"
+    ],
+    "motion_blur": false,
+    "occlusion": false,
+    "viewpoint": [],
+    "color_semantics": false,
+    "horizontal_flip_safe": null,
+    "text_or_symbols_present": false
+  },
+  "deployment_constraints": {
+    "memory_category": null,
+    "max_runtime_memory_mb": 6144.0,
+    "max_model_size_mb": null,
+    "max_parameters_m": null,
+    "max_cpu_latency_ms": null,
+    "hard_limits": []
+  },
+  "available_hardware": {
+    "hardware_category": "ConsumerCPU",
+    "cpu_cores": null,
+    "gpu_type": null,
+    "gpu_count": null,
+    "vram_gb": null,
+    "ram_gb": 16.0,
+    "storage_gb": null,
+    "details": "Apple Silicon MacBook Air; M4; Metal acceleration"
+  },
+  "model_requirements": null,
+  "augmentation": null,
+  "preprocessing": null,
+  "num_qa_pairs": null,
+  "training_hardware": {
+    "profile_id": "rtx2060_6gb_ryzen5600x_16gb",
+    "accelerator": "cuda",
+    "hardware_category": "ConsumerGPU",
+    "gpu_type": "ASUS Dual NVIDIA GeForce RTX 2060 EVO 6GB",
+    "gpu_count": 1,
+    "vram_gb": 6.0,
+    "ram_gb": 16.0,
+    "unified_memory": false,
+    "training_memory_budget_gb": 5.0,
+    "max_batch_size": 4,
+    "workers": 4,
+    "supports_amp": true
+  },
+  "class_expansions": {},
+  "model_selection_graph_context": null,
+  "dataset_selection_graph_context": null,
+  "hyperparameter_graph_context": null,
+  "use_graphrag": false,
+  "selected_model_info": {
+    "model": {
+      "model_architecture": "yolov8",
+      "loss_function_box": "giou",
+      "loss_function_cls": "focal",
+      "optimizer": "adamw",
+      "description": "Lightweight YOLOv8 detector tuned for small-object detection in urban street scenes. Balanced speed and accuracy for CPU/Metal on Apple Silicon. Emphasizes multi-scale features to improve tiny object localization (traffic lights/signs) in dense scenes.",
+      "num_epochs": 50,
+      "patience": 5,
+      "architecture_family": "yolo"
+    }
+  },
+  "hpo_config": {
+    "task_type": "detection",
+    "classes": [
+      "traffic light",
+      "traffic sign"
+    ],
+    "selected_data": [
+      {
+        "class_name": "traffic light",
+        "sources": [
+          {
+            "dataset_name": "bdd_100k_det_train",
+            "allocations": [
+              {
+                "split": "train",
+                "count": 2400,
+                "assignment_type": "official_split"
+              },
+              {
+                "split": "test",
+                "count": 300,
+                "assignment_type": "derived_from_train"
+              }
+            ]
+          },
+          {
+            "dataset_name": "bdd_100k_det_val",
+            "allocations": [
+              {
+                "split": "validation",
+                "count": 300,
+                "assignment_type": "official_split"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "class_name": "traffic sign",
+        "sources": [
+          {
+            "dataset_name": "bdd_100k_det_train",
+            "allocations": [
+              {
+                "split": "train",
+                "count": 2400,
+                "assignment_type": "official_split"
+              },
+              {
+                "split": "test",
+                "count": 300,
+                "assignment_type": "derived_from_train"
+              }
+            ]
+          },
+          {
+            "dataset_name": "bdd_100k_det_val",
+            "allocations": [
+              {
+                "split": "validation",
+                "count": 300,
+                "assignment_type": "official_split"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "train_data_ratio": 0.8,
+    "val_data_ratio": 0.1,
+    "test_data_ratio": 0.1,
+    "num_epochs": 50,
+    "patience": 5,
+    "batch_size": 4,
+    "input_size": 640,
+    "track_metric": "val_mAP",
+    "model_name": "yolov8_n",
+    "model_weights": "default",
+    "training_recipe_id": "",
+    "scheduler_name": "linear",
+    "final_learning_rate_factor": 0.01,
+    "warmup_epochs": 3.0,
+    "warmup_momentum": 0.8,
+    "amp": true,
+    "lambda_box": 1.0,
+    "lambda_cls": 1.0,
+    "lambda_dfl": 0.0,
+    "mosaic": 1.0,
+    "mixup": 0.0,
+    "cutmix": 0.0,
+    "copy_paste": 0.0,
+    "degrees": 0.0,
+    "translate": 0.0,
+    "scale": 0.0,
+    "fliplr": 0.5,
+    "hsv_h": 0.015,
+    "hsv_s": 0.7,
+    "hsv_v": 0.9,
+    "close_mosaic": 0,
+    "single_cls": false,
+    "rect": false,
+    "multi_scale": 1.0,
+    "confidence_threshold": 0.25,
+    "nms_iou_threshold": 0.45,
+    "max_detections": 100,
+    "workers": 4,
+    "seed": 42,
+    "freeze": 0,
+    "optimizer": {
+      "name": "adamw",
+      "params": {
+        "learning_rate": 0.001,
+        "weight_decay": 0.0005,
+        "beta1": 0.9
+      }
+    }
+  },
+  "hpo_decision": {
+    "accept": true,
+    "reason": "Proposed Active Runtime Configuration is consistent with registered constraints (yolov8_n) and dataset/hardware assumptions. No blocking errors detected. The following items are minor tunable preferences to potentially improve robustness or efficiency; adjust as needed.",
+    "findings": [
+      {
+        "field": "confidence_threshold",
+        "severity": "preference",
+        "reason": "Current confidence_threshold of 0.25 is reasonable for initial training on a two-class, small-object detection task but may yield more false positives in dense urban scenes. If you observe many spurious detections, consider increasing to 0.35.",
+        "recommended_value": "0.35",
+        "rule_id": null
+      },
+      {
+        "field": "nms_iou_threshold",
+        "severity": "preference",
+        "reason": "nms_iou_threshold of 0.45 is typical, but precision can improve if you raise it modestly in high-density scenarios. Try 0.50 to reduce duplicate detections.",
+        "recommended_value": "0.50",
+        "rule_id": null
+      },
+      {
+        "field": "input_size",
+        "severity": "preference",
+        "reason": "Input size 640 balances small-object visibility and compute. If memory is tighter or you need faster iteration, consider reducing to 512 as a backup.",
+        "recommended_value": "512",
+        "rule_id": null
+      },
+      {
+        "field": "max_detections",
+        "severity": "preference",
+        "reason": "max_detections is capped at 100 to limit compute per image. If you observe many noisy detections, reducing to 80 can save compute without drastically hurting recall in two-class, small-object scenarios.",
+        "recommended_value": "80",
+        "rule_id": null
+      },
+      {
+        "field": "workers",
+        "severity": "preference",
+        "reason": "Dataloader workers are set to 4. If you have more CPU cores and stable I/O, increasing to 8 can speed data loading and training iterations.",
+        "recommended_value": "8",
+        "rule_id": null
+      }
+    ],
+    "suggestions": [
+      "If memory allows, consider experimenting with a slightly larger input_size (e.g., 640) and adjust confidence/nms thresholds accordingly to optimize precision-recall for your dataset.",
+      "Calibration on a small validation subset can help pick good confidence and NMS thresholds before full-scale training.",
+      "Monitor GPU memory during training and adjust batch_size or input_size if you observe OOM or slowdown."
+    ]
+  },
+  "model_selection_decision_evidence": {
+    "decision_type": "model_selection",
+    "decision": {
+      "model": {
+        "model_architecture": "yolov8",
+        "loss_function_box": "giou",
+        "loss_function_cls": "focal",
+        "optimizer": "adamw",
+        "description": "Lightweight YOLOv8 detector tuned for small-object detection in urban street scenes. Balanced speed and accuracy for CPU/Metal on Apple Silicon. Emphasizes multi-scale features to improve tiny object localization (traffic lights/signs) in dense scenes.",
+        "num_epochs": 50,
+        "patience": 5,
+        "architecture_family": "yolo"
+      }
+    },
+    "rationale": "Summary of recommendation and trade-offs\n- Hard constraints considered:\n - Inference memory: target <= 6 GB during runtime on a MacBook Air with M4 and unified memory 16 GB. YOLOv8 (especially small variants) typically stays well within this bound on CPU/Metal, even with multi-scale inputs.\n - Latency: target ~500 ms per frame; YOLOv8 family offers efficient single-shot detection with practical CPU latency on Apple Silicon, making 0.5 s per frame feasible with appropriate input resolutions and batch size settings.\n - Accuracy target: mAP@0.5:0.95 around 0.30 is modest. With the provided diverse data sources (BDD, Open Images, COCO, LVIS, Objects365) and fine-tuning for traffic lights and signs, a well-tuned YOLOv8 can reach or exceed the target on the target classes, given proper augmentation and small-object emphasis.\n- Core data fit:\n - Target classes: traffic light, traffic sign. Available data includes large counts from BDD100K det train/val, Open Images, COCO det subsets, and specialized day/night variants (bdd100k_unit_day2night). This supports learning small-object representations in dense urban contexts and lighting changes.\n - Domain alignment: urban street scenes with small, distant objects. The data mix covers these conditions and should translate well to real-world deployment on a MacBook Air with Metal acceleration.\n- Candidate considerations:\n - YOLOv8 (selected) offers a favorable balance of accuracy, speed, and memory footprint for CPU/Metal on Apple Silicon, and has good tooling/support for on-device export (CoreML/Metal) and quantization if needed.\n - RTDETRHGNetV2_L (alternative) could yield strong small-object performance but is heavier, riskier for the 6 GB RAM ceiling, and less certain to meet the 0.5 s frame-time target on a MacBook Air CPU without aggressive optimization.\n\nIntegrated recommendation and fallback plan\n- Primary choice: yolov8 as the base architecture with a light configuration (e.g., small/medium size, multi-scale input, and appropriate image resolution like 640x640 or 800x800 depending on dataloader). This aligns with the memory/latency budgets and leverages multi-scale features for small-object detection in dense scenes.\n- If latency or memory proves tighter in practice, fallback to a lighter variant within the same family or perform model optimizations (input-res reduction, tiling strategy, pruning/quantization) to maintain accuracy while meeting the constraints.\n- If extremely high small-object accuracy is required after initial training, a secondary evaluation with RTDETRHGNetV2_L could be pursued, but only after confirming that the deployment environment can meet memory and latency budgets (potentially via quantization or smaller input resolutions).\n\nWhat to train and how to tune (practical guidance)\n- Data strategy:\n - Combine traffic-light and traffic-sign annotations from the following sources: bdd_100k_det_train, bdd100k_UNIT_day2night_det_train, bdd_100k_det_val, coco2017_det_train/val, openimages_challenge_2019_det_train/val, objects365_det_val, LVIS_det_train, openimages_challenge_2019_det_train/val.\n - Emphasize small-object sampling and daylight/night variants to improve robustness to lighting and distance.\n- Training and augmentation:\n - Use mosaic/augmentation, multi-scale training, and random upscaling to boost small-object sensitivity.\n - Input resolution: aim for 640x640 to 768x768, balancing tiny object visibility with CPU performance.\n - Losses: use giou for boxes and focal loss for classification to improve hard-negative handling and small-object localization.\n - Optimizer: AdamW with a small weight decay; learning rate schedule with warmup and cosine decay.\n - Regularization: label smoothing and strong data augmentation to reduce overfitting on urban scenes.\n- Inference and deployment:\n - Consider exporting to CoreML/MLCompute-optimized backend for better Metal performance on Apple Silicon.\n - If needed, apply post-training quantization to reduce memory and improve latency with minimal accuracy loss.\n - Validate on a held-out subset of your target scenarios (dense traffic, small distant signs, night/day) to verify mAP targets and frame-time budgets.\n\nRisks and uncertainties\n- Real-world mAP@0.5:0.95 depends on training data distribution and augmentation; under some conditions the target 0.30 may require targeted fine-tuning to traffic-related classes.\n- On-device latency: CPU-only inference on MacBook Air with M4 can vary with input size and background load; plan to profile and adjust input resolution and batch size per frame to stay around 0.5 s.\n- Small-object difficulty: dense scenes and small object sizes increase the risk of missed detections; ensure multi-scale feature fusion and appropriate anchor-free style configuration.\n- Metal acceleration support: while YOLOv8 is broadly supported, real-world performance will depend on the exact PyTorch/Metal integration and any model export steps.\n\nUncertainties\n- Exact on-device latency and peak memory for the final training setup depend on input resolution, batch policy, and the Mac software stack (PyTorch/Metal/CoreML versions). It is advised to profile after conversion to the target runtime.\n- The precise mAP@0.5:0.95 achievable on the traffic-light/traffic-sign subset with the chosen training regime remains to be confirmed with a pilot run.\n\nSummary verdict\n- Primary architecture: yolov8 (selected_candidate_id = yolov8) due to strong small-object detection abilities, favorable CPU/Metal performance on Apple Silicon, reasonable memory footprint, and robust ecosystem for training and deployment.\n- Alternative (if needed later): RTDETRHGNetV2_L as a fallback option for potential gains in small-object accuracy, subject to meeting latency/memory constraints through optimization.\n\nIf you want, I can generate a concrete training patch (Hyperparameters, augmentation schedule, and a minimal DetectionAgentModelSpec) tailored to your environment and the datasets you listed.",
+    "selection_policy": null,
+    "retrieved_facts": [],
+    "evidence_sources": [],
+    "grounded": false,
+    "evidence_backed": false,
+    "match_scope": null,
+    "grounding": {
+      "status": "ungrounded",
+      "fact_count": 0,
+      "support_counts": {},
+      "evidence_coverage": 0
+    }
+  },
+  "dataset_selection_decision_evidence": {
+    "decision_type": "dataset_selection",
+    "decision": [
+      {
+        "class_name": "traffic light",
+        "sources": [
+          {
+            "dataset_name": "bdd_100k_det_train",
+            "allocations": [
+              {
+                "split": "train",
+                "count": 2400,
+                "assignment_type": "official_split"
+              },
+              {
+                "split": "test",
+                "count": 300,
+                "assignment_type": "derived_from_train"
+              }
+            ]
+          },
+          {
+            "dataset_name": "bdd_100k_det_val",
+            "allocations": [
+              {
+                "split": "validation",
+                "count": 300,
+                "assignment_type": "official_split"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "class_name": "traffic sign",
+        "sources": [
+          {
+            "dataset_name": "bdd_100k_det_train",
+            "allocations": [
+              {
+                "split": "train",
+                "count": 2400,
+                "assignment_type": "official_split"
+              },
+              {
+                "split": "test",
+                "count": 300,
+                "assignment_type": "derived_from_train"
+              }
+            ]
+          },
+          {
+            "dataset_name": "bdd_100k_det_val",
+            "allocations": [
+              {
+                "split": "validation",
+                "count": 300,
+                "assignment_type": "official_split"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "rationale": "Chosen 3000 images per class from a single, domain-aligned training source (BDD100K detection train) to maximize urban-street domain relevance and annotation consistency while respecting constraints: (1) target_images_per_class = 3000; (2) allowed_sources_by_class include bdd_100k_det_train with large availability and aligned domain; (3) mutually_exclusive_source_pairs prevent selecting both bdd_100k_det_train and bdd100k_UNIT_day2night_det_train, so we pick the aligned, non-derived train split only; (4) maximum_generalization_sources = 1, so we avoid adding non-domain generalization sources; (5) primary-domain share is >=0.8 (in fact 1.0 with BDD100K), meeting the domain-alignment preference. Using one coherent dataset family supports a shared backbone across both classes and satisfies the dataset_sizing guidance (minimum coverage and target per class). The per-class pool totals 3000 images each (6000 total pulled from the same dataset); actual unique image count may be slightly lower if images overlap across classes, and final train/val/test splits will be determined deterministically by downstream code. Estimated download footprint: about 6000 images from BDD100K training data (well within typical budget).",
+    "retrieved_facts": [],
+    "evidence_sources": [],
+    "grounded": false,
+    "evidence_backed": false,
+    "grounding": {
+      "status": "ungrounded",
+      "fact_count": 0,
+      "support_counts": {},
+      "evidence_coverage": 0
+    },
+    "mode": "llm_validated",
+    "correctness_source": "local_registry",
+    "graphrag_requested": false,
+    "graphrag_used": false,
+    "guidance_source": "local_registry",
+    "validation_findings": [],
+    "fallback_validation_findings": [],
+    "proposed_selection": [
+      {
+        "class_name": "traffic light",
+        "sources": [
+          {
+            "dataset_name": "bdd_100k_det_train",
+            "count": 3000
+          }
+        ]
+      },
+      {
+        "class_name": "traffic sign",
+        "sources": [
+          {
+            "dataset_name": "bdd_100k_det_train",
+            "count": 3000
+          }
+        ]
+      }
+    ],
+    "fallback_selection": null,
+    "dropped_inferred_classes": [],
+    "eligible_dataset_ids": [
+      "LVIS_det_train",
+      "bdd100k_UNIT_day2night_det_train",
+      "bdd_100k_det_train",
+      "bdd_100k_det_val",
+      "coco2017_det_train",
+      "coco2017_det_val",
+      "objects365_det_val",
+      "openimages_challenge_2019_det_train",
+      "openimages_challenge_2019_det_val"
+    ],
+    "selected_dataset_ids": [
+      "bdd_100k_det_train",
+      "bdd_100k_det_val"
+    ],
+    "dataset_profile": {
+      "total_selected_images": 6000,
+      "minimum_images_per_class": 3000,
+      "maximum_images_per_class": 3000,
+      "class_balance_ratio": 1,
+      "number_of_sources": 2,
+      "domains": [
+        "autonomous_driving",
+        "street"
+      ],
+      "multi_domain": false,
+      "characteristics": [],
+      "characteristic_support": {},
+      "small_object_fraction": null,
+      "median_short_side_px_at_640": null,
+      "planned_counts": {
+        "train": 4800,
+        "validation": 600,
+        "test": 600
+      },
+      "official_counts": {
+        "train": 4800,
+        "validation": 600,
+        "test": 0
+      },
+      "derived_counts": {
+        "train": 0,
+        "validation": 0,
+        "test": 600
+      }
+    },
+    "split_construction_summary": {
+      "strategy": "source_stratified_primary_holdouts",
+      "multi_family_policy": "derive_holdouts_from_sufficiently_represented_training_sources",
+      "single_family_policy": "prefer_compatible_official_holdouts_and_derive_missing_holdouts",
+      "total": 6000,
+      "counts": {
+        "train": 4800,
+        "validation": 600,
+        "test": 600
+      },
+      "ratios": {
+        "train": 0.8,
+        "validation": 0.1,
+        "test": 0.1
+      },
+      "classes": [
+        {
+          "class_name": "traffic light",
+          "total": 3000,
+          "counts": {
+            "train": 2400,
+            "validation": 300,
+            "test": 300
+          },
+          "ratios": {
+            "train": 0.8,
+            "validation": 0.1,
+            "test": 0.1
+          },
+          "families_by_split": {
+            "train": [
+              "bdd_100k"
+            ],
+            "validation": [
+              "bdd_100k"
+            ],
+            "test": [
+              "bdd_100k"
+            ]
+          },
+          "sources": [
+            {
+              "dataset_name": "bdd_100k_det_train",
+              "family": "bdd_100k",
+              "counts": {
+                "train": 2400,
+                "validation": 0,
+                "test": 300
+              }
+            },
+            {
+              "dataset_name": "bdd_100k_det_val",
+              "family": "bdd_100k",
+              "counts": {
+                "train": 0,
+                "validation": 300,
+                "test": 0
+              }
+            }
+          ]
+        },
+        {
+          "class_name": "traffic sign",
+          "total": 3000,
+          "counts": {
+            "train": 2400,
+            "validation": 300,
+            "test": 300
+          },
+          "ratios": {
+            "train": 0.8,
+            "validation": 0.1,
+            "test": 0.1
+          },
+          "families_by_split": {
+            "train": [
+              "bdd_100k"
+            ],
+            "validation": [
+              "bdd_100k"
+            ],
+            "test": [
+              "bdd_100k"
+            ]
+          },
+          "sources": [
+            {
+              "dataset_name": "bdd_100k_det_train",
+              "family": "bdd_100k",
+              "counts": {
+                "train": 2400,
+                "validation": 0,
+                "test": 300
+              }
+            },
+            {
+              "dataset_name": "bdd_100k_det_val",
+              "family": "bdd_100k",
+              "counts": {
+                "train": 0,
+                "validation": 300,
+                "test": 0
+              }
+            }
+          ]
+        }
+      ],
+      "warnings": []
+    },
+    "source_selection_rationale": "Chosen 3000 images per class from a single, domain-aligned training source (BDD100K detection train) to maximize urban-street domain relevance and annotation consistency while respecting constraints: (1) target_images_per_class = 3000; (2) allowed_sources_by_class include bdd_100k_det_train with large availability and aligned domain; (3) mutually_exclusive_source_pairs prevent selecting both bdd_100k_det_train and bdd100k_UNIT_day2night_det_train, so we pick the aligned, non-derived train split only; (4) maximum_generalization_sources = 1, so we avoid adding non-domain generalization sources; (5) primary-domain share is >=0.8 (in fact 1.0 with BDD100K), meeting the domain-alignment preference. Using one coherent dataset family supports a shared backbone across both classes and satisfies the dataset_sizing guidance (minimum coverage and target per class). The per-class pool totals 3000 images each (6000 total pulled from the same dataset); actual unique image count may be slightly lower if images overlap across classes, and final train/val/test splits will be determined deterministically by downstream code. Estimated download footprint: about 6000 images from BDD100K training data (well within typical budget).",
+    "deployment_coverage_warnings": [
+      {
+        "code": "DEPLOYMENT_COVERAGE_UNVERIFIED",
+        "severity": "warning",
+        "dimensions": [
+          "lighting"
+        ],
+        "reason": "The split is source-stratified, but the available sample metadata does not verify coverage of these requested deployment characteristics."
+      }
+    ],
+    "data_selection_policy": {
+      "policy_ids": [
+        "data.detection.robust_pool.v1",
+        "data.detection.source_sufficiency.v1",
+        "data.detection.lineage_safety.v1",
+        "data.detection.domain_mix.v1"
+      ],
+      "target_images_per_class": 3000,
+      "min_mixed_source_count": 500,
+      "min_mixed_source_share": 0.1,
+      "reject_unpaired_original_derived_mix": true,
+      "requested_robustness_dimensions": [
+        "lighting",
+        "scene_density"
+      ],
+      "policy_id": "data.detection.domain_mix.v1",
+      "preferred_primary_domain_share": 0.8,
+      "minimum_primary_domain_share": 0.7,
+      "maximum_generalization_sources": 1,
+      "dataset_sizing": {
+        "target_images_per_class": 3000,
+        "minimum_images_per_class": 2500,
+        "maximum_images_per_class": 3000,
+        "confidence": "high",
+        "facts": {
+          "pretrained_class_coverage": "partial",
+          "domain_shift": "moderate",
+          "accuracy_demand": "standard",
+          "robustness_dimensions": [
+            "lighting",
+            "scene_density"
+          ],
+          "object_size_risk": "medium",
+          "object_size_evidence": "explicit_requirement",
+          "small_object_fraction": null,
+          "median_short_side_px_at_640": null,
+          "previous_run_failed": false
+        },
+        "adjustments": [
+          {
+            "rule": "partial_pretrained_class_coverage",
+            "value": 500,
+            "reason": "Some requested classes require adaptation of the pretrained detector."
+          },
+          {
+            "rule": "moderate_domain_shift",
+            "value": 500,
+            "reason": "The deployment domain is moderately different or could not be verified."
+          },
+          {
+            "rule": "robustness_coverage",
+            "value": 500,
+            "reason": "Requested robustness dimensions require stratified coverage, with a bounded volume increase."
+          },
+          {
+            "rule": "explicit_small_object_requirement",
+            "value": 750,
+            "reason": "The structured task requirements explicitly prioritize small objects."
+          }
+        ],
+        "config": {
+          "base_images_per_class": 1000,
+          "full_pretrained_coverage_adjustment": -250,
+          "partial_pretrained_coverage_adjustment": 500,
+          "no_pretrained_coverage_adjustment": 1000,
+          "moderate_domain_shift_adjustment": 500,
+          "strong_domain_shift_adjustment": 1000,
+          "robustness_adjustment_per_dimension": 250,
+          "robustness_adjustment_maximum": 500,
+          "high_accuracy_adjustment": 500,
+          "explicit_small_object_adjustment": 750,
+          "observed_small_object_adjustment": 1250,
+          "normal_minimum": 750,
+          "normal_maximum": 3000,
+          "evidence_backed_expansion_maximum": 5000
+        },
+        "expansion_requires_evidence": true,
+        "calculated_target_images_per_class": 3000,
+        "effective_target_images_per_class": 3000,
+        "explicit_user_override": false,
+        "calculation_stage": "select_datasets_prerequisite"
+      }
+    },
+    "assignments_authoritative": true,
+    "split_policy": {
+      "official_splits_preserved": true,
+      "missing_holdouts": "derived_from_train",
+      "derived_holdout_sizing": "adaptive_by_selected_training_pool",
+      "derived_holdouts_source_stratified": true,
+      "multi_family_primary_holdouts": "derived_from_sufficiently_represented_training_sources",
+      "single_family_primary_holdouts": "prefer_compatible_official_splits",
+      "official_holdouts_require_selected_training_family": true,
+      "classification_default_pool_per_class": 1500,
+      "classification_max_pool_per_class": 10000,
+      "classification_max_selected_images": 50000,
+      "detection_default_pool_per_class": 1000,
+      "detection_medium_high_pool_per_class": 1500,
+      "detection_recommended_pool_per_class": 3000,
+      "detection_sizing_recommendation": {
+        "target_images_per_class": 3000,
+        "minimum_images_per_class": 2500,
+        "maximum_images_per_class": 3000,
+        "confidence": "high",
+        "facts": {
+          "pretrained_class_coverage": "partial",
+          "domain_shift": "moderate",
+          "accuracy_demand": "standard",
+          "robustness_dimensions": [
+            "lighting",
+            "scene_density"
+          ],
+          "object_size_risk": "medium",
+          "object_size_evidence": "explicit_requirement",
+          "small_object_fraction": null,
+          "median_short_side_px_at_640": null,
+          "previous_run_failed": false
+        },
+        "adjustments": [
+          {
+            "rule": "partial_pretrained_class_coverage",
+            "value": 500,
+            "reason": "Some requested classes require adaptation of the pretrained detector."
+          },
+          {
+            "rule": "moderate_domain_shift",
+            "value": 500,
+            "reason": "The deployment domain is moderately different or could not be verified."
+          },
+          {
+            "rule": "robustness_coverage",
+            "value": 500,
+            "reason": "Requested robustness dimensions require stratified coverage, with a bounded volume increase."
+          },
+          {
+            "rule": "explicit_small_object_requirement",
+            "value": 750,
+            "reason": "The structured task requirements explicitly prioritize small objects."
+          }
+        ],
+        "config": {
+          "base_images_per_class": 1000,
+          "full_pretrained_coverage_adjustment": -250,
+          "partial_pretrained_coverage_adjustment": 500,
+          "no_pretrained_coverage_adjustment": 1000,
+          "moderate_domain_shift_adjustment": 500,
+          "strong_domain_shift_adjustment": 1000,
+          "robustness_adjustment_per_dimension": 250,
+          "robustness_adjustment_maximum": 500,
+          "high_accuracy_adjustment": 500,
+          "explicit_small_object_adjustment": 750,
+          "observed_small_object_adjustment": 1250,
+          "normal_minimum": 750,
+          "normal_maximum": 3000,
+          "evidence_backed_expansion_maximum": 5000
+        },
+        "expansion_requires_evidence": true,
+        "calculated_target_images_per_class": 3000,
+        "effective_target_images_per_class": 3000,
+        "explicit_user_override": false,
+        "calculation_stage": "select_datasets_prerequisite"
+      },
+      "selection_target_images_per_class": 3000,
+      "detection_max_pool_per_class": 10000,
+      "detection_max_selected_image_allocations": 50000,
+      "detection_max_instances_per_class": null,
+      "detection_instance_limit_enforced": false,
+      "detection_shared_backbone_required_when_available": true,
+      "detection_shared_backbone_min_available_images": 50,
+      "detection_shared_backbone_min_share": 0.25,
+      "detection_shared_backbone_target_images": 500,
+      "explicit_images_per_class": null,
+      "test_used_for_model_selection": false
+    }
+  },
+  "hyperparameter_decision_evidence": {
+    "decision_type": "hyperparameter_selection",
+    "decision": {
+      "task_type": "detection",
+      "classes": [
+        "traffic light",
+        "traffic sign"
+      ],
+      "selected_data": [
+        {
+          "class_name": "traffic light",
+          "sources": [
+            {
+              "dataset_name": "bdd_100k_det_train",
+              "allocations": [
+                {
+                  "split": "train",
+                  "count": 2400,
+                  "assignment_type": "official_split"
+                },
+                {
+                  "split": "test",
+                  "count": 300,
+                  "assignment_type": "derived_from_train"
+                }
+              ]
+            },
+            {
+              "dataset_name": "bdd_100k_det_val",
+              "allocations": [
+                {
+                  "split": "validation",
+                  "count": 300,
+                  "assignment_type": "official_split"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "class_name": "traffic sign",
+          "sources": [
+            {
+              "dataset_name": "bdd_100k_det_train",
+              "allocations": [
+                {
+                  "split": "train",
+                  "count": 2400,
+                  "assignment_type": "official_split"
+                },
+                {
+                  "split": "test",
+                  "count": 300,
+                  "assignment_type": "derived_from_train"
+                }
+              ]
+            },
+            {
+              "dataset_name": "bdd_100k_det_val",
+              "allocations": [
+                {
+                  "split": "validation",
+                  "count": 300,
+                  "assignment_type": "official_split"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "train_data_ratio": 0.8,
+      "val_data_ratio": 0.1,
+      "test_data_ratio": 0.1,
+      "num_epochs": 50,
+      "patience": 5,
+      "batch_size": 4,
+      "input_size": 640,
+      "track_metric": "val_mAP",
+      "model_name": "yolov8_n",
+      "model_weights": "default",
+      "training_recipe_id": "",
+      "scheduler_name": "linear",
+      "final_learning_rate_factor": 0.01,
+      "warmup_epochs": 3.0,
+      "warmup_momentum": 0.8,
+      "amp": true,
+      "lambda_box": 1.0,
+      "lambda_cls": 1.0,
+      "lambda_dfl": 0.0,
+      "mosaic": 1.0,
+      "mixup": 0.0,
+      "cutmix": 0.0,
+      "copy_paste": 0.0,
+      "degrees": 0.0,
+      "translate": 0.0,
+      "scale": 0.0,
+      "fliplr": 0.5,
+      "hsv_h": 0.015,
+      "hsv_s": 0.7,
+      "hsv_v": 0.9,
+      "close_mosaic": 0,
+      "single_cls": false,
+      "rect": false,
+      "multi_scale": 1.0,
+      "confidence_threshold": 0.25,
+      "nms_iou_threshold": 0.45,
+      "max_detections": 100,
+      "workers": 4,
+      "seed": 42,
+      "freeze": 0,
+      "optimizer": {
+        "name": "adamw",
+        "params": {
+          "learning_rate": 0.001,
+          "weight_decay": 0.0005,
+          "beta1": 0.9
+        }
+      }
+    },
+    "rationale": "Safe, executable starting point for on-device Apple Silicon (MacBook Air with M4). Uses yolov8_n to satisfy runtime constraint while balancing small-object detection (traffic lights/signs) and dense urban scenes. Data split mirrors the planned per-class allocations with 80/10/10 train/val/test. Optimizer AdamW with a modest learning rate and linear scheduler, plus common augmentations (mosaic, multi-scale, hue/saturation/brightness jitter) to improve robustness to lighting and distance. Input size 640 maintains a balance between resolution for small objects and inference efficiency on CPU/Metal. The configuration emphasizes memory safety (batch size 4, max_detections 100) and provides a reasonable epoch budget (50) with early-stopping (patience 5).",
+    "retrieved_facts": [],
+    "evidence_sources": [],
+    "field_provenance": {},
+    "grounded": false,
+    "evidence_backed": false,
+    "grounding": {
+      "status": "ungrounded",
+      "fact_count": 0,
+      "support_counts": {},
+      "evidence_coverage": 0.0
+    }
+  },
+  "dataset_profile": {
+    "total_selected_images": 6000,
+    "minimum_images_per_class": 3000,
+    "maximum_images_per_class": 3000,
+    "class_balance_ratio": 1.0,
+    "number_of_sources": 2,
+    "domains": [
+      "autonomous_driving",
+      "street"
+    ],
+    "multi_domain": false,
+    "characteristics": [],
+    "characteristic_support": {},
+    "small_object_fraction": null,
+    "median_short_side_px_at_640": null,
+    "planned_counts": {
+      "train": 4800,
+      "validation": 600,
+      "test": 600
+    },
+    "official_counts": {
+      "train": 4800,
+      "validation": 600,
+      "test": 0
+    },
+    "derived_counts": {
+      "train": 0,
+      "validation": 0,
+      "test": 600
+    }
+  },
+  "step_history": [
+    "Task Interpretation Completed",
+    "Data Availability Checked",
+    "GraphRAG Model Suggestions: disabled for this run.",
+    "Model Selection Rationale: Summary of recommendation and trade-offs\n- Hard constraints considered:\n - Inference memory: target <= 6 GB during runtime on a MacBook Air with M4 and unified memory 16 GB. YOLOv8 (especially small variants) typically stays well within this bound on CPU/Metal, even with multi-scale inputs.\n - Latency: target ~500 ms per frame; YOLOv8 family offers efficient single-shot detection with practical CPU latency on Apple Silicon, making 0.5 s per frame feasible with appropriate input resolutions and batch size settings.\n - Accuracy target: mAP@0.5:0.95 around 0.30 is modest. With the provided diverse data sources (BDD, Open Images, COCO, LVIS, Objects365) and fine-tuning for traffic lights and signs, a well-tuned YOLOv8 can reach or exceed the target on the target classes, given proper augmentation and small-object emphasis.\n- Core data fit:\n - Target classes: traffic light, traffic sign. Available data includes large counts from BDD100K det train/val, Open Images, COCO det subsets, and specialized day/night variants (bdd100k_unit_day2night). This supports learning small-object representations in dense urban contexts and lighting changes.\n - Domain alignment: urban street scenes with small, distant objects. The data mix covers these conditions and should translate well to real-world deployment on a MacBook Air with Metal acceleration.\n- Candidate considerations:\n - YOLOv8 (selected) offers a favorable balance of accuracy, speed, and memory footprint for CPU/Metal on Apple Silicon, and has good tooling/support for on-device export (CoreML/Metal) and quantization if needed.\n - RTDETRHGNetV2_L (alternative) could yield strong small-object performance but is heavier, riskier for the 6 GB RAM ceiling, and less certain to meet the 0.5 s frame-time target on a MacBook Air CPU without aggressive optimization.\n\nIntegrated recommendation and fallback plan\n- Primary choice: yolov8 as the base architecture with a light configuration (e.g., small/medium size, multi-scale input, and appropriate image resolution like 640x640 or 800x800 depending on dataloader). This aligns with the memory/latency budgets and leverages multi-scale features for small-object detection in dense scenes.\n- If latency or memory proves tighter in practice, fallback to a lighter variant within the same family or perform model optimizations (input-res reduction, tiling strategy, pruning/quantization) to maintain accuracy while meeting the constraints.\n- If extremely high small-object accuracy is required after initial training, a secondary evaluation with RTDETRHGNetV2_L could be pursued, but only after confirming that the deployment environment can meet memory and latency budgets (potentially via quantization or smaller input resolutions).\n\nWhat to train and how to tune (practical guidance)\n- Data strategy:\n - Combine traffic-light and traffic-sign annotations from the following sources: bdd_100k_det_train, bdd100k_UNIT_day2night_det_train, bdd_100k_det_val, coco2017_det_train/val, openimages_challenge_2019_det_train/val, objects365_det_val, LVIS_det_train, openimages_challenge_2019_det_train/val.\n - Emphasize small-object sampling and daylight/night variants to improve robustness to lighting and distance.\n- Training and augmentation:\n - Use mosaic/augmentation, multi-scale training, and random upscaling to boost small-object sensitivity.\n - Input resolution: aim for 640x640 to 768x768, balancing tiny object visibility with CPU performance.\n - Losses: use giou for boxes and focal loss for classification to improve hard-negative handling and small-object localization.\n - Optimizer: AdamW with a small weight decay; learning rate schedule with warmup and cosine decay.\n - Regularization: label smoothing and strong data augmentation to reduce overfitting on urban scenes.\n- Inference and deployment:\n - Consider exporting to CoreML/MLCompute-optimized backend for better Metal performance on Apple Silicon.\n - If needed, apply post-training quantization to reduce memory and improve latency with minimal accuracy loss.\n - Validate on a held-out subset of your target scenarios (dense traffic, small distant signs, night/day) to verify mAP targets and frame-time budgets.\n\nRisks and uncertainties\n- Real-world mAP@0.5:0.95 depends on training data distribution and augmentation; under some conditions the target 0.30 may require targeted fine-tuning to traffic-related classes.\n- On-device latency: CPU-only inference on MacBook Air with M4 can vary with input size and background load; plan to profile and adjust input resolution and batch size per frame to stay around 0.5 s.\n- Small-object difficulty: dense scenes and small object sizes increase the risk of missed detections; ensure multi-scale feature fusion and appropriate anchor-free style configuration.\n- Metal acceleration support: while YOLOv8 is broadly supported, real-world performance will depend on the exact PyTorch/Metal integration and any model export steps.\n\nUncertainties\n- Exact on-device latency and peak memory for the final training setup depend on input resolution, batch policy, and the Mac software stack (PyTorch/Metal/CoreML versions). It is advised to profile after conversion to the target runtime.\n- The precise mAP@0.5:0.95 achievable on the traffic-light/traffic-sign subset with the chosen training regime remains to be confirmed with a pilot run.\n\nSummary verdict\n- Primary architecture: yolov8 (selected_candidate_id = yolov8) due to strong small-object detection abilities, favorable CPU/Metal performance on Apple Silicon, reasonable memory footprint, and robust ecosystem for training and deployment.\n- Alternative (if needed later): RTDETRHGNetV2_L as a fallback option for potential gains in small-object accuracy, subject to meeting latency/memory constraints through optimization.\n\nIf you want, I can generate a concrete training patch (Hyperparameters, augmentation schedule, and a minimal DetectionAgentModelSpec) tailored to your environment and the datasets you listed.",
+    "Model Selection Completed",
+    "Data Selection Rationale: Chosen 3000 images per class from a single, domain-aligned training source (BDD100K detection train) to maximize urban-street domain relevance and annotation consistency while respecting constraints: (1) target_images_per_class = 3000; (2) allowed_sources_by_class include bdd_100k_det_train with large availability and aligned domain; (3) mutually_exclusive_source_pairs prevent selecting both bdd_100k_det_train and bdd100k_UNIT_day2night_det_train, so we pick the aligned, non-derived train split only; (4) maximum_generalization_sources = 1, so we avoid adding non-domain generalization sources; (5) primary-domain share is >=0.8 (in fact 1.0 with BDD100K), meeting the domain-alignment preference. Using one coherent dataset family supports a shared backbone across both classes and satisfies the dataset_sizing guidance (minimum coverage and target per class). The per-class pool totals 3000 images each (6000 total pulled from the same dataset); actual unique image count may be slightly lower if images overlap across classes, and final train/val/test splits will be determined deterministically by downstream code. Estimated download footprint: about 6000 images from BDD100K training data (well within typical budget).",
+    "Dataset Selection Completed",
+    "Hyperparameter GraphRAG: disabled for this run.",
+    "Hyperparameter Optimization Completed"
+  ],
+  "last_updated": "2026-08-13T12:03:04.891876",
+  "revision": {
+    "active": null,
+    "history": []
+  }
+}

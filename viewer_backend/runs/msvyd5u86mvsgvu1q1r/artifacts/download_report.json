@@ -1,0 +1,550 @@
+{
+  "job_id": "msvyd5u86mvsgvu1q1r",
+  "task": "detection",
+  "sources": [
+    {
+      "class_name": "car",
+      "dataset_name": "bdd_100k_det_train",
+      "source_role": "train",
+      "assigned_split": "train",
+      "assignment_type": "official_split",
+      "requested": 2000,
+      "candidates": 2000,
+      "downloaded": 2000,
+      "direct_allocation_downloaded": 2000,
+      "global_top_up_downloaded": 0,
+      "shortfall": 0,
+      "cross_split_conflicts": 0,
+      "content_duplicate_conflicts": 0,
+      "content_duplicates": [],
+      "failures": []
+    },
+    {
+      "class_name": "car",
+      "dataset_name": "bdd_100k_det_train",
+      "source_role": "train",
+      "assigned_split": "test",
+      "assignment_type": "derived_from_train",
+      "requested": 250,
+      "candidates": 2250,
+      "downloaded": 250,
+      "direct_allocation_downloaded": 250,
+      "global_top_up_downloaded": 0,
+      "shortfall": 0,
+      "cross_split_conflicts": 2000,
+      "content_duplicate_conflicts": 0,
+      "content_duplicates": [],
+      "failures": []
+    },
+    {
+      "class_name": "car",
+      "dataset_name": "bdd_100k_det_val",
+      "source_role": "validation",
+      "assigned_split": "validation",
+      "assignment_type": "official_split",
+      "requested": 250,
+      "candidates": 250,
+      "downloaded": 250,
+      "direct_allocation_downloaded": 250,
+      "global_top_up_downloaded": 0,
+      "shortfall": 0,
+      "cross_split_conflicts": 0,
+      "content_duplicate_conflicts": 0,
+      "content_duplicates": [],
+      "failures": []
+    },
+    {
+      "class_name": "bus",
+      "dataset_name": "bdd_100k_det_train",
+      "source_role": "train",
+      "assigned_split": "train",
+      "assignment_type": "official_split",
+      "requested": 2000,
+      "candidates": 2029,
+      "downloaded": 2000,
+      "direct_allocation_downloaded": 2000,
+      "global_top_up_downloaded": 0,
+      "shortfall": 0,
+      "cross_split_conflicts": 29,
+      "content_duplicate_conflicts": 0,
+      "content_duplicates": [],
+      "failures": []
+    },
+    {
+      "class_name": "bus",
+      "dataset_name": "bdd_100k_det_train",
+      "source_role": "train",
+      "assigned_split": "test",
+      "assignment_type": "derived_from_train",
+      "requested": 250,
+      "candidates": 2250,
+      "downloaded": 250,
+      "direct_allocation_downloaded": 250,
+      "global_top_up_downloaded": 0,
+      "shortfall": 0,
+      "cross_split_conflicts": 2000,
+      "content_duplicate_conflicts": 0,
+      "content_duplicates": [],
+      "failures": []
+    },
+    {
+      "class_name": "bus",
+      "dataset_name": "bdd_100k_det_val",
+      "source_role": "validation",
+      "assigned_split": "validation",
+      "assignment_type": "official_split",
+      "requested": 250,
+      "candidates": 250,
+      "downloaded": 250,
+      "direct_allocation_downloaded": 250,
+      "global_top_up_downloaded": 0,
+      "shortfall": 0,
+      "cross_split_conflicts": 0,
+      "content_duplicate_conflicts": 0,
+      "content_duplicates": [],
+      "failures": []
+    },
+    {
+      "class_name": "truck",
+      "dataset_name": "bdd_100k_det_train",
+      "source_role": "train",
+      "assigned_split": "train",
+      "assignment_type": "official_split",
+      "requested": 2000,
+      "candidates": 2079,
+      "downloaded": 2000,
+      "direct_allocation_downloaded": 2000,
+      "global_top_up_downloaded": 0,
+      "shortfall": 0,
+      "cross_split_conflicts": 79,
+      "content_duplicate_conflicts": 0,
+      "content_duplicates": [],
+      "failures": []
+    },
+    {
+      "class_name": "truck",
+      "dataset_name": "bdd_100k_det_train",
+      "source_role": "train",
+      "assigned_split": "test",
+      "assignment_type": "derived_from_train",
+      "requested": 250,
+      "candidates": 2281,
+      "downloaded": 250,
+      "direct_allocation_downloaded": 250,
+      "global_top_up_downloaded": 0,
+      "shortfall": 0,
+      "cross_split_conflicts": 2031,
+      "content_duplicate_conflicts": 0,
+      "content_duplicates": [],
+      "failures": []
+    },
+    {
+      "class_name": "truck",
+      "dataset_name": "bdd_100k_det_val",
+      "source_role": "validation",
+      "assigned_split": "validation",
+      "assignment_type": "official_split",
+      "requested": 250,
+      "candidates": 250,
+      "downloaded": 250,
+      "direct_allocation_downloaded": 250,
+      "global_top_up_downloaded": 0,
+      "shortfall": 0,
+      "cross_split_conflicts": 0,
+      "content_duplicate_conflicts": 0,
+      "content_duplicates": [],
+      "failures": []
+    },
+    {
+      "class_name": "motorcycle",
+      "dataset_name": "bdd_100k_det_train",
+      "source_role": "train",
+      "assigned_split": "train",
+      "assignment_type": "official_split",
+      "requested": 1861,
+      "candidates": 1880,
+      "downloaded": 1861,
+      "direct_allocation_downloaded": 1861,
+      "global_top_up_downloaded": 0,
+      "shortfall": 0,
+      "cross_split_conflicts": 19,
+      "content_duplicate_conflicts": 0,
+      "content_duplicates": [],
+      "failures": []
+    },
+    {
+      "class_name": "motorcycle",
+      "dataset_name": "bdd_100k_det_train",
+      "source_role": "train",
+      "assigned_split": "validation",
+      "assignment_type": "derived_from_train",
+      "requested": 233,
+      "candidates": 2113,
+      "downloaded": 233,
+      "direct_allocation_downloaded": 233,
+      "global_top_up_downloaded": 0,
+      "shortfall": 0,
+      "cross_split_conflicts": 1880,
+      "content_duplicate_conflicts": 0,
+      "content_duplicates": [],
+      "failures": []
+    },
+    {
+      "class_name": "motorcycle",
+      "dataset_name": "bdd_100k_det_train",
+      "source_role": "train",
+      "assigned_split": "test",
+      "assignment_type": "derived_from_train",
+      "requested": 233,
+      "candidates": 2327,
+      "downloaded": 233,
+      "direct_allocation_downloaded": 233,
+      "global_top_up_downloaded": 0,
+      "shortfall": 0,
+      "cross_split_conflicts": 2094,
+      "content_duplicate_conflicts": 0,
+      "content_duplicates": [],
+      "failures": []
+    },
+    {
+      "class_name": "motorcycle",
+      "dataset_name": "LVIS_det_train",
+      "source_role": "train",
+      "assigned_split": "train",
+      "assignment_type": "official_split",
+      "requested": 400,
+      "candidates": 400,
+      "downloaded": 400,
+      "direct_allocation_downloaded": 400,
+      "global_top_up_downloaded": 0,
+      "shortfall": 0,
+      "cross_split_conflicts": 0,
+      "content_duplicate_conflicts": 0,
+      "content_duplicates": [],
+      "failures": []
+    },
+    {
+      "class_name": "motorcycle",
+      "dataset_name": "LVIS_det_train",
+      "source_role": "train",
+      "assigned_split": "validation",
+      "assignment_type": "derived_from_train",
+      "requested": 50,
+      "candidates": 450,
+      "downloaded": 50,
+      "direct_allocation_downloaded": 50,
+      "global_top_up_downloaded": 0,
+      "shortfall": 0,
+      "cross_split_conflicts": 400,
+      "content_duplicate_conflicts": 0,
+      "content_duplicates": [],
+      "failures": []
+    },
+    {
+      "class_name": "motorcycle",
+      "dataset_name": "LVIS_det_train",
+      "source_role": "train",
+      "assigned_split": "test",
+      "assignment_type": "derived_from_train",
+      "requested": 50,
+      "candidates": 500,
+      "downloaded": 50,
+      "direct_allocation_downloaded": 50,
+      "global_top_up_downloaded": 0,
+      "shortfall": 0,
+      "cross_split_conflicts": 450,
+      "content_duplicate_conflicts": 0,
+      "content_duplicates": [],
+      "failures": []
+    },
+    {
+      "class_name": "bicycle",
+      "dataset_name": "bdd_100k_det_train",
+      "source_role": "train",
+      "assigned_split": "train",
+      "assignment_type": "official_split",
+      "requested": 2000,
+      "candidates": 2060,
+      "downloaded": 2000,
+      "direct_allocation_downloaded": 2000,
+      "global_top_up_downloaded": 0,
+      "shortfall": 0,
+      "cross_split_conflicts": 60,
+      "content_duplicate_conflicts": 0,
+      "content_duplicates": [],
+      "failures": []
+    },
+    {
+      "class_name": "bicycle",
+      "dataset_name": "bdd_100k_det_train",
+      "source_role": "train",
+      "assigned_split": "test",
+      "assignment_type": "derived_from_train",
+      "requested": 250,
+      "candidates": 2271,
+      "downloaded": 250,
+      "direct_allocation_downloaded": 250,
+      "global_top_up_downloaded": 0,
+      "shortfall": 0,
+      "cross_split_conflicts": 2021,
+      "content_duplicate_conflicts": 0,
+      "content_duplicates": [],
+      "failures": []
+    },
+    {
+      "class_name": "bicycle",
+      "dataset_name": "bdd_100k_det_val",
+      "source_role": "validation",
+      "assigned_split": "validation",
+      "assignment_type": "official_split",
+      "requested": 250,
+      "candidates": 250,
+      "downloaded": 250,
+      "direct_allocation_downloaded": 250,
+      "global_top_up_downloaded": 0,
+      "shortfall": 0,
+      "cross_split_conflicts": 0,
+      "content_duplicate_conflicts": 0,
+      "content_duplicates": [],
+      "failures": []
+    },
+    {
+      "class_name": "pedestrian",
+      "dataset_name": "bdd_100k_det_train",
+      "source_role": "train",
+      "assigned_split": "train",
+      "assignment_type": "official_split",
+      "requested": 2000,
+      "candidates": 4136,
+      "downloaded": 3948,
+      "direct_allocation_downloaded": 2012,
+      "global_top_up_downloaded": 1936,
+      "shortfall": 0,
+      "cross_split_conflicts": 188,
+      "content_duplicate_conflicts": 0,
+      "content_duplicates": [],
+      "failures": []
+    },
+    {
+      "class_name": "pedestrian",
+      "dataset_name": "bdd_100k_det_train",
+      "source_role": "train",
+      "assigned_split": "test",
+      "assignment_type": "derived_from_train",
+      "requested": 250,
+      "candidates": 4536,
+      "downloaded": 329,
+      "direct_allocation_downloaded": 279,
+      "global_top_up_downloaded": 50,
+      "shortfall": 0,
+      "cross_split_conflicts": 4207,
+      "content_duplicate_conflicts": 0,
+      "content_duplicates": [],
+      "failures": []
+    },
+    {
+      "class_name": "pedestrian",
+      "dataset_name": "bdd_100k_det_val",
+      "source_role": "validation",
+      "assigned_split": "validation",
+      "assignment_type": "official_split",
+      "requested": 250,
+      "candidates": 2313,
+      "downloaded": 919,
+      "direct_allocation_downloaded": 300,
+      "global_top_up_downloaded": 619,
+      "shortfall": 0,
+      "cross_split_conflicts": 1311,
+      "content_duplicate_conflicts": 0,
+      "content_duplicates": [],
+      "failures": []
+    }
+  ],
+  "complete": true,
+  "coverage": {
+    "requirements": {
+      "target_unique_images": 15327,
+      "target_unique_images_by_split": {
+        "train": 12261,
+        "validation": 1533,
+        "test": 1533
+      },
+      "minimum_images_per_class": {
+        "car": 2500,
+        "bus": 2500,
+        "truck": 2500,
+        "motorcycle": 2827,
+        "bicycle": 2500,
+        "pedestrian": 2500
+      },
+      "minimum_images_per_class_by_split": {
+        "car": {
+          "train": 2000,
+          "validation": 250,
+          "test": 250
+        },
+        "bus": {
+          "train": 2000,
+          "validation": 250,
+          "test": 250
+        },
+        "truck": {
+          "train": 2000,
+          "validation": 250,
+          "test": 250
+        },
+        "motorcycle": {
+          "train": 2261,
+          "validation": 283,
+          "test": 283
+        },
+        "bicycle": {
+          "train": 2000,
+          "validation": 250,
+          "test": 250
+        },
+        "pedestrian": {
+          "train": 2000,
+          "validation": 250,
+          "test": 250
+        }
+      }
+    },
+    "verified_unique_images": 13518,
+    "verified_unique_images_by_split": {
+      "train": 10698,
+      "validation": 1533,
+      "test": 1287
+    },
+    "verified_images_per_class": {
+      "car": 11316,
+      "bus": 3066,
+      "truck": 4279,
+      "motorcycle": 3255,
+      "bicycle": 3640,
+      "pedestrian": 5880
+    },
+    "verified_images_per_class_by_split": {
+      "car": {
+        "train": 8677,
+        "validation": 1415,
+        "test": 1224
+      },
+      "bus": {
+        "train": 2419,
+        "validation": 318,
+        "test": 329
+      },
+      "truck": {
+        "train": 3423,
+        "validation": 413,
+        "test": 443
+      },
+      "motorcycle": {
+        "train": 2602,
+        "validation": 370,
+        "test": 283
+      },
+      "bicycle": {
+        "train": 3029,
+        "validation": 318,
+        "test": 293
+      },
+      "pedestrian": {
+        "train": 4519,
+        "validation": 649,
+        "test": 712
+      }
+    },
+    "unique_image_shortfall": 1809,
+    "unique_coverage_ratio": 0.8819729888432178,
+    "class_image_shortfalls": {
+      "car": 0,
+      "bus": 0,
+      "truck": 0,
+      "motorcycle": 0,
+      "bicycle": 0,
+      "pedestrian": 0
+    },
+    "class_split_image_shortfalls": {
+      "car": {
+        "train": 0,
+        "validation": 0,
+        "test": 0
+      },
+      "bus": {
+        "train": 0,
+        "validation": 0,
+        "test": 0
+      },
+      "truck": {
+        "train": 0,
+        "validation": 0,
+        "test": 0
+      },
+      "motorcycle": {
+        "train": 0,
+        "validation": 0,
+        "test": 0
+      },
+      "bicycle": {
+        "train": 0,
+        "validation": 0,
+        "test": 0
+      },
+      "pedestrian": {
+        "train": 0,
+        "validation": 0,
+        "test": 0
+      }
+    },
+    "class_split_coverage_satisfied": true,
+    "satisfied": false
+  },
+  "allocation_shortfalls": [],
+  "acceptance": {
+    "minimum_unique_coverage_ratio": 0.85,
+    "unique_coverage_ratio": 0.8819729888432178,
+    "unique_target_satisfied": false,
+    "aspirational_unique_target_accepted": true,
+    "class_split_coverage_satisfied": true,
+    "unresolved_transfer_failures": [],
+    "cross_split_duplicates": []
+  },
+  "warnings": [
+    {
+      "type": "aspirational_unique_image_shortfall",
+      "message": "The selected multi-label candidate pools were exhausted after top-up. All per-class split requirements are satisfied, so the distinct image pool was accepted below its aspirational target.",
+      "target_unique_images": 15327,
+      "verified_unique_images": 13518,
+      "unique_coverage_ratio": 0.8819729888432178,
+      "minimum_unique_coverage_ratio": 0.85,
+      "planned_unique_images_by_split": {
+        "train": 12261,
+        "validation": 1533,
+        "test": 1533
+      },
+      "adjusted_split_sizes": {
+        "train": 10698,
+        "validation": 1533,
+        "test": 1287
+      }
+    }
+  ],
+  "requested": 15327,
+  "downloaded": 18023,
+  "unique_downloaded": 13518,
+  "performance": {
+    "elapsed_seconds": 373.6394012999999,
+    "sparql_queries": 403,
+    "sparql_seconds": 301.7679911000123,
+    "download_batches": 196,
+    "cache_hits": 13518,
+    "cached_failures": 0,
+    "bytes_downloaded": 0,
+    "retries": 0,
+    "transfer_and_validation_seconds": 0.0
+  },
+  "manifest_path": "C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\runs\\msvyd5u86mvsgvu1q1r\\data\\dataset_manifest.json",
+  "report_path": "C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\runs\\msvyd5u86mvsgvu1q1r\\artifacts\\download_report.json"
+}

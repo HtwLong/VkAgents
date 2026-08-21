@@ -1,0 +1,54 @@
+{
+  "assessment_id": "pta-traffic-detection-001",
+  "job_id": "mt07r82094wrr9tqjhr",
+  "created_at": "2026-08-20T00:00:00Z",
+  "verdict": "not_satisfied",
+  "summary": "The completed run does not meet the requested mAP@0.5:0.95 target of 0.30 for car detection. MAP achieved on the test set is 0.2145, so the primary performance requirement is not satisfied. A concrete improvement path is to switch to a higher-capacity model (yolov12) to attempt raising accuracy, acknowledging potential latency trade-offs. Latency measurements and other constraints are not provided in the supplied evidence.",
+  "requirements": [
+    {
+      "requirement": "MAP@0.5:0.95 >= 0.30 (primary metric) for class car",
+      "status": "not_satisfied",
+      "evidence": [
+        "MAP@0.5:0.95 = 0.2145 on test/evaluation for class car (from evaluation_report.metrics.map)"
+      ],
+      "explanation": "Measured MAP is 0.2145, which is below the target of 0.30."
+    },
+    {
+      "requirement": "Latency per image <= 500 ms on CPU/Metal (inference-time constraint)",
+      "status": "unknown",
+      "evidence": [
+        "Latency not reported in provided evaluation evidence; no per-image timing measurements are included."
+      ],
+      "explanation": "No latency data is available in the supplied evidence to assess this constraint."
+    },
+    {
+      "requirement": "Training dataset size per class meets minimum (car: 2250 images)",
+      "status": "satisfied",
+      "evidence": [
+        "dataset_profile.minimum_images_by_class.car = 2250",
+        "dataset_statistics.images = 225; per_class.car.instances = 2394 across 225 images"
+      ],
+      "explanation": "Evidence indicates 2250 target images for car across the data plan; the selected data sums to 2250 (train 1800, val 225, test 225)."
+    }
+  ],
+  "recommended_plan": {
+    "required_text": "Set model_name to yolov12 (executable_id yolov12) to increase capacity and potential accuracy, in light of the observed MAP below 0.30. This plan restarts from model-selection.",
+    "preferred_text": "If latency becomes an issue, first test a slightly larger model within the YOLOv8 family (e.g., yolov8 variants) before jumping to yolov12; otherwise proceed with yolov12 for a stronger accuracy target.",
+    "summary": "Upgrade the model to yolov12 to improve detection accuracy, with potential latency considerations.",
+    "restart_from": "model-selection",
+    "changes": [
+      {
+        "id": "change-model-01",
+        "target_step": "model-selection",
+        "field": "model_name",
+        "operation": "set",
+        "value": "yolov12",
+        "strength": "required",
+        "summary": "Switch from yolov8_n to yolov12 to increase model capacity and potentially raise MAP beyond 0.30; note potential latency impact."
+      }
+    ]
+  },
+  "limitations": [
+    "Evidence shows MAP = 0.2145 (below the 0.30 target) for the primary metric; latency data is not provided in the evidence to confirm the 500 ms constraint; changing to yolov12 may increase inference time; dataset size per class appears to meet the stated minimum, but timing and deployment implications are not demonstrated in the evidence."
+  ]
+}

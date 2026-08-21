@@ -1,0 +1,260 @@
+{
+  "task": "classification",
+  "application_domain": "furniture marketplace",
+  "user_query": "I need an image classification model for a furniture marketplace that categorizes the primary product in an uploaded photo as a chair, sofa, table, cabinet and or lamp. Each image should primarily contain one product. Inference will run on CPU-only backend servers with approximately 4 CPU cores and 8 GB of RAM. The model should aim for a macro-F1 score of at least 0.85, use less than approximately 1.5 GB of runtime memory, and preferably classify an image within 500 milliseconds.",
+  "use_case_description": "Image classification of the primary product in an uploaded photo with a single product per image; categories chair, sofa, table, cabinet, lamp.",
+  "questions_list": null,
+  "classes": [
+    "chair",
+    "sofa",
+    "table",
+    "cabinet",
+    "lamp"
+  ],
+  "available_data": [
+    {
+      "class_name": "chair",
+      "sources": [
+        {
+          "dataset_name": "SOP_cls_test",
+          "count": 6226
+        },
+        {
+          "dataset_name": "SOP_cls_train",
+          "count": 5845
+        },
+        {
+          "dataset_name": "cifar100_cls_train",
+          "count": 500
+        },
+        {
+          "dataset_name": "cifar100_cls_test",
+          "count": 100
+        }
+      ]
+    },
+    {
+      "class_name": "sofa",
+      "sources": [
+        {
+          "dataset_name": "SOP_cls_test",
+          "count": 3959
+        },
+        {
+          "dataset_name": "SOP_cls_train",
+          "count": 3472
+        }
+      ]
+    },
+    {
+      "class_name": "table",
+      "sources": [
+        {
+          "dataset_name": "SOP_cls_test",
+          "count": 5638
+        },
+        {
+          "dataset_name": "SOP_cls_train",
+          "count": 5470
+        },
+        {
+          "dataset_name": "cifar100_cls_train",
+          "count": 500
+        },
+        {
+          "dataset_name": "cifar100_cls_test",
+          "count": 100
+        }
+      ]
+    },
+    {
+      "class_name": "cabinet",
+      "sources": [
+        {
+          "dataset_name": "SOP_cls_test",
+          "count": 6220
+        },
+        {
+          "dataset_name": "SOP_cls_train",
+          "count": 5848
+        }
+      ]
+    },
+    {
+      "class_name": "lamp",
+      "sources": [
+        {
+          "dataset_name": "SOP_cls_train",
+          "count": 6304
+        },
+        {
+          "dataset_name": "SOP_cls_test",
+          "count": 6226
+        },
+        {
+          "dataset_name": "cifar100_cls_train",
+          "count": 500
+        },
+        {
+          "dataset_name": "cifar100_cls_test",
+          "count": 100
+        }
+      ]
+    }
+  ],
+  "selected_data": null,
+  "performance_requirements": {
+    "primary_metric": "macro-F1",
+    "target_value": 0.85,
+    "target_is_hard": true,
+    "latency_category": "Medium",
+    "accuracy_category": "MediumHigh",
+    "other_constraints": null
+  },
+  "constraint_strengths": {
+    "accuracy": "hard",
+    "latency": "preference",
+    "runtime_memory": "hard",
+    "model_size": "unspecified",
+    "training_time": "unspecified"
+  },
+  "robustness_requirements": {
+    "lighting": [],
+    "weather": [],
+    "object_scale": [],
+    "scene_density": [],
+    "motion_blur": false,
+    "occlusion": false,
+    "viewpoint": [],
+    "color_semantics": false,
+    "horizontal_flip_safe": null,
+    "text_or_symbols_present": false
+  },
+  "deployment_constraints": {
+    "memory_category": "Low",
+    "max_runtime_memory_mb": null,
+    "max_model_size_mb": null,
+    "max_parameters_m": null,
+    "max_cpu_latency_ms": 500.0,
+    "hard_limits": [
+      "max_cpu_latency_ms"
+    ]
+  },
+  "available_hardware": {
+    "hardware_category": "ConsumerCPU",
+    "cpu_cores": 4,
+    "gpu_type": null,
+    "gpu_count": null,
+    "vram_gb": null,
+    "ram_gb": 8.0,
+    "storage_gb": null,
+    "details": null
+  },
+  "model_requirements": null,
+  "augmentation": null,
+  "preprocessing": null,
+  "num_qa_pairs": null,
+  "training_hardware": {
+    "profile_id": "rtx2060_6gb_ryzen5600x_16gb",
+    "accelerator": "cuda",
+    "hardware_category": "ConsumerGPU",
+    "gpu_type": "ASUS Dual NVIDIA GeForce RTX 2060 EVO 6GB",
+    "gpu_count": 1,
+    "vram_gb": 6.0,
+    "ram_gb": 16.0,
+    "unified_memory": false,
+    "training_memory_budget_gb": 5.0,
+    "max_batch_size": 4,
+    "workers": 4,
+    "supports_amp": true
+  },
+  "class_expansions": {},
+  "model_selection_graph_context": null,
+  "dataset_selection_graph_context": null,
+  "hyperparameter_graph_context": null,
+  "use_graphrag": false,
+  "selected_model_info": {
+    "model": {
+      "model_architecture": "mobilenet_v3_small",
+      "description": "Lightweight CPU-friendly image classifier designed for mobile/edge devices; small footprint and fast inference on CPU cores. Suitable for 224x224 input, can be fine-tuned on SOP-like data, and fits the 1.5 GB runtime memory target with CPU-only deployment.",
+      "architecture_family": "mobilenet"
+    }
+  },
+  "hpo_config": null,
+  "hpo_decision": null,
+  "model_selection_decision_evidence": {
+    "decision_type": "model_selection",
+    "decision": {
+      "model": {
+        "model_architecture": "mobilenet_v3_small",
+        "description": "Lightweight CPU-friendly image classifier designed for mobile/edge devices; small footprint and fast inference on CPU cores. Suitable for 224x224 input, can be fine-tuned on SOP-like data, and fits the 1.5 GB runtime memory target with CPU-only deployment.",
+        "architecture_family": "mobilenet"
+      }
+    },
+    "rationale": "Given the CPU-only backend (4 cores, 8 GB RAM), the priority is a strong memory-latency trade-off while still achieving macro-F1 >= 0.85. Mobilenet_v3_small offers the smallest runtime memory and likely sub-500 ms inference on typical 224x224 inputs, making it the most robust fit under the hard memory constraint and latency target. It supports efficient transfer learning and quantization, which helps meet accuracy goals on the provided five-class furniture dataset. EfficientNet-B0 could offer higher accuracy but carries greater risk of higher latency and memory consumption on CPU, which could threaten the 500 ms target and 1.5 GB runtime memory cap. If macro-F1 remains below 0.85 during validation, a fallback to EfficientNet-B0 (or another more-capable architecture) can be attempted, with careful quantization and pruning to meet constraints.",
+    "selection_policy": null,
+    "retrieved_facts": [],
+    "evidence_sources": [],
+    "grounded": false,
+    "evidence_backed": false,
+    "match_scope": null,
+    "grounding": {
+      "status": "ungrounded",
+      "fact_count": 0,
+      "support_counts": {},
+      "evidence_coverage": 0.0
+    },
+    "evaluated_candidates": [
+      {
+        "candidate_id": "mobilenet_v3_small",
+        "advantages": [
+          "Very small footprint and low runtime memory",
+          "Fast CPU inference on 4-core engines",
+          "Good baseline accuracy with transfer learning on moderate-size datasets",
+          "Flexible to fine-tune on SOP-like data and handle class imbalance with augmentation"
+        ],
+        "risks": [
+          "Macro-F1 >= 0.85 is not guaranteed on the given dataset without careful fine-tuning",
+          "Sofa class underrepresentation could affect per-class performance",
+          "Domain shift between SOP/CIFAR-derived data and product photography may require domain-specific augmentation"
+        ],
+        "constraint_status": "feasible"
+      },
+      {
+        "candidate_id": "efficientnet_b0",
+        "advantages": [
+          "Higher potential accuracy due to compound scaling and strong feature representations",
+          "Good robustness across varied image conditions"
+        ],
+        "risks": [
+          "Larger memory footprint and higher CPU latency compared to MobilenetV3 Small",
+          "Closer to the 1.5 GB runtime memory boundary, risk of violating latency target on some CPUs",
+          "May require more aggressive quantization/optimization to fit CPU constraints"
+        ],
+        "constraint_status": "feasible"
+      }
+    ],
+    "uncertainties": [
+      "Exact macro-F1 achievable (0.85 target) depends on fine-tuning data splits, augmentation strategy, and domain adaptation to product photography",
+      "Runtime memory and latency are hardware dependent; actual CPU performance may vary across platforms",
+      "Sofa class may be underrepresented relative to other classes, impacting per-class performance and macro-F1"
+    ],
+    "comparison_warnings": [],
+    "selection_confidence": "standard"
+  },
+  "dataset_selection_decision_evidence": null,
+  "hyperparameter_decision_evidence": null,
+  "dataset_profile": null,
+  "step_history": [
+    "Task Interpretation Completed",
+    "Data Availability Checked",
+    "GraphRAG Model Suggestions: disabled for this run.",
+    "Model Selection Rationale: Given the CPU-only backend (4 cores, 8 GB RAM), the priority is a strong memory-latency trade-off while still achieving macro-F1 >= 0.85. Mobilenet_v3_small offers the smallest runtime memory and likely sub-500 ms inference on typical 224x224 inputs, making it the most robust fit under the hard memory constraint and latency target. It supports efficient transfer learning and quantization, which helps meet accuracy goals on the provided five-class furniture dataset. EfficientNet-B0 could offer higher accuracy but carries greater risk of higher latency and memory consumption on CPU, which could threaten the 500 ms target and 1.5 GB runtime memory cap. If macro-F1 remains below 0.85 during validation, a fallback to EfficientNet-B0 (or another more-capable architecture) can be attempted, with careful quantization and pruning to meet constraints.",
+    "Model Selection Completed"
+  ],
+  "last_updated": "2026-08-16T03:53:46.363757",
+  "revision": {
+    "active": null,
+    "history": []
+  }
+}

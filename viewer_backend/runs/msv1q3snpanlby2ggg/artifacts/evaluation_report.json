@@ -1,0 +1,373 @@
+{
+  "job_id": "msv1q3snpanlby2ggg",
+  "task": "classification",
+  "model": {
+    "name": "convnext_tiny",
+    "weights": "default",
+    "training_mode": "fine_tune_pretrained"
+  },
+  "classes": [
+    "chair",
+    "sofa",
+    "table",
+    "cabinet",
+    "lamp"
+  ],
+  "dataset": {
+    "splits": {
+      "train": 6000,
+      "validation": 750,
+      "test": 750
+    },
+    "assignment_fingerprint": "49dee03adcffd37a163ffa561345676ee964a631316eda504a2cadc197d7bf25"
+  },
+  "configuration": {
+    "model_weights": "default",
+    "training_mode": "fine_tune_pretrained",
+    "image_size": 224,
+    "batch_size": 4,
+    "num_epochs": 25,
+    "optimizer_name": "sgd",
+    "learning_rate": 0.001,
+    "weight_decay": 0.0,
+    "track_metric": "macro_f1",
+    "precision": "fp32"
+  },
+  "training_history": [
+    {
+      "epoch": 1,
+      "train_loss": 0.948848,
+      "train_acc": 0.6235,
+      "val_loss": 0.813509,
+      "val_acc": 0.682667,
+      "macro_f1": 0.671643,
+      "micro_f1": 0.682667,
+      "tracked": 0.671643
+    },
+    {
+      "epoch": 2,
+      "train_loss": 0.640847,
+      "train_acc": 0.7635,
+      "val_loss": 0.746229,
+      "val_acc": 0.72,
+      "macro_f1": 0.714148,
+      "micro_f1": 0.72,
+      "tracked": 0.714148
+    },
+    {
+      "epoch": 3,
+      "train_loss": 0.526333,
+      "train_acc": 0.804,
+      "val_loss": 0.708983,
+      "val_acc": 0.764,
+      "macro_f1": 0.759591,
+      "micro_f1": 0.764,
+      "tracked": 0.759591
+    },
+    {
+      "epoch": 4,
+      "train_loss": 0.436177,
+      "train_acc": 0.839667,
+      "val_loss": 0.741553,
+      "val_acc": 0.728,
+      "macro_f1": 0.726158,
+      "micro_f1": 0.728,
+      "tracked": 0.726158
+    },
+    {
+      "epoch": 5,
+      "train_loss": 0.369457,
+      "train_acc": 0.867,
+      "val_loss": 0.78453,
+      "val_acc": 0.749333,
+      "macro_f1": 0.745018,
+      "micro_f1": 0.749333,
+      "tracked": 0.745018
+    },
+    {
+      "epoch": 6,
+      "train_loss": 0.308904,
+      "train_acc": 0.885167,
+      "val_loss": 0.988209,
+      "val_acc": 0.717333,
+      "macro_f1": 0.715996,
+      "micro_f1": 0.717333,
+      "tracked": 0.715996
+    },
+    {
+      "epoch": 7,
+      "train_loss": 0.24241,
+      "train_acc": 0.913667,
+      "val_loss": 1.081755,
+      "val_acc": 0.729333,
+      "macro_f1": 0.724692,
+      "micro_f1": 0.729333,
+      "tracked": 0.724692
+    },
+    {
+      "epoch": 8,
+      "train_loss": 0.094204,
+      "train_acc": 0.970333,
+      "val_loss": 0.923635,
+      "val_acc": 0.749333,
+      "macro_f1": 0.745395,
+      "micro_f1": 0.749333,
+      "tracked": 0.745395
+    },
+    {
+      "epoch": 9,
+      "train_loss": 0.062144,
+      "train_acc": 0.978833,
+      "val_loss": 0.935324,
+      "val_acc": 0.758667,
+      "macro_f1": 0.755535,
+      "micro_f1": 0.758667,
+      "tracked": 0.755535
+    },
+    {
+      "epoch": 10,
+      "train_loss": 0.044932,
+      "train_acc": 0.987167,
+      "val_loss": 1.000872,
+      "val_acc": 0.76,
+      "macro_f1": 0.756521,
+      "micro_f1": 0.76,
+      "tracked": 0.756521
+    },
+    {
+      "epoch": 11,
+      "train_loss": 0.039068,
+      "train_acc": 0.988667,
+      "val_loss": 1.023264,
+      "val_acc": 0.758667,
+      "macro_f1": 0.753456,
+      "micro_f1": 0.758667,
+      "tracked": 0.753456
+    },
+    {
+      "epoch": 12,
+      "train_loss": 0.033669,
+      "train_acc": 0.991667,
+      "val_loss": 1.031558,
+      "val_acc": 0.753333,
+      "macro_f1": 0.747935,
+      "micro_f1": 0.753333,
+      "tracked": 0.747935
+    },
+    {
+      "epoch": 13,
+      "train_loss": 0.028766,
+      "train_acc": 0.993333,
+      "val_loss": 1.070013,
+      "val_acc": 0.754667,
+      "macro_f1": 0.748137,
+      "micro_f1": 0.754667,
+      "tracked": 0.748137
+    },
+    {
+      "epoch": 14,
+      "train_loss": 0.028921,
+      "train_acc": 0.991833,
+      "val_loss": 1.02918,
+      "val_acc": 0.76,
+      "macro_f1": 0.756374,
+      "micro_f1": 0.76,
+      "tracked": 0.756374
+    },
+    {
+      "epoch": 15,
+      "train_loss": 0.022589,
+      "train_acc": 0.994833,
+      "val_loss": 1.043657,
+      "val_acc": 0.753333,
+      "macro_f1": 0.749065,
+      "micro_f1": 0.753333,
+      "tracked": 0.749065
+    },
+    {
+      "epoch": 16,
+      "train_loss": 0.024256,
+      "train_acc": 0.993833,
+      "val_loss": 1.055775,
+      "val_acc": 0.753333,
+      "macro_f1": 0.748912,
+      "micro_f1": 0.753333,
+      "tracked": 0.748912
+    },
+    {
+      "epoch": 17,
+      "train_loss": 0.021131,
+      "train_acc": 0.994667,
+      "val_loss": 1.055106,
+      "val_acc": 0.753333,
+      "macro_f1": 0.748898,
+      "micro_f1": 0.753333,
+      "tracked": 0.748898
+    },
+    {
+      "epoch": 18,
+      "train_loss": 0.02268,
+      "train_acc": 0.9935,
+      "val_loss": 1.06659,
+      "val_acc": 0.754667,
+      "macro_f1": 0.749945,
+      "micro_f1": 0.754667,
+      "tracked": 0.749945
+    },
+    {
+      "epoch": 19,
+      "train_loss": 0.020184,
+      "train_acc": 0.995167,
+      "val_loss": 1.054533,
+      "val_acc": 0.753333,
+      "macro_f1": 0.748715,
+      "micro_f1": 0.753333,
+      "tracked": 0.748715
+    },
+    {
+      "epoch": 20,
+      "train_loss": 0.020043,
+      "train_acc": 0.995167,
+      "val_loss": 1.053835,
+      "val_acc": 0.754667,
+      "macro_f1": 0.750288,
+      "micro_f1": 0.754667,
+      "tracked": 0.750288
+    },
+    {
+      "epoch": 21,
+      "train_loss": 0.023849,
+      "train_acc": 0.994167,
+      "val_loss": 1.059823,
+      "val_acc": 0.753333,
+      "macro_f1": 0.749037,
+      "micro_f1": 0.753333,
+      "tracked": 0.749037
+    },
+    {
+      "epoch": 22,
+      "train_loss": 0.02612,
+      "train_acc": 0.993667,
+      "val_loss": 1.060633,
+      "val_acc": 0.753333,
+      "macro_f1": 0.749037,
+      "micro_f1": 0.753333,
+      "tracked": 0.749037
+    },
+    {
+      "epoch": 23,
+      "train_loss": 0.022657,
+      "train_acc": 0.9945,
+      "val_loss": 1.060299,
+      "val_acc": 0.753333,
+      "macro_f1": 0.749037,
+      "micro_f1": 0.753333,
+      "tracked": 0.749037
+    },
+    {
+      "epoch": 24,
+      "train_loss": 0.022099,
+      "train_acc": 0.9935,
+      "val_loss": 1.060482,
+      "val_acc": 0.753333,
+      "macro_f1": 0.749037,
+      "micro_f1": 0.753333,
+      "tracked": 0.749037
+    },
+    {
+      "epoch": 25,
+      "train_loss": 0.023203,
+      "train_acc": 0.993667,
+      "val_loss": 1.060294,
+      "val_acc": 0.754667,
+      "macro_f1": 0.750432,
+      "micro_f1": 0.754667,
+      "tracked": 0.750432
+    }
+  ],
+  "metrics": {
+    "accuracy": 0.7146666666666667,
+    "loss": 0.7181631158317129,
+    "macro_precision": 0.7187081950130209,
+    "macro_recall": 0.7146666666666667,
+    "macro_f1": 0.7152955280207999,
+    "micro_precision": 0.7146666666666667,
+    "micro_recall": 0.7146666666666667,
+    "micro_f1": 0.7146666666666667,
+    "top5_acc": 1.0
+  },
+  "per_class": [
+    {
+      "class_name": "chair",
+      "precision": 0.588957055214724,
+      "recall": 0.64,
+      "f1": 0.6134185303514377,
+      "support": 150
+    },
+    {
+      "class_name": "sofa",
+      "precision": 0.7843137254901961,
+      "recall": 0.8,
+      "f1": 0.7920792079207921,
+      "support": 150
+    },
+    {
+      "class_name": "table",
+      "precision": 0.5694444444444444,
+      "recall": 0.5466666666666666,
+      "f1": 0.5578231292517006,
+      "support": 150
+    },
+    {
+      "class_name": "cabinet",
+      "precision": 0.8682170542635659,
+      "recall": 0.7466666666666667,
+      "f1": 0.8028673835125448,
+      "support": 150
+    },
+    {
+      "class_name": "lamp",
+      "precision": 0.782608695652174,
+      "recall": 0.84,
+      "f1": 0.8102893890675241,
+      "support": 150
+    }
+  ],
+  "confusion_matrix": [
+    [
+      96,
+      23,
+      18,
+      4,
+      9
+    ],
+    [
+      21,
+      120,
+      7,
+      2,
+      0
+    ],
+    [
+      30,
+      5,
+      82,
+      11,
+      22
+    ],
+    [
+      6,
+      2,
+      26,
+      112,
+      4
+    ],
+    [
+      10,
+      3,
+      11,
+      0,
+      126
+    ]
+  ]
+}

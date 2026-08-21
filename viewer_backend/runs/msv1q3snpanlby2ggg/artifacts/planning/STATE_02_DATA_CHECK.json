@@ -1,0 +1,192 @@
+{
+  "task": "classification",
+  "application_domain": null,
+  "user_query": "I need an image classification model for a furniture marketplace that categorizes the primary product in an uploaded photo as a chair, sofa, table, cabinet and or lamp. Each image should primarily contain one product. Inference will run on CPU-only backend servers with approximately 4 CPU cores and 8 GB of RAM. The model should aim for a macro-F1 score of at least 0.85, use less than approximately 1.5 GB of runtime memory, and preferably classify an image within 500 milliseconds.",
+  "use_case_description": null,
+  "questions_list": null,
+  "classes": [
+    "chair",
+    "sofa",
+    "table",
+    "cabinet",
+    "lamp"
+  ],
+  "available_data": [
+    {
+      "class_name": "chair",
+      "sources": [
+        {
+          "dataset_name": "SOP_cls_test",
+          "count": 6226
+        },
+        {
+          "dataset_name": "SOP_cls_train",
+          "count": 5845
+        },
+        {
+          "dataset_name": "cifar100_cls_train",
+          "count": 500
+        },
+        {
+          "dataset_name": "cifar100_cls_test",
+          "count": 100
+        }
+      ]
+    },
+    {
+      "class_name": "sofa",
+      "sources": [
+        {
+          "dataset_name": "SOP_cls_test",
+          "count": 3959
+        },
+        {
+          "dataset_name": "SOP_cls_train",
+          "count": 3472
+        }
+      ]
+    },
+    {
+      "class_name": "table",
+      "sources": [
+        {
+          "dataset_name": "SOP_cls_test",
+          "count": 5638
+        },
+        {
+          "dataset_name": "SOP_cls_train",
+          "count": 5470
+        },
+        {
+          "dataset_name": "cifar100_cls_train",
+          "count": 500
+        },
+        {
+          "dataset_name": "cifar100_cls_test",
+          "count": 100
+        }
+      ]
+    },
+    {
+      "class_name": "cabinet",
+      "sources": [
+        {
+          "dataset_name": "SOP_cls_test",
+          "count": 6220
+        },
+        {
+          "dataset_name": "SOP_cls_train",
+          "count": 5848
+        }
+      ]
+    },
+    {
+      "class_name": "lamp",
+      "sources": [
+        {
+          "dataset_name": "SOP_cls_train",
+          "count": 6304
+        },
+        {
+          "dataset_name": "SOP_cls_test",
+          "count": 6226
+        },
+        {
+          "dataset_name": "cifar100_cls_train",
+          "count": 500
+        },
+        {
+          "dataset_name": "cifar100_cls_test",
+          "count": 100
+        }
+      ]
+    }
+  ],
+  "selected_data": null,
+  "performance_requirements": {
+    "primary_metric": "macro_f1",
+    "target_value": 0.85,
+    "target_is_hard": true,
+    "latency_category": "Low",
+    "accuracy_category": "MediumHigh",
+    "other_constraints": []
+  },
+  "constraint_strengths": {
+    "accuracy": "hard",
+    "latency": "preference",
+    "runtime_memory": "hard",
+    "model_size": "unspecified",
+    "training_time": "unspecified"
+  },
+  "robustness_requirements": {
+    "lighting": [],
+    "weather": [],
+    "object_scale": [],
+    "scene_density": [],
+    "motion_blur": false,
+    "occlusion": false,
+    "viewpoint": [],
+    "color_semantics": false,
+    "horizontal_flip_safe": null,
+    "text_or_symbols_present": false
+  },
+  "deployment_constraints": {
+    "memory_category": "Low",
+    "max_runtime_memory_mb": 1536.0,
+    "max_model_size_mb": null,
+    "max_parameters_m": null,
+    "max_cpu_latency_ms": 500.0,
+    "hard_limits": [
+      "max_cpu_latency_ms"
+    ]
+  },
+  "available_hardware": {
+    "hardware_category": "ConsumerCPU",
+    "cpu_cores": 4,
+    "gpu_type": null,
+    "gpu_count": null,
+    "vram_gb": null,
+    "ram_gb": 8.0,
+    "storage_gb": null,
+    "details": null
+  },
+  "model_requirements": null,
+  "augmentation": null,
+  "preprocessing": null,
+  "num_qa_pairs": null,
+  "training_hardware": {
+    "profile_id": "rtx2060_6gb_ryzen5600x_16gb",
+    "accelerator": "cuda",
+    "hardware_category": "ConsumerGPU",
+    "gpu_type": "ASUS Dual NVIDIA GeForce RTX 2060 EVO 6GB",
+    "gpu_count": 1,
+    "vram_gb": 6.0,
+    "ram_gb": 16.0,
+    "unified_memory": false,
+    "training_memory_budget_gb": 5.0,
+    "max_batch_size": 4,
+    "workers": 4,
+    "supports_amp": true
+  },
+  "class_expansions": {},
+  "model_selection_graph_context": null,
+  "dataset_selection_graph_context": null,
+  "hyperparameter_graph_context": null,
+  "use_graphrag": true,
+  "selected_model_info": null,
+  "hpo_config": null,
+  "hpo_decision": null,
+  "model_selection_decision_evidence": null,
+  "dataset_selection_decision_evidence": null,
+  "hyperparameter_decision_evidence": null,
+  "dataset_profile": null,
+  "step_history": [
+    "Task Interpretation Completed",
+    "Data Availability Checked"
+  ],
+  "last_updated": "2026-08-16T02:08:20.610249",
+  "revision": {
+    "active": null,
+    "history": []
+  }
+}

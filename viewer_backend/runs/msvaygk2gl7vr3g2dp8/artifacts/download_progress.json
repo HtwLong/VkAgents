@@ -1,0 +1,12 @@
+{
+  "job_id": "msvaygk2gl7vr3g2dp8",
+  "status": "completed",
+  "downloaded": 9074,
+  "processed": 9074,
+  "failed": 0,
+  "failed_datasets": [],
+  "total": 9000,
+  "current_image": null,
+  "previous_downloaded": 0,
+  "updated_at": "2026-08-16T04:37:15.447269+00:00"
+}

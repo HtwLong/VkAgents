@@ -1,0 +1,14 @@
+{
+  "status": "running",
+  "current_epoch": 7,
+  "total_epochs": 20,
+  "train_loss": 0.11273561894335823,
+  "train_accuracy": 0.961,
+  "val_loss": 0.7521694197952383,
+  "val_accuracy": 0.8013333333333333,
+  "val_macro_f1": 0.7979798604175177,
+  "val_micro_f1": 0.8013333333333333,
+  "tracked_metric": "val_acc",
+  "tracked_value": 0.8013333333333333,
+  "elapsed_seconds": 85.4166648387909
+}

@@ -1,0 +1,238 @@
+{
+  "task": "classification",
+  "application_domain": null,
+  "user_query": "I need a lightweight image classification model that recognizes handwritten numbers. The model will run on a CPU-only system with 4 GB of RAM. It should aim for accuracy of at least 95%, use less than approximately 500 MB of runtime memory, and process an image within 200 milliseconds.",
+  "use_case_description": "I need a lightweight image classification model that recognizes handwritten numbers.",
+  "questions_list": null,
+  "classes": [
+    "0",
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+    "7",
+    "8",
+    "9"
+  ],
+  "available_data": [
+    {
+      "class_name": "0",
+      "sources": [
+        {
+          "dataset_name": "mnist_cls_train",
+          "count": 5923
+        },
+        {
+          "dataset_name": "mnist_cls_test",
+          "count": 980
+        }
+      ]
+    },
+    {
+      "class_name": "1",
+      "sources": [
+        {
+          "dataset_name": "mnist_cls_train",
+          "count": 6742
+        },
+        {
+          "dataset_name": "mnist_cls_test",
+          "count": 1135
+        }
+      ]
+    },
+    {
+      "class_name": "2",
+      "sources": [
+        {
+          "dataset_name": "mnist_cls_train",
+          "count": 5958
+        },
+        {
+          "dataset_name": "mnist_cls_test",
+          "count": 1032
+        }
+      ]
+    },
+    {
+      "class_name": "3",
+      "sources": [
+        {
+          "dataset_name": "mnist_cls_train",
+          "count": 6131
+        },
+        {
+          "dataset_name": "mnist_cls_test",
+          "count": 1010
+        }
+      ]
+    },
+    {
+      "class_name": "4",
+      "sources": [
+        {
+          "dataset_name": "mnist_cls_train",
+          "count": 5842
+        },
+        {
+          "dataset_name": "mnist_cls_test",
+          "count": 982
+        }
+      ]
+    },
+    {
+      "class_name": "5",
+      "sources": [
+        {
+          "dataset_name": "mnist_cls_train",
+          "count": 5421
+        },
+        {
+          "dataset_name": "mnist_cls_test",
+          "count": 892
+        }
+      ]
+    },
+    {
+      "class_name": "6",
+      "sources": [
+        {
+          "dataset_name": "mnist_cls_train",
+          "count": 5918
+        },
+        {
+          "dataset_name": "mnist_cls_test",
+          "count": 958
+        }
+      ]
+    },
+    {
+      "class_name": "7",
+      "sources": [
+        {
+          "dataset_name": "mnist_cls_train",
+          "count": 6265
+        },
+        {
+          "dataset_name": "mnist_cls_test",
+          "count": 1028
+        }
+      ]
+    },
+    {
+      "class_name": "8",
+      "sources": [
+        {
+          "dataset_name": "mnist_cls_train",
+          "count": 5851
+        },
+        {
+          "dataset_name": "mnist_cls_test",
+          "count": 974
+        }
+      ]
+    },
+    {
+      "class_name": "9",
+      "sources": [
+        {
+          "dataset_name": "mnist_cls_train",
+          "count": 5949
+        },
+        {
+          "dataset_name": "mnist_cls_test",
+          "count": 1009
+        }
+      ]
+    }
+  ],
+  "selected_data": null,
+  "performance_requirements": {
+    "primary_metric": "accuracy",
+    "target_value": 0.95,
+    "target_is_hard": true,
+    "latency_category": "Medium",
+    "accuracy_category": "High",
+    "other_constraints": null
+  },
+  "constraint_strengths": {
+    "accuracy": "hard",
+    "latency": "soft",
+    "runtime_memory": "hard",
+    "model_size": "unspecified",
+    "training_time": "unspecified"
+  },
+  "robustness_requirements": {
+    "lighting": [],
+    "weather": [],
+    "object_scale": [],
+    "scene_density": [],
+    "motion_blur": false,
+    "occlusion": false,
+    "viewpoint": [],
+    "color_semantics": false,
+    "horizontal_flip_safe": null,
+    "text_or_symbols_present": false
+  },
+  "deployment_constraints": {
+    "memory_category": "Low",
+    "max_runtime_memory_mb": 500.0,
+    "max_model_size_mb": null,
+    "max_parameters_m": null,
+    "max_cpu_latency_ms": 200.0,
+    "hard_limits": [
+      "max_cpu_latency_ms"
+    ]
+  },
+  "available_hardware": {
+    "hardware_category": "ConsumerCPU",
+    "cpu_cores": null,
+    "gpu_type": null,
+    "gpu_count": null,
+    "vram_gb": null,
+    "ram_gb": null,
+    "storage_gb": null,
+    "details": null
+  },
+  "model_requirements": null,
+  "augmentation": null,
+  "preprocessing": null,
+  "num_qa_pairs": null,
+  "training_hardware": {
+    "profile_id": "rtx2060_6gb_ryzen5600x_16gb",
+    "accelerator": "cuda",
+    "hardware_category": "ConsumerGPU",
+    "gpu_type": "ASUS Dual NVIDIA GeForce RTX 2060 EVO 6GB",
+    "gpu_count": 1,
+    "vram_gb": 6.0,
+    "ram_gb": 16.0,
+    "unified_memory": false,
+    "training_memory_budget_gb": 5.0,
+    "max_batch_size": 4,
+    "workers": 4,
+    "supports_amp": true
+  },
+  "class_expansions": {},
+  "model_selection_graph_context": null,
+  "dataset_selection_graph_context": null,
+  "hyperparameter_graph_context": null,
+  "use_graphrag": true,
+  "selected_model_info": null,
+  "hpo_config": null,
+  "hpo_decision": null,
+  "model_selection_decision_evidence": null,
+  "dataset_selection_decision_evidence": null,
+  "hyperparameter_decision_evidence": null,
+  "dataset_profile": null,
+  "step_history": [
+    "Task Interpretation Completed",
+    "Data Availability Checked"
+  ],
+  "last_updated": "2026-08-15T13:46:03.677194",
+  "revision": {
+    "active": null,
+    "history": []
+  }
+}

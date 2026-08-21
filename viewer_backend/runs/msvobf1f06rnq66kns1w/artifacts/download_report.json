@@ -1,0 +1,1430 @@
+{
+  "job_id": "msvobf1f06rnq66kns1w",
+  "task": "detection",
+  "sources": [
+    {
+      "class_name": "nightstand",
+      "dataset_name": "objects365_det_train",
+      "source_role": "train",
+      "assigned_split": "train",
+      "assignment_type": "official_split",
+      "requested": 1920,
+      "candidates": 1927,
+      "downloaded": 1920,
+      "direct_allocation_downloaded": 1920,
+      "global_top_up_downloaded": 0,
+      "shortfall": 0,
+      "cross_split_conflicts": 0,
+      "content_duplicate_conflicts": 7,
+      "content_duplicates": [
+        {
+          "image_path": "objects365_det_train/patch2/objects365_v1_00125697.jpg",
+          "assigned_split": "train",
+          "duplicate_of": "objects365_det_train/patch2/objects365_v1_00117354.jpg",
+          "duplicate_split": "train",
+          "sha256": "0d15eb74b9d4cb00aabfa913c9a28f8dcfb46c34bc804958d100923a711d0b82"
+        },
+        {
+          "image_path": "objects365_det_train/patch24/objects365_v2_01257072.jpg",
+          "assigned_split": "train",
+          "duplicate_of": "objects365_det_train/patch21/objects365_v2_01127144.jpg",
+          "duplicate_split": "train",
+          "sha256": "51ee2b00a81ee47c2b5ffc104d111d929842e4b6c3e2d0ef87e6b9dcf379c91c"
+        },
+        {
+          "image_path": "objects365_det_train/patch28/objects365_v2_01391704.jpg",
+          "assigned_split": "train",
+          "duplicate_of": "objects365_det_train/patch21/objects365_v2_01104828.jpg",
+          "duplicate_split": "train",
+          "sha256": "ebc5eca695376f85d665e847c5b0fe2994575c849b743e6579e4254be3183b58"
+        },
+        {
+          "image_path": "objects365_det_train/patch28/objects365_v2_01417270.jpg",
+          "assigned_split": "train",
+          "duplicate_of": "objects365_det_train/patch24/objects365_v2_01253784.jpg",
+          "duplicate_split": "train",
+          "sha256": "edafb310e0869b045cdf70d4d09fa16be695c8396f2ac0885b91fd5906bb99cf"
+        },
+        {
+          "image_path": "objects365_det_train/patch29/objects365_v2_01420134.jpg",
+          "assigned_split": "train",
+          "duplicate_of": "objects365_det_train/patch24/objects365_v2_01255897.jpg",
+          "duplicate_split": "train",
+          "sha256": "a4fd58cb2f4372decef16db6c8fa09f12f8522727406abcfe82de96776790cc4"
+        },
+        {
+          "image_path": "objects365_det_train/patch29/objects365_v2_01427662.jpg",
+          "assigned_split": "train",
+          "duplicate_of": "objects365_det_train/patch29/objects365_v2_01433500.jpg",
+          "duplicate_split": "train",
+          "sha256": "f72f54a3f87d91a1787f8aef3001637cd6ec06fda1df0e67413aca82154c0da6"
+        },
+        {
+          "image_path": "objects365_det_train/patch29/objects365_v2_01435829.jpg",
+          "assigned_split": "train",
+          "duplicate_of": "objects365_det_train/patch24/objects365_v2_01238627.jpg",
+          "duplicate_split": "train",
+          "sha256": "8feea1820055a2d36aa22730bcbb87307401500bd8ec3867bb77334cde9dd2a8"
+        }
+      ],
+      "failures": [
+        {
+          "image_path": "objects365_det_train/patch2/objects365_v1_00125697.jpg",
+          "assigned_split": "train",
+          "duplicate_of": "objects365_det_train/patch2/objects365_v1_00117354.jpg",
+          "duplicate_split": "train",
+          "sha256": "0d15eb74b9d4cb00aabfa913c9a28f8dcfb46c34bc804958d100923a711d0b82",
+          "reason": "duplicate_content"
+        },
+        {
+          "image_path": "objects365_det_train/patch24/objects365_v2_01257072.jpg",
+          "assigned_split": "train",
+          "duplicate_of": "objects365_det_train/patch21/objects365_v2_01127144.jpg",
+          "duplicate_split": "train",
+          "sha256": "51ee2b00a81ee47c2b5ffc104d111d929842e4b6c3e2d0ef87e6b9dcf379c91c",
+          "reason": "duplicate_content"
+        },
+        {
+          "image_path": "objects365_det_train/patch28/objects365_v2_01391704.jpg",
+          "assigned_split": "train",
+          "duplicate_of": "objects365_det_train/patch21/objects365_v2_01104828.jpg",
+          "duplicate_split": "train",
+          "sha256": "ebc5eca695376f85d665e847c5b0fe2994575c849b743e6579e4254be3183b58",
+          "reason": "duplicate_content"
+        },
+        {
+          "image_path": "objects365_det_train/patch28/objects365_v2_01417270.jpg",
+          "assigned_split": "train",
+          "duplicate_of": "objects365_det_train/patch24/objects365_v2_01253784.jpg",
+          "duplicate_split": "train",
+          "sha256": "edafb310e0869b045cdf70d4d09fa16be695c8396f2ac0885b91fd5906bb99cf",
+          "reason": "duplicate_content"
+        },
+        {
+          "image_path": "objects365_det_train/patch29/objects365_v2_01420134.jpg",
+          "assigned_split": "train",
+          "duplicate_of": "objects365_det_train/patch24/objects365_v2_01255897.jpg",
+          "duplicate_split": "train",
+          "sha256": "a4fd58cb2f4372decef16db6c8fa09f12f8522727406abcfe82de96776790cc4",
+          "reason": "duplicate_content"
+        },
+        {
+          "image_path": "objects365_det_train/patch29/objects365_v2_01427662.jpg",
+          "assigned_split": "train",
+          "duplicate_of": "objects365_det_train/patch29/objects365_v2_01433500.jpg",
+          "duplicate_split": "train",
+          "sha256": "f72f54a3f87d91a1787f8aef3001637cd6ec06fda1df0e67413aca82154c0da6",
+          "reason": "duplicate_content"
+        },
+        {
+          "image_path": "objects365_det_train/patch29/objects365_v2_01435829.jpg",
+          "assigned_split": "train",
+          "duplicate_of": "objects365_det_train/patch24/objects365_v2_01238627.jpg",
+          "duplicate_split": "train",
+          "sha256": "8feea1820055a2d36aa22730bcbb87307401500bd8ec3867bb77334cde9dd2a8",
+          "reason": "duplicate_content"
+        }
+      ]
+    },
+    {
+      "class_name": "nightstand",
+      "dataset_name": "objects365_det_train",
+      "source_role": "train",
+      "assigned_split": "validation",
+      "assignment_type": "derived_from_train",
+      "requested": 240,
+      "candidates": 2171,
+      "downloaded": 240,
+      "direct_allocation_downloaded": 240,
+      "global_top_up_downloaded": 0,
+      "shortfall": 0,
+      "cross_split_conflicts": 1920,
+      "content_duplicate_conflicts": 11,
+      "content_duplicates": [
+        {
+          "image_path": "objects365_det_train/patch2/objects365_v1_00125697.jpg",
+          "assigned_split": "validation",
+          "duplicate_of": "objects365_det_train/patch2/objects365_v1_00117354.jpg",
+          "duplicate_split": "train",
+          "sha256": "0d15eb74b9d4cb00aabfa913c9a28f8dcfb46c34bc804958d100923a711d0b82"
+        },
+        {
+          "image_path": "objects365_det_train/patch24/objects365_v2_01257072.jpg",
+          "assigned_split": "validation",
+          "duplicate_of": "objects365_det_train/patch21/objects365_v2_01127144.jpg",
+          "duplicate_split": "train",
+          "sha256": "51ee2b00a81ee47c2b5ffc104d111d929842e4b6c3e2d0ef87e6b9dcf379c91c"
+        },
+        {
+          "image_path": "objects365_det_train/patch28/objects365_v2_01391704.jpg",
+          "assigned_split": "validation",
+          "duplicate_of": "objects365_det_train/patch21/objects365_v2_01104828.jpg",
+          "duplicate_split": "train",
+          "sha256": "ebc5eca695376f85d665e847c5b0fe2994575c849b743e6579e4254be3183b58"
+        },
+        {
+          "image_path": "objects365_det_train/patch28/objects365_v2_01417270.jpg",
+          "assigned_split": "validation",
+          "duplicate_of": "objects365_det_train/patch24/objects365_v2_01253784.jpg",
+          "duplicate_split": "train",
+          "sha256": "edafb310e0869b045cdf70d4d09fa16be695c8396f2ac0885b91fd5906bb99cf"
+        },
+        {
+          "image_path": "objects365_det_train/patch29/objects365_v2_01420134.jpg",
+          "assigned_split": "validation",
+          "duplicate_of": "objects365_det_train/patch24/objects365_v2_01255897.jpg",
+          "duplicate_split": "train",
+          "sha256": "a4fd58cb2f4372decef16db6c8fa09f12f8522727406abcfe82de96776790cc4"
+        },
+        {
+          "image_path": "objects365_det_train/patch29/objects365_v2_01435829.jpg",
+          "assigned_split": "validation",
+          "duplicate_of": "objects365_det_train/patch24/objects365_v2_01238627.jpg",
+          "duplicate_split": "train",
+          "sha256": "8feea1820055a2d36aa22730bcbb87307401500bd8ec3867bb77334cde9dd2a8"
+        },
+        {
+          "image_path": "objects365_det_train/patch29/objects365_v2_01427662.jpg",
+          "assigned_split": "validation",
+          "duplicate_of": "objects365_det_train/patch29/objects365_v2_01433500.jpg",
+          "duplicate_split": "train",
+          "sha256": "f72f54a3f87d91a1787f8aef3001637cd6ec06fda1df0e67413aca82154c0da6"
+        },
+        {
+          "image_path": "objects365_det_train/patch30/objects365_v2_01474257.jpg",
+          "assigned_split": "validation",
+          "duplicate_of": "objects365_det_train/patch20/objects365_v2_01076729.jpg",
+          "duplicate_split": "train",
+          "sha256": "a5d365cfcf7612b43f6f3ca48e38bd94f55d89e96939430ff8a350ee100994a7"
+        },
+        {
+          "image_path": "objects365_det_train/patch30/objects365_v2_01472304.jpg",
+          "assigned_split": "validation",
+          "duplicate_of": "objects365_det_train/patch21/objects365_v2_01137605.jpg",
+          "duplicate_split": "train",
+          "sha256": "9248f00dd290d8ee0bf547e18ca93beb60b7e99570f458ac0dff8bcb61a7a571"
+        },
+        {
+          "image_path": "objects365_det_train/patch31/objects365_v2_01516009.jpg",
+          "assigned_split": "validation",
+          "duplicate_of": "objects365_det_train/patch24/objects365_v2_01228365.jpg",
+          "duplicate_split": "train",
+          "sha256": "1cba57d07d6b5957ee409784f92e80a210acc9dea6d19c995d4f6b30ea607bee"
+        },
+        {
+          "image_path": "objects365_det_train/patch31/objects365_v2_01501396.jpg",
+          "assigned_split": "validation",
+          "duplicate_of": "objects365_det_train/patch30/objects365_v2_01487661.jpg",
+          "duplicate_split": "validation",
+          "sha256": "a4c387ce16baf263a7dfdafe81cc1d140a2aa353730f2a312ab10ef559070cf5"
+        }
+      ],
+      "failures": [
+        {
+          "image_path": "objects365_det_train/patch2/objects365_v1_00125697.jpg",
+          "assigned_split": "validation",
+          "duplicate_of": "objects365_det_train/patch2/objects365_v1_00117354.jpg",
+          "duplicate_split": "train",
+          "sha256": "0d15eb74b9d4cb00aabfa913c9a28f8dcfb46c34bc804958d100923a711d0b82",
+          "reason": "duplicate_content"
+        },
+        {
+          "image_path": "objects365_det_train/patch24/objects365_v2_01257072.jpg",
+          "assigned_split": "validation",
+          "duplicate_of": "objects365_det_train/patch21/objects365_v2_01127144.jpg",
+          "duplicate_split": "train",
+          "sha256": "51ee2b00a81ee47c2b5ffc104d111d929842e4b6c3e2d0ef87e6b9dcf379c91c",
+          "reason": "duplicate_content"
+        },
+        {
+          "image_path": "objects365_det_train/patch28/objects365_v2_01391704.jpg",
+          "assigned_split": "validation",
+          "duplicate_of": "objects365_det_train/patch21/objects365_v2_01104828.jpg",
+          "duplicate_split": "train",
+          "sha256": "ebc5eca695376f85d665e847c5b0fe2994575c849b743e6579e4254be3183b58",
+          "reason": "duplicate_content"
+        },
+        {
+          "image_path": "objects365_det_train/patch28/objects365_v2_01417270.jpg",
+          "assigned_split": "validation",
+          "duplicate_of": "objects365_det_train/patch24/objects365_v2_01253784.jpg",
+          "duplicate_split": "train",
+          "sha256": "edafb310e0869b045cdf70d4d09fa16be695c8396f2ac0885b91fd5906bb99cf",
+          "reason": "duplicate_content"
+        },
+        {
+          "image_path": "objects365_det_train/patch29/objects365_v2_01420134.jpg",
+          "assigned_split": "validation",
+          "duplicate_of": "objects365_det_train/patch24/objects365_v2_01255897.jpg",
+          "duplicate_split": "train",
+          "sha256": "a4fd58cb2f4372decef16db6c8fa09f12f8522727406abcfe82de96776790cc4",
+          "reason": "duplicate_content"
+        },
+        {
+          "image_path": "objects365_det_train/patch29/objects365_v2_01435829.jpg",
+          "assigned_split": "validation",
+          "duplicate_of": "objects365_det_train/patch24/objects365_v2_01238627.jpg",
+          "duplicate_split": "train",
+          "sha256": "8feea1820055a2d36aa22730bcbb87307401500bd8ec3867bb77334cde9dd2a8",
+          "reason": "duplicate_content"
+        },
+        {
+          "image_path": "objects365_det_train/patch29/objects365_v2_01427662.jpg",
+          "assigned_split": "validation",
+          "duplicate_of": "objects365_det_train/patch29/objects365_v2_01433500.jpg",
+          "duplicate_split": "train",
+          "sha256": "f72f54a3f87d91a1787f8aef3001637cd6ec06fda1df0e67413aca82154c0da6",
+          "reason": "duplicate_content"
+        },
+        {
+          "image_path": "objects365_det_train/patch30/objects365_v2_01474257.jpg",
+          "assigned_split": "validation",
+          "duplicate_of": "objects365_det_train/patch20/objects365_v2_01076729.jpg",
+          "duplicate_split": "train",
+          "sha256": "a5d365cfcf7612b43f6f3ca48e38bd94f55d89e96939430ff8a350ee100994a7",
+          "reason": "duplicate_content"
+        },
+        {
+          "image_path": "objects365_det_train/patch30/objects365_v2_01472304.jpg",
+          "assigned_split": "validation",
+          "duplicate_of": "objects365_det_train/patch21/objects365_v2_01137605.jpg",
+          "duplicate_split": "train",
+          "sha256": "9248f00dd290d8ee0bf547e18ca93beb60b7e99570f458ac0dff8bcb61a7a571",
+          "reason": "duplicate_content"
+        },
+        {
+          "image_path": "objects365_det_train/patch31/objects365_v2_01516009.jpg",
+          "assigned_split": "validation",
+          "duplicate_of": "objects365_det_train/patch24/objects365_v2_01228365.jpg",
+          "duplicate_split": "train",
+          "sha256": "1cba57d07d6b5957ee409784f92e80a210acc9dea6d19c995d4f6b30ea607bee",
+          "reason": "duplicate_content"
+        },
+        {
+          "image_path": "objects365_det_train/patch31/objects365_v2_01501396.jpg",
+          "assigned_split": "validation",
+          "duplicate_of": "objects365_det_train/patch30/objects365_v2_01487661.jpg",
+          "duplicate_split": "validation",
+          "sha256": "a4c387ce16baf263a7dfdafe81cc1d140a2aa353730f2a312ab10ef559070cf5",
+          "reason": "duplicate_content"
+        }
+      ]
+    },
+    {
+      "class_name": "nightstand",
+      "dataset_name": "objects365_det_train",
+      "source_role": "train",
+      "assigned_split": "test",
+      "assignment_type": "derived_from_train",
+      "requested": 240,
+      "candidates": 2413,
+      "downloaded": 240,
+      "direct_allocation_downloaded": 240,
+      "global_top_up_downloaded": 0,
+      "shortfall": 0,
+      "cross_split_conflicts": 2160,
+      "content_duplicate_conflicts": 13,
+      "content_duplicates": [
+        {
+          "image_path": "objects365_det_train/patch2/objects365_v1_00125697.jpg",
+          "assigned_split": "test",
+          "duplicate_of": "objects365_det_train/patch2/objects365_v1_00117354.jpg",
+          "duplicate_split": "train",
+          "sha256": "0d15eb74b9d4cb00aabfa913c9a28f8dcfb46c34bc804958d100923a711d0b82"
+        },
+        {
+          "image_path": "objects365_det_train/patch24/objects365_v2_01257072.jpg",
+          "assigned_split": "test",
+          "duplicate_of": "objects365_det_train/patch21/objects365_v2_01127144.jpg",
+          "duplicate_split": "train",
+          "sha256": "51ee2b00a81ee47c2b5ffc104d111d929842e4b6c3e2d0ef87e6b9dcf379c91c"
+        },
+        {
+          "image_path": "objects365_det_train/patch28/objects365_v2_01391704.jpg",
+          "assigned_split": "test",
+          "duplicate_of": "objects365_det_train/patch21/objects365_v2_01104828.jpg",
+          "duplicate_split": "train",
+          "sha256": "ebc5eca695376f85d665e847c5b0fe2994575c849b743e6579e4254be3183b58"
+        },
+        {
+          "image_path": "objects365_det_train/patch28/objects365_v2_01417270.jpg",
+          "assigned_split": "test",
+          "duplicate_of": "objects365_det_train/patch24/objects365_v2_01253784.jpg",
+          "duplicate_split": "train",
+          "sha256": "edafb310e0869b045cdf70d4d09fa16be695c8396f2ac0885b91fd5906bb99cf"
+        },
+        {
+          "image_path": "objects365_det_train/patch29/objects365_v2_01420134.jpg",
+          "assigned_split": "test",
+          "duplicate_of": "objects365_det_train/patch24/objects365_v2_01255897.jpg",
+          "duplicate_split": "train",
+          "sha256": "a4fd58cb2f4372decef16db6c8fa09f12f8522727406abcfe82de96776790cc4"
+        },
+        {
+          "image_path": "objects365_det_train/patch29/objects365_v2_01435829.jpg",
+          "assigned_split": "test",
+          "duplicate_of": "objects365_det_train/patch24/objects365_v2_01238627.jpg",
+          "duplicate_split": "train",
+          "sha256": "8feea1820055a2d36aa22730bcbb87307401500bd8ec3867bb77334cde9dd2a8"
+        },
+        {
+          "image_path": "objects365_det_train/patch29/objects365_v2_01427662.jpg",
+          "assigned_split": "test",
+          "duplicate_of": "objects365_det_train/patch29/objects365_v2_01433500.jpg",
+          "duplicate_split": "train",
+          "sha256": "f72f54a3f87d91a1787f8aef3001637cd6ec06fda1df0e67413aca82154c0da6"
+        },
+        {
+          "image_path": "objects365_det_train/patch30/objects365_v2_01472304.jpg",
+          "assigned_split": "test",
+          "duplicate_of": "objects365_det_train/patch21/objects365_v2_01137605.jpg",
+          "duplicate_split": "train",
+          "sha256": "9248f00dd290d8ee0bf547e18ca93beb60b7e99570f458ac0dff8bcb61a7a571"
+        },
+        {
+          "image_path": "objects365_det_train/patch30/objects365_v2_01474257.jpg",
+          "assigned_split": "test",
+          "duplicate_of": "objects365_det_train/patch20/objects365_v2_01076729.jpg",
+          "duplicate_split": "train",
+          "sha256": "a5d365cfcf7612b43f6f3ca48e38bd94f55d89e96939430ff8a350ee100994a7"
+        },
+        {
+          "image_path": "objects365_det_train/patch31/objects365_v2_01516009.jpg",
+          "assigned_split": "test",
+          "duplicate_of": "objects365_det_train/patch24/objects365_v2_01228365.jpg",
+          "duplicate_split": "train",
+          "sha256": "1cba57d07d6b5957ee409784f92e80a210acc9dea6d19c995d4f6b30ea607bee"
+        },
+        {
+          "image_path": "objects365_det_train/patch31/objects365_v2_01501396.jpg",
+          "assigned_split": "test",
+          "duplicate_of": "objects365_det_train/patch30/objects365_v2_01487661.jpg",
+          "duplicate_split": "validation",
+          "sha256": "a4c387ce16baf263a7dfdafe81cc1d140a2aa353730f2a312ab10ef559070cf5"
+        },
+        {
+          "image_path": "objects365_det_train/patch31/objects365_v2_01533727.jpg",
+          "assigned_split": "test",
+          "duplicate_of": "objects365_det_train/patch30/objects365_v2_01474892.jpg",
+          "duplicate_split": "validation",
+          "sha256": "2290dd76b6394afbc7b923fe569ef7dfc2e765f978cc6419ae662f56ea952a76"
+        },
+        {
+          "image_path": "objects365_det_train/patch32/objects365_v2_01562053.jpg",
+          "assigned_split": "test",
+          "duplicate_of": "objects365_det_train/patch27/objects365_v2_01343527.jpg",
+          "duplicate_split": "train",
+          "sha256": "72a60c1a662c97a13f80655c71566b06d3f2037437e045cfbf96741fbac90220"
+        }
+      ],
+      "failures": [
+        {
+          "image_path": "objects365_det_train/patch2/objects365_v1_00125697.jpg",
+          "assigned_split": "test",
+          "duplicate_of": "objects365_det_train/patch2/objects365_v1_00117354.jpg",
+          "duplicate_split": "train",
+          "sha256": "0d15eb74b9d4cb00aabfa913c9a28f8dcfb46c34bc804958d100923a711d0b82",
+          "reason": "duplicate_content"
+        },
+        {
+          "image_path": "objects365_det_train/patch24/objects365_v2_01257072.jpg",
+          "assigned_split": "test",
+          "duplicate_of": "objects365_det_train/patch21/objects365_v2_01127144.jpg",
+          "duplicate_split": "train",
+          "sha256": "51ee2b00a81ee47c2b5ffc104d111d929842e4b6c3e2d0ef87e6b9dcf379c91c",
+          "reason": "duplicate_content"
+        },
+        {
+          "image_path": "objects365_det_train/patch28/objects365_v2_01391704.jpg",
+          "assigned_split": "test",
+          "duplicate_of": "objects365_det_train/patch21/objects365_v2_01104828.jpg",
+          "duplicate_split": "train",
+          "sha256": "ebc5eca695376f85d665e847c5b0fe2994575c849b743e6579e4254be3183b58",
+          "reason": "duplicate_content"
+        },
+        {
+          "image_path": "objects365_det_train/patch28/objects365_v2_01417270.jpg",
+          "assigned_split": "test",
+          "duplicate_of": "objects365_det_train/patch24/objects365_v2_01253784.jpg",
+          "duplicate_split": "train",
+          "sha256": "edafb310e0869b045cdf70d4d09fa16be695c8396f2ac0885b91fd5906bb99cf",
+          "reason": "duplicate_content"
+        },
+        {
+          "image_path": "objects365_det_train/patch29/objects365_v2_01420134.jpg",
+          "assigned_split": "test",
+          "duplicate_of": "objects365_det_train/patch24/objects365_v2_01255897.jpg",
+          "duplicate_split": "train",
+          "sha256": "a4fd58cb2f4372decef16db6c8fa09f12f8522727406abcfe82de96776790cc4",
+          "reason": "duplicate_content"
+        },
+        {
+          "image_path": "objects365_det_train/patch29/objects365_v2_01435829.jpg",
+          "assigned_split": "test",
+          "duplicate_of": "objects365_det_train/patch24/objects365_v2_01238627.jpg",
+          "duplicate_split": "train",
+          "sha256": "8feea1820055a2d36aa22730bcbb87307401500bd8ec3867bb77334cde9dd2a8",
+          "reason": "duplicate_content"
+        },
+        {
+          "image_path": "objects365_det_train/patch29/objects365_v2_01427662.jpg",
+          "assigned_split": "test",
+          "duplicate_of": "objects365_det_train/patch29/objects365_v2_01433500.jpg",
+          "duplicate_split": "train",
+          "sha256": "f72f54a3f87d91a1787f8aef3001637cd6ec06fda1df0e67413aca82154c0da6",
+          "reason": "duplicate_content"
+        },
+        {
+          "image_path": "objects365_det_train/patch30/objects365_v2_01472304.jpg",
+          "assigned_split": "test",
+          "duplicate_of": "objects365_det_train/patch21/objects365_v2_01137605.jpg",
+          "duplicate_split": "train",
+          "sha256": "9248f00dd290d8ee0bf547e18ca93beb60b7e99570f458ac0dff8bcb61a7a571",
+          "reason": "duplicate_content"
+        },
+        {
+          "image_path": "objects365_det_train/patch30/objects365_v2_01474257.jpg",
+          "assigned_split": "test",
+          "duplicate_of": "objects365_det_train/patch20/objects365_v2_01076729.jpg",
+          "duplicate_split": "train",
+          "sha256": "a5d365cfcf7612b43f6f3ca48e38bd94f55d89e96939430ff8a350ee100994a7",
+          "reason": "duplicate_content"
+        },
+        {
+          "image_path": "objects365_det_train/patch31/objects365_v2_01516009.jpg",
+          "assigned_split": "test",
+          "duplicate_of": "objects365_det_train/patch24/objects365_v2_01228365.jpg",
+          "duplicate_split": "train",
+          "sha256": "1cba57d07d6b5957ee409784f92e80a210acc9dea6d19c995d4f6b30ea607bee",
+          "reason": "duplicate_content"
+        },
+        {
+          "image_path": "objects365_det_train/patch31/objects365_v2_01501396.jpg",
+          "assigned_split": "test",
+          "duplicate_of": "objects365_det_train/patch30/objects365_v2_01487661.jpg",
+          "duplicate_split": "validation",
+          "sha256": "a4c387ce16baf263a7dfdafe81cc1d140a2aa353730f2a312ab10ef559070cf5",
+          "reason": "duplicate_content"
+        },
+        {
+          "image_path": "objects365_det_train/patch31/objects365_v2_01533727.jpg",
+          "assigned_split": "test",
+          "duplicate_of": "objects365_det_train/patch30/objects365_v2_01474892.jpg",
+          "duplicate_split": "validation",
+          "sha256": "2290dd76b6394afbc7b923fe569ef7dfc2e765f978cc6419ae662f56ea952a76",
+          "reason": "duplicate_content"
+        },
+        {
+          "image_path": "objects365_det_train/patch32/objects365_v2_01562053.jpg",
+          "assigned_split": "test",
+          "duplicate_of": "objects365_det_train/patch27/objects365_v2_01343527.jpg",
+          "duplicate_split": "train",
+          "sha256": "72a60c1a662c97a13f80655c71566b06d3f2037437e045cfbf96741fbac90220",
+          "reason": "duplicate_content"
+        }
+      ]
+    },
+    {
+      "class_name": "nightstand",
+      "dataset_name": "openimages_challenge_2019_det_train",
+      "source_role": "train",
+      "assigned_split": "train",
+      "assignment_type": "official_split",
+      "requested": 480,
+      "candidates": 480,
+      "downloaded": 480,
+      "direct_allocation_downloaded": 480,
+      "global_top_up_downloaded": 0,
+      "shortfall": 0,
+      "cross_split_conflicts": 0,
+      "content_duplicate_conflicts": 0,
+      "content_duplicates": [],
+      "failures": []
+    },
+    {
+      "class_name": "nightstand",
+      "dataset_name": "openimages_challenge_2019_det_train",
+      "source_role": "train",
+      "assigned_split": "validation",
+      "assignment_type": "derived_from_train",
+      "requested": 60,
+      "candidates": 540,
+      "downloaded": 60,
+      "direct_allocation_downloaded": 60,
+      "global_top_up_downloaded": 0,
+      "shortfall": 0,
+      "cross_split_conflicts": 480,
+      "content_duplicate_conflicts": 0,
+      "content_duplicates": [],
+      "failures": []
+    },
+    {
+      "class_name": "nightstand",
+      "dataset_name": "openimages_challenge_2019_det_train",
+      "source_role": "train",
+      "assigned_split": "test",
+      "assignment_type": "derived_from_train",
+      "requested": 60,
+      "candidates": 600,
+      "downloaded": 60,
+      "direct_allocation_downloaded": 60,
+      "global_top_up_downloaded": 0,
+      "shortfall": 0,
+      "cross_split_conflicts": 540,
+      "content_duplicate_conflicts": 0,
+      "content_duplicates": [],
+      "failures": []
+    },
+    {
+      "class_name": "coffee table",
+      "dataset_name": "objects365_det_train",
+      "source_role": "train",
+      "assigned_split": "train",
+      "assignment_type": "official_split",
+      "requested": 1920,
+      "candidates": 1930,
+      "downloaded": 1920,
+      "direct_allocation_downloaded": 1920,
+      "global_top_up_downloaded": 0,
+      "shortfall": 0,
+      "cross_split_conflicts": 0,
+      "content_duplicate_conflicts": 10,
+      "content_duplicates": [
+        {
+          "image_path": "objects365_det_train/patch20/objects365_v2_01066765.jpg",
+          "assigned_split": "train",
+          "duplicate_of": "objects365_det_train/patch18/objects365_v2_01001071.jpg",
+          "duplicate_split": "train",
+          "sha256": "7d74a4c94aa9858f9e1f9802ed3dcea1f33e7017d5c6156c8c48df24e7cd0bc9"
+        },
+        {
+          "image_path": "objects365_det_train/patch21/objects365_v2_01116249.jpg",
+          "assigned_split": "train",
+          "duplicate_of": "objects365_det_train/patch18/objects365_v2_01003846.jpg",
+          "duplicate_split": "train",
+          "sha256": "a36b2968283d1acd9680c65288d7ca3f450adcf47069d2074fd3a597d6721db6"
+        },
+        {
+          "image_path": "objects365_det_train/patch21/objects365_v2_01131461.jpg",
+          "assigned_split": "train",
+          "duplicate_of": "objects365_det_train/patch21/objects365_v2_01120859.jpg",
+          "duplicate_split": "train",
+          "sha256": "b7f548d22ade9ce5f0317742541204d92b7efba6f630472f4e502574160f9ddc"
+        },
+        {
+          "image_path": "objects365_det_train/patch22/objects365_v2_01159646.jpg",
+          "assigned_split": "train",
+          "duplicate_of": "objects365_det_train/patch19/objects365_v2_01020379.jpg",
+          "duplicate_split": "train",
+          "sha256": "fff60de860e128aeaa22bca76bb3140b3fa989a28cf164febf1e7e070dda9bb3"
+        },
+        {
+          "image_path": "objects365_det_train/patch23/objects365_v2_01185351.jpg",
+          "assigned_split": "train",
+          "duplicate_of": "objects365_det_train/patch22/objects365_v2_01140418.jpg",
+          "duplicate_split": "train",
+          "sha256": "d7dafae094cc992a2969f9ebd8ad942c1c4987138a86ffcde01f19469e905a2e"
+        },
+        {
+          "image_path": "objects365_det_train/patch23/objects365_v2_01214938.jpg",
+          "assigned_split": "train",
+          "duplicate_of": "objects365_det_train/patch21/objects365_v2_01104337.jpg",
+          "duplicate_split": "train",
+          "sha256": "9e8b9ab565a976e494df052c55539967e6ea4a5e8d01811d32d0e2716752b5b5"
+        },
+        {
+          "image_path": "objects365_det_train/patch24/objects365_v2_01238002.jpg",
+          "assigned_split": "train",
+          "duplicate_of": "objects365_det_train/patch21/objects365_v2_01128210.jpg",
+          "duplicate_split": "train",
+          "sha256": "3ee8cc3201087a9d3b7b7f144b001b15ab2efe87ea7a701059f2a880a50c3dd3"
+        },
+        {
+          "image_path": "objects365_det_train/patch26/objects365_v2_01323982.jpg",
+          "assigned_split": "train",
+          "duplicate_of": "objects365_det_train/patch20/objects365_v2_01066903.jpg",
+          "duplicate_split": "train",
+          "sha256": "b76696bed85e40c3b02bb300a58dc2863005c79e0f46015dd3cd8968b6be0ad2"
+        },
+        {
+          "image_path": "objects365_det_train/patch27/objects365_v2_01358242.jpg",
+          "assigned_split": "train",
+          "duplicate_of": "objects365_det_train/patch25/objects365_v2_01267421.jpg",
+          "duplicate_split": "train",
+          "sha256": "25670330a6f1fafa315ab0445cb2c308b6b6a8c6779699a146fea49bfb733aae"
+        },
+        {
+          "image_path": "objects365_det_train/patch27/objects365_v2_01360716.jpg",
+          "assigned_split": "train",
+          "duplicate_of": "objects365_det_train/patch19/objects365_v2_01034203.jpg",
+          "duplicate_split": "train",
+          "sha256": "ba1bab97777e1be690369a4050e07e9ac7c64e2aa2dc9079359980837f3cd0e2"
+        }
+      ],
+      "failures": [
+        {
+          "image_path": "objects365_det_train/patch20/objects365_v2_01066765.jpg",
+          "assigned_split": "train",
+          "duplicate_of": "objects365_det_train/patch18/objects365_v2_01001071.jpg",
+          "duplicate_split": "train",
+          "sha256": "7d74a4c94aa9858f9e1f9802ed3dcea1f33e7017d5c6156c8c48df24e7cd0bc9",
+          "reason": "duplicate_content"
+        },
+        {
+          "image_path": "objects365_det_train/patch21/objects365_v2_01116249.jpg",
+          "assigned_split": "train",
+          "duplicate_of": "objects365_det_train/patch18/objects365_v2_01003846.jpg",
+          "duplicate_split": "train",
+          "sha256": "a36b2968283d1acd9680c65288d7ca3f450adcf47069d2074fd3a597d6721db6",
+          "reason": "duplicate_content"
+        },
+        {
+          "image_path": "objects365_det_train/patch21/objects365_v2_01131461.jpg",
+          "assigned_split": "train",
+          "duplicate_of": "objects365_det_train/patch21/objects365_v2_01120859.jpg",
+          "duplicate_split": "train",
+          "sha256": "b7f548d22ade9ce5f0317742541204d92b7efba6f630472f4e502574160f9ddc",
+          "reason": "duplicate_content"
+        },
+        {
+          "image_path": "objects365_det_train/patch22/objects365_v2_01159646.jpg",
+          "assigned_split": "train",
+          "duplicate_of": "objects365_det_train/patch19/objects365_v2_01020379.jpg",
+          "duplicate_split": "train",
+          "sha256": "fff60de860e128aeaa22bca76bb3140b3fa989a28cf164febf1e7e070dda9bb3",
+          "reason": "duplicate_content"
+        },
+        {
+          "image_path": "objects365_det_train/patch23/objects365_v2_01185351.jpg",
+          "assigned_split": "train",
+          "duplicate_of": "objects365_det_train/patch22/objects365_v2_01140418.jpg",
+          "duplicate_split": "train",
+          "sha256": "d7dafae094cc992a2969f9ebd8ad942c1c4987138a86ffcde01f19469e905a2e",
+          "reason": "duplicate_content"
+        },
+        {
+          "image_path": "objects365_det_train/patch23/objects365_v2_01214938.jpg",
+          "assigned_split": "train",
+          "duplicate_of": "objects365_det_train/patch21/objects365_v2_01104337.jpg",
+          "duplicate_split": "train",
+          "sha256": "9e8b9ab565a976e494df052c55539967e6ea4a5e8d01811d32d0e2716752b5b5",
+          "reason": "duplicate_content"
+        },
+        {
+          "image_path": "objects365_det_train/patch24/objects365_v2_01238002.jpg",
+          "assigned_split": "train",
+          "duplicate_of": "objects365_det_train/patch21/objects365_v2_01128210.jpg",
+          "duplicate_split": "train",
+          "sha256": "3ee8cc3201087a9d3b7b7f144b001b15ab2efe87ea7a701059f2a880a50c3dd3",
+          "reason": "duplicate_content"
+        },
+        {
+          "image_path": "objects365_det_train/patch26/objects365_v2_01323982.jpg",
+          "assigned_split": "train",
+          "duplicate_of": "objects365_det_train/patch20/objects365_v2_01066903.jpg",
+          "duplicate_split": "train",
+          "sha256": "b76696bed85e40c3b02bb300a58dc2863005c79e0f46015dd3cd8968b6be0ad2",
+          "reason": "duplicate_content"
+        },
+        {
+          "image_path": "objects365_det_train/patch27/objects365_v2_01358242.jpg",
+          "assigned_split": "train",
+          "duplicate_of": "objects365_det_train/patch25/objects365_v2_01267421.jpg",
+          "duplicate_split": "train",
+          "sha256": "25670330a6f1fafa315ab0445cb2c308b6b6a8c6779699a146fea49bfb733aae",
+          "reason": "duplicate_content"
+        },
+        {
+          "image_path": "objects365_det_train/patch27/objects365_v2_01360716.jpg",
+          "assigned_split": "train",
+          "duplicate_of": "objects365_det_train/patch19/objects365_v2_01034203.jpg",
+          "duplicate_split": "train",
+          "sha256": "ba1bab97777e1be690369a4050e07e9ac7c64e2aa2dc9079359980837f3cd0e2",
+          "reason": "duplicate_content"
+        }
+      ]
+    },
+    {
+      "class_name": "coffee table",
+      "dataset_name": "objects365_det_train",
+      "source_role": "train",
+      "assigned_split": "validation",
+      "assignment_type": "derived_from_train",
+      "requested": 240,
+      "candidates": 2179,
+      "downloaded": 240,
+      "direct_allocation_downloaded": 240,
+      "global_top_up_downloaded": 0,
+      "shortfall": 0,
+      "cross_split_conflicts": 1927,
+      "content_duplicate_conflicts": 12,
+      "content_duplicates": [
+        {
+          "image_path": "objects365_det_train/patch20/objects365_v2_01066765.jpg",
+          "assigned_split": "validation",
+          "duplicate_of": "objects365_det_train/patch18/objects365_v2_01001071.jpg",
+          "duplicate_split": "train",
+          "sha256": "7d74a4c94aa9858f9e1f9802ed3dcea1f33e7017d5c6156c8c48df24e7cd0bc9"
+        },
+        {
+          "image_path": "objects365_det_train/patch21/objects365_v2_01116249.jpg",
+          "assigned_split": "validation",
+          "duplicate_of": "objects365_det_train/patch18/objects365_v2_01003846.jpg",
+          "duplicate_split": "train",
+          "sha256": "a36b2968283d1acd9680c65288d7ca3f450adcf47069d2074fd3a597d6721db6"
+        },
+        {
+          "image_path": "objects365_det_train/patch21/objects365_v2_01131461.jpg",
+          "assigned_split": "validation",
+          "duplicate_of": "objects365_det_train/patch21/objects365_v2_01120859.jpg",
+          "duplicate_split": "train",
+          "sha256": "b7f548d22ade9ce5f0317742541204d92b7efba6f630472f4e502574160f9ddc"
+        },
+        {
+          "image_path": "objects365_det_train/patch22/objects365_v2_01159646.jpg",
+          "assigned_split": "validation",
+          "duplicate_of": "objects365_det_train/patch19/objects365_v2_01020379.jpg",
+          "duplicate_split": "train",
+          "sha256": "fff60de860e128aeaa22bca76bb3140b3fa989a28cf164febf1e7e070dda9bb3"
+        },
+        {
+          "image_path": "objects365_det_train/patch23/objects365_v2_01185351.jpg",
+          "assigned_split": "validation",
+          "duplicate_of": "objects365_det_train/patch22/objects365_v2_01140418.jpg",
+          "duplicate_split": "train",
+          "sha256": "d7dafae094cc992a2969f9ebd8ad942c1c4987138a86ffcde01f19469e905a2e"
+        },
+        {
+          "image_path": "objects365_det_train/patch23/objects365_v2_01214938.jpg",
+          "assigned_split": "validation",
+          "duplicate_of": "objects365_det_train/patch21/objects365_v2_01104337.jpg",
+          "duplicate_split": "train",
+          "sha256": "9e8b9ab565a976e494df052c55539967e6ea4a5e8d01811d32d0e2716752b5b5"
+        },
+        {
+          "image_path": "objects365_det_train/patch24/objects365_v2_01238002.jpg",
+          "assigned_split": "validation",
+          "duplicate_of": "objects365_det_train/patch21/objects365_v2_01128210.jpg",
+          "duplicate_split": "train",
+          "sha256": "3ee8cc3201087a9d3b7b7f144b001b15ab2efe87ea7a701059f2a880a50c3dd3"
+        },
+        {
+          "image_path": "objects365_det_train/patch26/objects365_v2_01323982.jpg",
+          "assigned_split": "validation",
+          "duplicate_of": "objects365_det_train/patch20/objects365_v2_01066903.jpg",
+          "duplicate_split": "train",
+          "sha256": "b76696bed85e40c3b02bb300a58dc2863005c79e0f46015dd3cd8968b6be0ad2"
+        },
+        {
+          "image_path": "objects365_det_train/patch27/objects365_v2_01360716.jpg",
+          "assigned_split": "validation",
+          "duplicate_of": "objects365_det_train/patch19/objects365_v2_01034203.jpg",
+          "duplicate_split": "train",
+          "sha256": "ba1bab97777e1be690369a4050e07e9ac7c64e2aa2dc9079359980837f3cd0e2"
+        },
+        {
+          "image_path": "objects365_det_train/patch27/objects365_v2_01358242.jpg",
+          "assigned_split": "validation",
+          "duplicate_of": "objects365_det_train/patch25/objects365_v2_01267421.jpg",
+          "duplicate_split": "train",
+          "sha256": "25670330a6f1fafa315ab0445cb2c308b6b6a8c6779699a146fea49bfb733aae"
+        },
+        {
+          "image_path": "objects365_det_train/patch28/objects365_v2_01399462.jpg",
+          "assigned_split": "validation",
+          "duplicate_of": "objects365_det_train/patch22/objects365_v2_01147722.jpg",
+          "duplicate_split": "train",
+          "sha256": "022f2e6689a3fd4789009d2ddf5ddd96a361c00a76337542d758922e5c4b2591"
+        },
+        {
+          "image_path": "objects365_det_train/patch28/objects365_v2_01406011.jpg",
+          "assigned_split": "validation",
+          "duplicate_of": "objects365_det_train/patch22/objects365_v2_01174754.jpg",
+          "duplicate_split": "train",
+          "sha256": "cbbf64e677382dab83a0813936885f07c06484482a12da0c4fd77622babf9439"
+        }
+      ],
+      "failures": [
+        {
+          "image_path": "objects365_det_train/patch20/objects365_v2_01066765.jpg",
+          "assigned_split": "validation",
+          "duplicate_of": "objects365_det_train/patch18/objects365_v2_01001071.jpg",
+          "duplicate_split": "train",
+          "sha256": "7d74a4c94aa9858f9e1f9802ed3dcea1f33e7017d5c6156c8c48df24e7cd0bc9",
+          "reason": "duplicate_content"
+        },
+        {
+          "image_path": "objects365_det_train/patch21/objects365_v2_01116249.jpg",
+          "assigned_split": "validation",
+          "duplicate_of": "objects365_det_train/patch18/objects365_v2_01003846.jpg",
+          "duplicate_split": "train",
+          "sha256": "a36b2968283d1acd9680c65288d7ca3f450adcf47069d2074fd3a597d6721db6",
+          "reason": "duplicate_content"
+        },
+        {
+          "image_path": "objects365_det_train/patch21/objects365_v2_01131461.jpg",
+          "assigned_split": "validation",
+          "duplicate_of": "objects365_det_train/patch21/objects365_v2_01120859.jpg",
+          "duplicate_split": "train",
+          "sha256": "b7f548d22ade9ce5f0317742541204d92b7efba6f630472f4e502574160f9ddc",
+          "reason": "duplicate_content"
+        },
+        {
+          "image_path": "objects365_det_train/patch22/objects365_v2_01159646.jpg",
+          "assigned_split": "validation",
+          "duplicate_of": "objects365_det_train/patch19/objects365_v2_01020379.jpg",
+          "duplicate_split": "train",
+          "sha256": "fff60de860e128aeaa22bca76bb3140b3fa989a28cf164febf1e7e070dda9bb3",
+          "reason": "duplicate_content"
+        },
+        {
+          "image_path": "objects365_det_train/patch23/objects365_v2_01185351.jpg",
+          "assigned_split": "validation",
+          "duplicate_of": "objects365_det_train/patch22/objects365_v2_01140418.jpg",
+          "duplicate_split": "train",
+          "sha256": "d7dafae094cc992a2969f9ebd8ad942c1c4987138a86ffcde01f19469e905a2e",
+          "reason": "duplicate_content"
+        },
+        {
+          "image_path": "objects365_det_train/patch23/objects365_v2_01214938.jpg",
+          "assigned_split": "validation",
+          "duplicate_of": "objects365_det_train/patch21/objects365_v2_01104337.jpg",
+          "duplicate_split": "train",
+          "sha256": "9e8b9ab565a976e494df052c55539967e6ea4a5e8d01811d32d0e2716752b5b5",
+          "reason": "duplicate_content"
+        },
+        {
+          "image_path": "objects365_det_train/patch24/objects365_v2_01238002.jpg",
+          "assigned_split": "validation",
+          "duplicate_of": "objects365_det_train/patch21/objects365_v2_01128210.jpg",
+          "duplicate_split": "train",
+          "sha256": "3ee8cc3201087a9d3b7b7f144b001b15ab2efe87ea7a701059f2a880a50c3dd3",
+          "reason": "duplicate_content"
+        },
+        {
+          "image_path": "objects365_det_train/patch26/objects365_v2_01323982.jpg",
+          "assigned_split": "validation",
+          "duplicate_of": "objects365_det_train/patch20/objects365_v2_01066903.jpg",
+          "duplicate_split": "train",
+          "sha256": "b76696bed85e40c3b02bb300a58dc2863005c79e0f46015dd3cd8968b6be0ad2",
+          "reason": "duplicate_content"
+        },
+        {
+          "image_path": "objects365_det_train/patch27/objects365_v2_01360716.jpg",
+          "assigned_split": "validation",
+          "duplicate_of": "objects365_det_train/patch19/objects365_v2_01034203.jpg",
+          "duplicate_split": "train",
+          "sha256": "ba1bab97777e1be690369a4050e07e9ac7c64e2aa2dc9079359980837f3cd0e2",
+          "reason": "duplicate_content"
+        },
+        {
+          "image_path": "objects365_det_train/patch27/objects365_v2_01358242.jpg",
+          "assigned_split": "validation",
+          "duplicate_of": "objects365_det_train/patch25/objects365_v2_01267421.jpg",
+          "duplicate_split": "train",
+          "sha256": "25670330a6f1fafa315ab0445cb2c308b6b6a8c6779699a146fea49bfb733aae",
+          "reason": "duplicate_content"
+        },
+        {
+          "image_path": "objects365_det_train/patch28/objects365_v2_01399462.jpg",
+          "assigned_split": "validation",
+          "duplicate_of": "objects365_det_train/patch22/objects365_v2_01147722.jpg",
+          "duplicate_split": "train",
+          "sha256": "022f2e6689a3fd4789009d2ddf5ddd96a361c00a76337542d758922e5c4b2591",
+          "reason": "duplicate_content"
+        },
+        {
+          "image_path": "objects365_det_train/patch28/objects365_v2_01406011.jpg",
+          "assigned_split": "validation",
+          "duplicate_of": "objects365_det_train/patch22/objects365_v2_01174754.jpg",
+          "duplicate_split": "train",
+          "sha256": "cbbf64e677382dab83a0813936885f07c06484482a12da0c4fd77622babf9439",
+          "reason": "duplicate_content"
+        }
+      ]
+    },
+    {
+      "class_name": "coffee table",
+      "dataset_name": "objects365_det_train",
+      "source_role": "train",
+      "assigned_split": "test",
+      "assignment_type": "derived_from_train",
+      "requested": 240,
+      "candidates": 2430,
+      "downloaded": 240,
+      "direct_allocation_downloaded": 240,
+      "global_top_up_downloaded": 0,
+      "shortfall": 0,
+      "cross_split_conflicts": 2175,
+      "content_duplicate_conflicts": 15,
+      "content_duplicates": [
+        {
+          "image_path": "objects365_det_train/patch20/objects365_v2_01066765.jpg",
+          "assigned_split": "test",
+          "duplicate_of": "objects365_det_train/patch18/objects365_v2_01001071.jpg",
+          "duplicate_split": "train",
+          "sha256": "7d74a4c94aa9858f9e1f9802ed3dcea1f33e7017d5c6156c8c48df24e7cd0bc9"
+        },
+        {
+          "image_path": "objects365_det_train/patch21/objects365_v2_01116249.jpg",
+          "assigned_split": "test",
+          "duplicate_of": "objects365_det_train/patch18/objects365_v2_01003846.jpg",
+          "duplicate_split": "train",
+          "sha256": "a36b2968283d1acd9680c65288d7ca3f450adcf47069d2074fd3a597d6721db6"
+        },
+        {
+          "image_path": "objects365_det_train/patch21/objects365_v2_01131461.jpg",
+          "assigned_split": "test",
+          "duplicate_of": "objects365_det_train/patch21/objects365_v2_01120859.jpg",
+          "duplicate_split": "train",
+          "sha256": "b7f548d22ade9ce5f0317742541204d92b7efba6f630472f4e502574160f9ddc"
+        },
+        {
+          "image_path": "objects365_det_train/patch22/objects365_v2_01159646.jpg",
+          "assigned_split": "test",
+          "duplicate_of": "objects365_det_train/patch19/objects365_v2_01020379.jpg",
+          "duplicate_split": "train",
+          "sha256": "fff60de860e128aeaa22bca76bb3140b3fa989a28cf164febf1e7e070dda9bb3"
+        },
+        {
+          "image_path": "objects365_det_train/patch23/objects365_v2_01185351.jpg",
+          "assigned_split": "test",
+          "duplicate_of": "objects365_det_train/patch22/objects365_v2_01140418.jpg",
+          "duplicate_split": "train",
+          "sha256": "d7dafae094cc992a2969f9ebd8ad942c1c4987138a86ffcde01f19469e905a2e"
+        },
+        {
+          "image_path": "objects365_det_train/patch23/objects365_v2_01214938.jpg",
+          "assigned_split": "test",
+          "duplicate_of": "objects365_det_train/patch21/objects365_v2_01104337.jpg",
+          "duplicate_split": "train",
+          "sha256": "9e8b9ab565a976e494df052c55539967e6ea4a5e8d01811d32d0e2716752b5b5"
+        },
+        {
+          "image_path": "objects365_det_train/patch24/objects365_v2_01238002.jpg",
+          "assigned_split": "test",
+          "duplicate_of": "objects365_det_train/patch21/objects365_v2_01128210.jpg",
+          "duplicate_split": "train",
+          "sha256": "3ee8cc3201087a9d3b7b7f144b001b15ab2efe87ea7a701059f2a880a50c3dd3"
+        },
+        {
+          "image_path": "objects365_det_train/patch26/objects365_v2_01323982.jpg",
+          "assigned_split": "test",
+          "duplicate_of": "objects365_det_train/patch20/objects365_v2_01066903.jpg",
+          "duplicate_split": "train",
+          "sha256": "b76696bed85e40c3b02bb300a58dc2863005c79e0f46015dd3cd8968b6be0ad2"
+        },
+        {
+          "image_path": "objects365_det_train/patch27/objects365_v2_01360716.jpg",
+          "assigned_split": "test",
+          "duplicate_of": "objects365_det_train/patch19/objects365_v2_01034203.jpg",
+          "duplicate_split": "train",
+          "sha256": "ba1bab97777e1be690369a4050e07e9ac7c64e2aa2dc9079359980837f3cd0e2"
+        },
+        {
+          "image_path": "objects365_det_train/patch27/objects365_v2_01358242.jpg",
+          "assigned_split": "test",
+          "duplicate_of": "objects365_det_train/patch25/objects365_v2_01267421.jpg",
+          "duplicate_split": "train",
+          "sha256": "25670330a6f1fafa315ab0445cb2c308b6b6a8c6779699a146fea49bfb733aae"
+        },
+        {
+          "image_path": "objects365_det_train/patch28/objects365_v2_01399462.jpg",
+          "assigned_split": "test",
+          "duplicate_of": "objects365_det_train/patch22/objects365_v2_01147722.jpg",
+          "duplicate_split": "train",
+          "sha256": "022f2e6689a3fd4789009d2ddf5ddd96a361c00a76337542d758922e5c4b2591"
+        },
+        {
+          "image_path": "objects365_det_train/patch28/objects365_v2_01406011.jpg",
+          "assigned_split": "test",
+          "duplicate_of": "objects365_det_train/patch22/objects365_v2_01174754.jpg",
+          "duplicate_split": "train",
+          "sha256": "cbbf64e677382dab83a0813936885f07c06484482a12da0c4fd77622babf9439"
+        },
+        {
+          "image_path": "objects365_det_train/patch29/objects365_v2_01448928.jpg",
+          "assigned_split": "test",
+          "duplicate_of": "objects365_det_train/patch23/objects365_v2_01185931.jpg",
+          "duplicate_split": "train",
+          "sha256": "b237b2d372623727f75c41edef77440e96f71648f3b98326073dee03d86436e9"
+        },
+        {
+          "image_path": "objects365_det_train/patch30/objects365_v2_01467829.jpg",
+          "assigned_split": "test",
+          "duplicate_of": "objects365_det_train/patch25/objects365_v2_01260920.jpg",
+          "duplicate_split": "train",
+          "sha256": "0f9baccd4f652cb7c813c53f6050790285256a7c4807bba78ec80854fe0edf68"
+        },
+        {
+          "image_path": "objects365_det_train/patch30/objects365_v2_01472717.jpg",
+          "assigned_split": "test",
+          "duplicate_of": "objects365_det_train/patch21/objects365_v2_01108428.jpg",
+          "duplicate_split": "train",
+          "sha256": "4a124b6095e9f9656d847157e0ee1c85ee7f951b9c4251c3faaf818878db64ae"
+        }
+      ],
+      "failures": [
+        {
+          "image_path": "objects365_det_train/patch20/objects365_v2_01066765.jpg",
+          "assigned_split": "test",
+          "duplicate_of": "objects365_det_train/patch18/objects365_v2_01001071.jpg",
+          "duplicate_split": "train",
+          "sha256": "7d74a4c94aa9858f9e1f9802ed3dcea1f33e7017d5c6156c8c48df24e7cd0bc9",
+          "reason": "duplicate_content"
+        },
+        {
+          "image_path": "objects365_det_train/patch21/objects365_v2_01116249.jpg",
+          "assigned_split": "test",
+          "duplicate_of": "objects365_det_train/patch18/objects365_v2_01003846.jpg",
+          "duplicate_split": "train",
+          "sha256": "a36b2968283d1acd9680c65288d7ca3f450adcf47069d2074fd3a597d6721db6",
+          "reason": "duplicate_content"
+        },
+        {
+          "image_path": "objects365_det_train/patch21/objects365_v2_01131461.jpg",
+          "assigned_split": "test",
+          "duplicate_of": "objects365_det_train/patch21/objects365_v2_01120859.jpg",
+          "duplicate_split": "train",
+          "sha256": "b7f548d22ade9ce5f0317742541204d92b7efba6f630472f4e502574160f9ddc",
+          "reason": "duplicate_content"
+        },
+        {
+          "image_path": "objects365_det_train/patch22/objects365_v2_01159646.jpg",
+          "assigned_split": "test",
+          "duplicate_of": "objects365_det_train/patch19/objects365_v2_01020379.jpg",
+          "duplicate_split": "train",
+          "sha256": "fff60de860e128aeaa22bca76bb3140b3fa989a28cf164febf1e7e070dda9bb3",
+          "reason": "duplicate_content"
+        },
+        {
+          "image_path": "objects365_det_train/patch23/objects365_v2_01185351.jpg",
+          "assigned_split": "test",
+          "duplicate_of": "objects365_det_train/patch22/objects365_v2_01140418.jpg",
+          "duplicate_split": "train",
+          "sha256": "d7dafae094cc992a2969f9ebd8ad942c1c4987138a86ffcde01f19469e905a2e",
+          "reason": "duplicate_content"
+        },
+        {
+          "image_path": "objects365_det_train/patch23/objects365_v2_01214938.jpg",
+          "assigned_split": "test",
+          "duplicate_of": "objects365_det_train/patch21/objects365_v2_01104337.jpg",
+          "duplicate_split": "train",
+          "sha256": "9e8b9ab565a976e494df052c55539967e6ea4a5e8d01811d32d0e2716752b5b5",
+          "reason": "duplicate_content"
+        },
+        {
+          "image_path": "objects365_det_train/patch24/objects365_v2_01238002.jpg",
+          "assigned_split": "test",
+          "duplicate_of": "objects365_det_train/patch21/objects365_v2_01128210.jpg",
+          "duplicate_split": "train",
+          "sha256": "3ee8cc3201087a9d3b7b7f144b001b15ab2efe87ea7a701059f2a880a50c3dd3",
+          "reason": "duplicate_content"
+        },
+        {
+          "image_path": "objects365_det_train/patch26/objects365_v2_01323982.jpg",
+          "assigned_split": "test",
+          "duplicate_of": "objects365_det_train/patch20/objects365_v2_01066903.jpg",
+          "duplicate_split": "train",
+          "sha256": "b76696bed85e40c3b02bb300a58dc2863005c79e0f46015dd3cd8968b6be0ad2",
+          "reason": "duplicate_content"
+        },
+        {
+          "image_path": "objects365_det_train/patch27/objects365_v2_01360716.jpg",
+          "assigned_split": "test",
+          "duplicate_of": "objects365_det_train/patch19/objects365_v2_01034203.jpg",
+          "duplicate_split": "train",
+          "sha256": "ba1bab97777e1be690369a4050e07e9ac7c64e2aa2dc9079359980837f3cd0e2",
+          "reason": "duplicate_content"
+        },
+        {
+          "image_path": "objects365_det_train/patch27/objects365_v2_01358242.jpg",
+          "assigned_split": "test",
+          "duplicate_of": "objects365_det_train/patch25/objects365_v2_01267421.jpg",
+          "duplicate_split": "train",
+          "sha256": "25670330a6f1fafa315ab0445cb2c308b6b6a8c6779699a146fea49bfb733aae",
+          "reason": "duplicate_content"
+        },
+        {
+          "image_path": "objects365_det_train/patch28/objects365_v2_01399462.jpg",
+          "assigned_split": "test",
+          "duplicate_of": "objects365_det_train/patch22/objects365_v2_01147722.jpg",
+          "duplicate_split": "train",
+          "sha256": "022f2e6689a3fd4789009d2ddf5ddd96a361c00a76337542d758922e5c4b2591",
+          "reason": "duplicate_content"
+        },
+        {
+          "image_path": "objects365_det_train/patch28/objects365_v2_01406011.jpg",
+          "assigned_split": "test",
+          "duplicate_of": "objects365_det_train/patch22/objects365_v2_01174754.jpg",
+          "duplicate_split": "train",
+          "sha256": "cbbf64e677382dab83a0813936885f07c06484482a12da0c4fd77622babf9439",
+          "reason": "duplicate_content"
+        },
+        {
+          "image_path": "objects365_det_train/patch29/objects365_v2_01448928.jpg",
+          "assigned_split": "test",
+          "duplicate_of": "objects365_det_train/patch23/objects365_v2_01185931.jpg",
+          "duplicate_split": "train",
+          "sha256": "b237b2d372623727f75c41edef77440e96f71648f3b98326073dee03d86436e9",
+          "reason": "duplicate_content"
+        },
+        {
+          "image_path": "objects365_det_train/patch30/objects365_v2_01467829.jpg",
+          "assigned_split": "test",
+          "duplicate_of": "objects365_det_train/patch25/objects365_v2_01260920.jpg",
+          "duplicate_split": "train",
+          "sha256": "0f9baccd4f652cb7c813c53f6050790285256a7c4807bba78ec80854fe0edf68",
+          "reason": "duplicate_content"
+        },
+        {
+          "image_path": "objects365_det_train/patch30/objects365_v2_01472717.jpg",
+          "assigned_split": "test",
+          "duplicate_of": "objects365_det_train/patch21/objects365_v2_01108428.jpg",
+          "duplicate_split": "train",
+          "sha256": "4a124b6095e9f9656d847157e0ee1c85ee7f951b9c4251c3faaf818878db64ae",
+          "reason": "duplicate_content"
+        }
+      ]
+    },
+    {
+      "class_name": "coffee table",
+      "dataset_name": "openimages_challenge_2019_det_train",
+      "source_role": "train",
+      "assigned_split": "train",
+      "assignment_type": "official_split",
+      "requested": 480,
+      "candidates": 480,
+      "downloaded": 480,
+      "direct_allocation_downloaded": 480,
+      "global_top_up_downloaded": 0,
+      "shortfall": 0,
+      "cross_split_conflicts": 0,
+      "content_duplicate_conflicts": 0,
+      "content_duplicates": [],
+      "failures": []
+    },
+    {
+      "class_name": "coffee table",
+      "dataset_name": "openimages_challenge_2019_det_train",
+      "source_role": "train",
+      "assigned_split": "validation",
+      "assignment_type": "derived_from_train",
+      "requested": 60,
+      "candidates": 541,
+      "downloaded": 60,
+      "direct_allocation_downloaded": 60,
+      "global_top_up_downloaded": 0,
+      "shortfall": 0,
+      "cross_split_conflicts": 481,
+      "content_duplicate_conflicts": 0,
+      "content_duplicates": [],
+      "failures": []
+    },
+    {
+      "class_name": "coffee table",
+      "dataset_name": "openimages_challenge_2019_det_train",
+      "source_role": "train",
+      "assigned_split": "test",
+      "assignment_type": "derived_from_train",
+      "requested": 60,
+      "candidates": 601,
+      "downloaded": 60,
+      "direct_allocation_downloaded": 60,
+      "global_top_up_downloaded": 0,
+      "shortfall": 0,
+      "cross_split_conflicts": 541,
+      "content_duplicate_conflicts": 0,
+      "content_duplicates": [],
+      "failures": []
+    },
+    {
+      "class_name": "desk",
+      "dataset_name": "objects365_det_train",
+      "source_role": "train",
+      "assigned_split": "train",
+      "assignment_type": "official_split",
+      "requested": 1920,
+      "candidates": 1920,
+      "downloaded": 1920,
+      "direct_allocation_downloaded": 1920,
+      "global_top_up_downloaded": 0,
+      "shortfall": 0,
+      "cross_split_conflicts": 0,
+      "content_duplicate_conflicts": 0,
+      "content_duplicates": [],
+      "failures": []
+    },
+    {
+      "class_name": "desk",
+      "dataset_name": "objects365_det_train",
+      "source_role": "train",
+      "assigned_split": "validation",
+      "assignment_type": "derived_from_train",
+      "requested": 240,
+      "candidates": 2169,
+      "downloaded": 240,
+      "direct_allocation_downloaded": 240,
+      "global_top_up_downloaded": 0,
+      "shortfall": 0,
+      "cross_split_conflicts": 1929,
+      "content_duplicate_conflicts": 0,
+      "content_duplicates": [],
+      "failures": []
+    },
+    {
+      "class_name": "desk",
+      "dataset_name": "objects365_det_train",
+      "source_role": "train",
+      "assigned_split": "test",
+      "assignment_type": "derived_from_train",
+      "requested": 240,
+      "candidates": 2417,
+      "downloaded": 240,
+      "direct_allocation_downloaded": 240,
+      "global_top_up_downloaded": 0,
+      "shortfall": 0,
+      "cross_split_conflicts": 2177,
+      "content_duplicate_conflicts": 0,
+      "content_duplicates": [],
+      "failures": []
+    },
+    {
+      "class_name": "desk",
+      "dataset_name": "openimages_challenge_2019_det_train",
+      "source_role": "train",
+      "assigned_split": "train",
+      "assignment_type": "official_split",
+      "requested": 480,
+      "candidates": 3255,
+      "downloaded": 2258,
+      "direct_allocation_downloaded": 500,
+      "global_top_up_downloaded": 1758,
+      "shortfall": 0,
+      "cross_split_conflicts": 431,
+      "content_duplicate_conflicts": 0,
+      "content_duplicates": [],
+      "failures": []
+    },
+    {
+      "class_name": "desk",
+      "dataset_name": "openimages_challenge_2019_det_train",
+      "source_role": "train",
+      "assigned_split": "validation",
+      "assignment_type": "derived_from_train",
+      "requested": 60,
+      "candidates": 562,
+      "downloaded": 60,
+      "direct_allocation_downloaded": 60,
+      "global_top_up_downloaded": 0,
+      "shortfall": 0,
+      "cross_split_conflicts": 502,
+      "content_duplicate_conflicts": 0,
+      "content_duplicates": [],
+      "failures": []
+    },
+    {
+      "class_name": "desk",
+      "dataset_name": "openimages_challenge_2019_det_train",
+      "source_role": "train",
+      "assigned_split": "test",
+      "assignment_type": "derived_from_train",
+      "requested": 60,
+      "candidates": 623,
+      "downloaded": 60,
+      "direct_allocation_downloaded": 60,
+      "global_top_up_downloaded": 0,
+      "shortfall": 0,
+      "cross_split_conflicts": 563,
+      "content_duplicate_conflicts": 0,
+      "content_duplicates": [],
+      "failures": []
+    }
+  ],
+  "complete": true,
+  "coverage": {
+    "requirements": {
+      "target_unique_images": 9000,
+      "target_unique_images_by_split": {
+        "train": 7200,
+        "validation": 900,
+        "test": 900
+      },
+      "minimum_images_per_class": {
+        "nightstand": 3000,
+        "coffee table": 3000,
+        "desk": 3000
+      },
+      "minimum_images_per_class_by_split": {
+        "nightstand": {
+          "train": 2400,
+          "validation": 300,
+          "test": 300
+        },
+        "coffee table": {
+          "train": 2400,
+          "validation": 300,
+          "test": 300
+        },
+        "desk": {
+          "train": 2400,
+          "validation": 300,
+          "test": 300
+        }
+      }
+    },
+    "verified_unique_images": 9000,
+    "verified_unique_images_by_split": {
+      "train": 7200,
+      "validation": 900,
+      "test": 900
+    },
+    "verified_images_per_class": {
+      "nightstand": 3000,
+      "coffee table": 3029,
+      "desk": 5015
+    },
+    "verified_images_per_class_by_split": {
+      "nightstand": {
+        "train": 2400,
+        "validation": 300,
+        "test": 300
+      },
+      "coffee table": {
+        "train": 2419,
+        "validation": 302,
+        "test": 308
+      },
+      "desk": {
+        "train": 4047,
+        "validation": 486,
+        "test": 482
+      }
+    },
+    "unique_image_shortfall": 0,
+    "class_image_shortfalls": {
+      "nightstand": 0,
+      "coffee table": 0,
+      "desk": 0
+    },
+    "satisfied": true
+  },
+  "allocation_shortfalls": [],
+  "warnings": [],
+  "requested": 9000,
+  "downloaded": 10778,
+  "unique_downloaded": 9000,
+  "performance": {
+    "elapsed_seconds": 2084.8087889999733,
+    "sparql_queries": 318,
+    "sparql_seconds": 234.21204069897067,
+    "download_batches": 142,
+    "cache_hits": 7325,
+    "cached_failures": 0,
+    "bytes_downloaded": 486005482,
+    "retries": 332,
+    "transfer_and_validation_seconds": 20030.972397800128
+  },
+  "manifest_path": "C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\runs\\msvobf1f06rnq66kns1w\\data\\dataset_manifest.json",
+  "report_path": "C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\runs\\msvobf1f06rnq66kns1w\\artifacts\\download_report.json"
+}

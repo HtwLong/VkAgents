@@ -1,0 +1,213 @@
+{
+  "task": "detection",
+  "application_domain": "urban street scenes",
+  "user_query": "I need an object detection model to identify traffic lights and traffic signs in dense urban street scenes. The objects may be small and far away in the image. The model will run locally on a MacBook Air with an Apple M4 chip and 16 GB of unified memory, using Metal acceleration where supported. It should aim for a mAP@0.5:0.95 of around 0.30 or higher. An inference time of approximately 500 milliseconds or less per frame would be desirable, although somewhat slower processing is acceptable when it improves detection quality in difficult conditions. Memory usage during inference should preferably remain below 6 GB.",
+  "use_case_description": null,
+  "questions_list": null,
+  "classes": [
+    "traffic light",
+    "traffic sign"
+  ],
+  "available_data": [
+    {
+      "class_name": "traffic light",
+      "sources": [
+        {
+          "dataset_name": "bdd_100k_det_train",
+          "count": 39401
+        },
+        {
+          "dataset_name": "bdd100k_UNIT_day2night_det_train",
+          "count": 18240
+        },
+        {
+          "dataset_name": "bdd_100k_det_val",
+          "count": 5651
+        },
+        {
+          "dataset_name": "coco2017_det_train",
+          "count": 4139
+        },
+        {
+          "dataset_name": "LVIS_det_train",
+          "count": 1890
+        },
+        {
+          "dataset_name": "openimages_challenge_2019_det_train",
+          "count": 1773
+        },
+        {
+          "dataset_name": "objects365_det_val",
+          "count": 1014
+        },
+        {
+          "dataset_name": "coco2017_det_val",
+          "count": 191
+        },
+        {
+          "dataset_name": "openimages_challenge_2019_det_val",
+          "count": 22
+        }
+      ]
+    },
+    {
+      "class_name": "traffic sign",
+      "sources": [
+        {
+          "dataset_name": "bdd_100k_det_train",
+          "count": 57188
+        },
+        {
+          "dataset_name": "bdd100k_UNIT_day2night_det_train",
+          "count": 30377
+        },
+        {
+          "dataset_name": "bdd_100k_det_val",
+          "count": 8211
+        },
+        {
+          "dataset_name": "openimages_challenge_2019_det_train",
+          "count": 2813
+        },
+        {
+          "dataset_name": "objects365_det_val",
+          "count": 547
+        },
+        {
+          "dataset_name": "openimages_challenge_2019_det_val",
+          "count": 38
+        }
+      ]
+    }
+  ],
+  "selected_data": null,
+  "performance_requirements": {
+    "primary_metric": "mAP@0.5:0.95",
+    "target_value": 0.3,
+    "target_is_hard": false,
+    "latency_category": "Medium",
+    "accuracy_category": "Medium",
+    "other_constraints": []
+  },
+  "constraint_strengths": {
+    "accuracy": "preference",
+    "latency": "preference",
+    "runtime_memory": "preference",
+    "model_size": "unspecified",
+    "training_time": "unspecified"
+  },
+  "robustness_requirements": {
+    "lighting": [],
+    "weather": [],
+    "object_scale": [
+      "small"
+    ],
+    "scene_density": [
+      "dense"
+    ],
+    "motion_blur": false,
+    "occlusion": false,
+    "viewpoint": [],
+    "color_semantics": false,
+    "horizontal_flip_safe": null,
+    "text_or_symbols_present": false
+  },
+  "deployment_constraints": {
+    "memory_category": null,
+    "max_runtime_memory_mb": 6144.0,
+    "max_model_size_mb": null,
+    "max_parameters_m": null,
+    "max_cpu_latency_ms": null,
+    "hard_limits": []
+  },
+  "available_hardware": {
+    "hardware_category": "ConsumerCPU",
+    "cpu_cores": null,
+    "gpu_type": null,
+    "gpu_count": null,
+    "vram_gb": null,
+    "ram_gb": 16.0,
+    "storage_gb": null,
+    "details": "Apple Silicon MacBook Air; M4; Metal acceleration"
+  },
+  "model_requirements": null,
+  "augmentation": null,
+  "preprocessing": null,
+  "num_qa_pairs": null,
+  "training_hardware": {
+    "profile_id": "rtx2060_6gb_ryzen5600x_16gb",
+    "accelerator": "cuda",
+    "hardware_category": "ConsumerGPU",
+    "gpu_type": "ASUS Dual NVIDIA GeForce RTX 2060 EVO 6GB",
+    "gpu_count": 1,
+    "vram_gb": 6.0,
+    "ram_gb": 16.0,
+    "unified_memory": false,
+    "training_memory_budget_gb": 5.0,
+    "max_batch_size": 4,
+    "workers": 4,
+    "supports_amp": true
+  },
+  "class_expansions": {},
+  "model_selection_graph_context": null,
+  "dataset_selection_graph_context": null,
+  "hyperparameter_graph_context": null,
+  "use_graphrag": false,
+  "selected_model_info": {
+    "model": {
+      "model_architecture": "yolov8",
+      "loss_function_box": "giou",
+      "loss_function_cls": "focal",
+      "optimizer": "adamw",
+      "description": "Lightweight YOLOv8 detector tuned for small-object detection in urban street scenes. Balanced speed and accuracy for CPU/Metal on Apple Silicon. Emphasizes multi-scale features to improve tiny object localization (traffic lights/signs) in dense scenes.",
+      "num_epochs": 50,
+      "patience": 5,
+      "architecture_family": "yolo"
+    }
+  },
+  "hpo_config": null,
+  "hpo_decision": null,
+  "model_selection_decision_evidence": {
+    "decision_type": "model_selection",
+    "decision": {
+      "model": {
+        "model_architecture": "yolov8",
+        "loss_function_box": "giou",
+        "loss_function_cls": "focal",
+        "optimizer": "adamw",
+        "description": "Lightweight YOLOv8 detector tuned for small-object detection in urban street scenes. Balanced speed and accuracy for CPU/Metal on Apple Silicon. Emphasizes multi-scale features to improve tiny object localization (traffic lights/signs) in dense scenes.",
+        "num_epochs": 50,
+        "patience": 5,
+        "architecture_family": "yolo"
+      }
+    },
+    "rationale": "Summary of recommendation and trade-offs\n- Hard constraints considered:\n - Inference memory: target <= 6 GB during runtime on a MacBook Air with M4 and unified memory 16 GB. YOLOv8 (especially small variants) typically stays well within this bound on CPU/Metal, even with multi-scale inputs.\n - Latency: target ~500 ms per frame; YOLOv8 family offers efficient single-shot detection with practical CPU latency on Apple Silicon, making 0.5 s per frame feasible with appropriate input resolutions and batch size settings.\n - Accuracy target: mAP@0.5:0.95 around 0.30 is modest. With the provided diverse data sources (BDD, Open Images, COCO, LVIS, Objects365) and fine-tuning for traffic lights and signs, a well-tuned YOLOv8 can reach or exceed the target on the target classes, given proper augmentation and small-object emphasis.\n- Core data fit:\n - Target classes: traffic light, traffic sign. Available data includes large counts from BDD100K det train/val, Open Images, COCO det subsets, and specialized day/night variants (bdd100k_unit_day2night). This supports learning small-object representations in dense urban contexts and lighting changes.\n - Domain alignment: urban street scenes with small, distant objects. The data mix covers these conditions and should translate well to real-world deployment on a MacBook Air with Metal acceleration.\n- Candidate considerations:\n - YOLOv8 (selected) offers a favorable balance of accuracy, speed, and memory footprint for CPU/Metal on Apple Silicon, and has good tooling/support for on-device export (CoreML/Metal) and quantization if needed.\n - RTDETRHGNetV2_L (alternative) could yield strong small-object performance but is heavier, riskier for the 6 GB RAM ceiling, and less certain to meet the 0.5 s frame-time target on a MacBook Air CPU without aggressive optimization.\n\nIntegrated recommendation and fallback plan\n- Primary choice: yolov8 as the base architecture with a light configuration (e.g., small/medium size, multi-scale input, and appropriate image resolution like 640x640 or 800x800 depending on dataloader). This aligns with the memory/latency budgets and leverages multi-scale features for small-object detection in dense scenes.\n- If latency or memory proves tighter in practice, fallback to a lighter variant within the same family or perform model optimizations (input-res reduction, tiling strategy, pruning/quantization) to maintain accuracy while meeting the constraints.\n- If extremely high small-object accuracy is required after initial training, a secondary evaluation with RTDETRHGNetV2_L could be pursued, but only after confirming that the deployment environment can meet memory and latency budgets (potentially via quantization or smaller input resolutions).\n\nWhat to train and how to tune (practical guidance)\n- Data strategy:\n - Combine traffic-light and traffic-sign annotations from the following sources: bdd_100k_det_train, bdd100k_UNIT_day2night_det_train, bdd_100k_det_val, coco2017_det_train/val, openimages_challenge_2019_det_train/val, objects365_det_val, LVIS_det_train, openimages_challenge_2019_det_train/val.\n - Emphasize small-object sampling and daylight/night variants to improve robustness to lighting and distance.\n- Training and augmentation:\n - Use mosaic/augmentation, multi-scale training, and random upscaling to boost small-object sensitivity.\n - Input resolution: aim for 640x640 to 768x768, balancing tiny object visibility with CPU performance.\n - Losses: use giou for boxes and focal loss for classification to improve hard-negative handling and small-object localization.\n - Optimizer: AdamW with a small weight decay; learning rate schedule with warmup and cosine decay.\n - Regularization: label smoothing and strong data augmentation to reduce overfitting on urban scenes.\n- Inference and deployment:\n - Consider exporting to CoreML/MLCompute-optimized backend for better Metal performance on Apple Silicon.\n - If needed, apply post-training quantization to reduce memory and improve latency with minimal accuracy loss.\n - Validate on a held-out subset of your target scenarios (dense traffic, small distant signs, night/day) to verify mAP targets and frame-time budgets.\n\nRisks and uncertainties\n- Real-world mAP@0.5:0.95 depends on training data distribution and augmentation; under some conditions the target 0.30 may require targeted fine-tuning to traffic-related classes.\n- On-device latency: CPU-only inference on MacBook Air with M4 can vary with input size and background load; plan to profile and adjust input resolution and batch size per frame to stay around 0.5 s.\n- Small-object difficulty: dense scenes and small object sizes increase the risk of missed detections; ensure multi-scale feature fusion and appropriate anchor-free style configuration.\n- Metal acceleration support: while YOLOv8 is broadly supported, real-world performance will depend on the exact PyTorch/Metal integration and any model export steps.\n\nUncertainties\n- Exact on-device latency and peak memory for the final training setup depend on input resolution, batch policy, and the Mac software stack (PyTorch/Metal/CoreML versions). It is advised to profile after conversion to the target runtime.\n- The precise mAP@0.5:0.95 achievable on the traffic-light/traffic-sign subset with the chosen training regime remains to be confirmed with a pilot run.\n\nSummary verdict\n- Primary architecture: yolov8 (selected_candidate_id = yolov8) due to strong small-object detection abilities, favorable CPU/Metal performance on Apple Silicon, reasonable memory footprint, and robust ecosystem for training and deployment.\n- Alternative (if needed later): RTDETRHGNetV2_L as a fallback option for potential gains in small-object accuracy, subject to meeting latency/memory constraints through optimization.\n\nIf you want, I can generate a concrete training patch (Hyperparameters, augmentation schedule, and a minimal DetectionAgentModelSpec) tailored to your environment and the datasets you listed.",
+    "selection_policy": null,
+    "retrieved_facts": [],
+    "evidence_sources": [],
+    "grounded": false,
+    "evidence_backed": false,
+    "match_scope": null,
+    "grounding": {
+      "status": "ungrounded",
+      "fact_count": 0,
+      "support_counts": {},
+      "evidence_coverage": 0.0
+    }
+  },
+  "dataset_selection_decision_evidence": null,
+  "hyperparameter_decision_evidence": null,
+  "dataset_profile": null,
+  "step_history": [
+    "Task Interpretation Completed",
+    "Data Availability Checked",
+    "GraphRAG Model Suggestions: disabled for this run.",
+    "Model Selection Rationale: Summary of recommendation and trade-offs\n- Hard constraints considered:\n - Inference memory: target <= 6 GB during runtime on a MacBook Air with M4 and unified memory 16 GB. YOLOv8 (especially small variants) typically stays well within this bound on CPU/Metal, even with multi-scale inputs.\n - Latency: target ~500 ms per frame; YOLOv8 family offers efficient single-shot detection with practical CPU latency on Apple Silicon, making 0.5 s per frame feasible with appropriate input resolutions and batch size settings.\n - Accuracy target: mAP@0.5:0.95 around 0.30 is modest. With the provided diverse data sources (BDD, Open Images, COCO, LVIS, Objects365) and fine-tuning for traffic lights and signs, a well-tuned YOLOv8 can reach or exceed the target on the target classes, given proper augmentation and small-object emphasis.\n- Core data fit:\n - Target classes: traffic light, traffic sign. Available data includes large counts from BDD100K det train/val, Open Images, COCO det subsets, and specialized day/night variants (bdd100k_unit_day2night). This supports learning small-object representations in dense urban contexts and lighting changes.\n - Domain alignment: urban street scenes with small, distant objects. The data mix covers these conditions and should translate well to real-world deployment on a MacBook Air with Metal acceleration.\n- Candidate considerations:\n - YOLOv8 (selected) offers a favorable balance of accuracy, speed, and memory footprint for CPU/Metal on Apple Silicon, and has good tooling/support for on-device export (CoreML/Metal) and quantization if needed.\n - RTDETRHGNetV2_L (alternative) could yield strong small-object performance but is heavier, riskier for the 6 GB RAM ceiling, and less certain to meet the 0.5 s frame-time target on a MacBook Air CPU without aggressive optimization.\n\nIntegrated recommendation and fallback plan\n- Primary choice: yolov8 as the base architecture with a light configuration (e.g., small/medium size, multi-scale input, and appropriate image resolution like 640x640 or 800x800 depending on dataloader). This aligns with the memory/latency budgets and leverages multi-scale features for small-object detection in dense scenes.\n- If latency or memory proves tighter in practice, fallback to a lighter variant within the same family or perform model optimizations (input-res reduction, tiling strategy, pruning/quantization) to maintain accuracy while meeting the constraints.\n- If extremely high small-object accuracy is required after initial training, a secondary evaluation with RTDETRHGNetV2_L could be pursued, but only after confirming that the deployment environment can meet memory and latency budgets (potentially via quantization or smaller input resolutions).\n\nWhat to train and how to tune (practical guidance)\n- Data strategy:\n - Combine traffic-light and traffic-sign annotations from the following sources: bdd_100k_det_train, bdd100k_UNIT_day2night_det_train, bdd_100k_det_val, coco2017_det_train/val, openimages_challenge_2019_det_train/val, objects365_det_val, LVIS_det_train, openimages_challenge_2019_det_train/val.\n - Emphasize small-object sampling and daylight/night variants to improve robustness to lighting and distance.\n- Training and augmentation:\n - Use mosaic/augmentation, multi-scale training, and random upscaling to boost small-object sensitivity.\n - Input resolution: aim for 640x640 to 768x768, balancing tiny object visibility with CPU performance.\n - Losses: use giou for boxes and focal loss for classification to improve hard-negative handling and small-object localization.\n - Optimizer: AdamW with a small weight decay; learning rate schedule with warmup and cosine decay.\n - Regularization: label smoothing and strong data augmentation to reduce overfitting on urban scenes.\n- Inference and deployment:\n - Consider exporting to CoreML/MLCompute-optimized backend for better Metal performance on Apple Silicon.\n - If needed, apply post-training quantization to reduce memory and improve latency with minimal accuracy loss.\n - Validate on a held-out subset of your target scenarios (dense traffic, small distant signs, night/day) to verify mAP targets and frame-time budgets.\n\nRisks and uncertainties\n- Real-world mAP@0.5:0.95 depends on training data distribution and augmentation; under some conditions the target 0.30 may require targeted fine-tuning to traffic-related classes.\n- On-device latency: CPU-only inference on MacBook Air with M4 can vary with input size and background load; plan to profile and adjust input resolution and batch size per frame to stay around 0.5 s.\n- Small-object difficulty: dense scenes and small object sizes increase the risk of missed detections; ensure multi-scale feature fusion and appropriate anchor-free style configuration.\n- Metal acceleration support: while YOLOv8 is broadly supported, real-world performance will depend on the exact PyTorch/Metal integration and any model export steps.\n\nUncertainties\n- Exact on-device latency and peak memory for the final training setup depend on input resolution, batch policy, and the Mac software stack (PyTorch/Metal/CoreML versions). It is advised to profile after conversion to the target runtime.\n- The precise mAP@0.5:0.95 achievable on the traffic-light/traffic-sign subset with the chosen training regime remains to be confirmed with a pilot run.\n\nSummary verdict\n- Primary architecture: yolov8 (selected_candidate_id = yolov8) due to strong small-object detection abilities, favorable CPU/Metal performance on Apple Silicon, reasonable memory footprint, and robust ecosystem for training and deployment.\n- Alternative (if needed later): RTDETRHGNetV2_L as a fallback option for potential gains in small-object accuracy, subject to meeting latency/memory constraints through optimization.\n\nIf you want, I can generate a concrete training patch (Hyperparameters, augmentation schedule, and a minimal DetectionAgentModelSpec) tailored to your environment and the datasets you listed.",
+    "Model Selection Completed"
+  ],
+  "last_updated": "2026-08-13T11:59:59.377993",
+  "revision": {
+    "active": null,
+    "history": []
+  }
+}

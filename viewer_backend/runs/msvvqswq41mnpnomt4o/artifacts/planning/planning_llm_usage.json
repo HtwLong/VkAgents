@@ -1,0 +1,110 @@
+{
+  "schema_version": 1,
+  "job_id": "msvvqswq41mnpnomt4o",
+  "scope": "planning",
+  "currency": "USD",
+  "totals": {
+    "requests": 7,
+    "input_tokens": 204879,
+    "cached_input_tokens": 71168,
+    "output_tokens": 48327,
+    "reasoning_tokens": 22016,
+    "total_tokens": 253206,
+    "calculated_cost_usd": "0.02637219"
+  },
+  "models": {
+    "gpt-5-nano": {
+      "requests": 4,
+      "input_tokens": 55124,
+      "cached_input_tokens": 0,
+      "output_tokens": 21220,
+      "reasoning_tokens": 0,
+      "total_tokens": 76344,
+      "calculated_cost_usd": "0.01124420"
+    },
+    "gpt-5-nano-2025-08-07": {
+      "requests": 3,
+      "input_tokens": 149755,
+      "cached_input_tokens": 71168,
+      "output_tokens": 27107,
+      "reasoning_tokens": 22016,
+      "total_tokens": 176862,
+      "calculated_cost_usd": "0.01512799"
+    }
+  },
+  "operations": {
+    "completeness_check": {
+      "requests": 1,
+      "input_tokens": 247,
+      "cached_input_tokens": 0,
+      "output_tokens": 849,
+      "reasoning_tokens": 0,
+      "total_tokens": 1096,
+      "calculated_cost_usd": "0.00035195"
+    },
+    "task_interpretation": {
+      "requests": 1,
+      "input_tokens": 3157,
+      "cached_input_tokens": 0,
+      "output_tokens": 7583,
+      "reasoning_tokens": 0,
+      "total_tokens": 10740,
+      "calculated_cost_usd": "0.00319105"
+    },
+    "model_selection": {
+      "requests": 1,
+      "input_tokens": 46451,
+      "cached_input_tokens": 0,
+      "output_tokens": 6506,
+      "reasoning_tokens": 0,
+      "total_tokens": 52957,
+      "calculated_cost_usd": "0.00492495"
+    },
+    "dataset_selection": {
+      "requests": 1,
+      "input_tokens": 5269,
+      "cached_input_tokens": 0,
+      "output_tokens": 6282,
+      "reasoning_tokens": 0,
+      "total_tokens": 11551,
+      "calculated_cost_usd": "0.00277625"
+    },
+    "hpo_optimizer": {
+      "requests": 2,
+      "input_tokens": 144495,
+      "cached_input_tokens": 71168,
+      "output_tokens": 18944,
+      "reasoning_tokens": 14464,
+      "total_tokens": 163439,
+      "calculated_cost_usd": "0.01159979"
+    },
+    "hpo_evaluator": {
+      "requests": 1,
+      "input_tokens": 5260,
+      "cached_input_tokens": 0,
+      "output_tokens": 8163,
+      "reasoning_tokens": 7552,
+      "total_tokens": 13423,
+      "calculated_cost_usd": "0.00352820"
+    }
+  },
+  "pricing": {
+    "gpt-5-nano": {
+      "input_per_million": "0.05",
+      "cached_input_per_million": "0.005",
+      "output_per_million": "0.40",
+      "effective_date": "2026-08-15",
+      "source": "https://developers.openai.com/api/docs/models/gpt-5-nano"
+    },
+    "gpt-5-nano-2025-08-07": {
+      "input_per_million": "0.05",
+      "cached_input_per_million": "0.005",
+      "output_per_million": "0.40",
+      "effective_date": "2026-08-15",
+      "source": "https://developers.openai.com/api/docs/models/gpt-5-nano"
+    }
+  },
+  "usage_notes": [
+    "The installed Agents SDK reports aggregate input tokens without a cached-token breakdown; those calls are calculated at the standard input rate."
+  ]
+}

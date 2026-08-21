@@ -1,0 +1,88 @@
+{
+  "task_type": "detection",
+  "classes": [
+    "car"
+  ],
+  "selected_data": [
+    {
+      "class_name": "car",
+      "sources": [
+        {
+          "dataset_name": "bdd_100k_det_train",
+          "allocations": [
+            {
+              "split": "train",
+              "count": 1800,
+              "assignment_type": "official_split"
+            },
+            {
+              "split": "test",
+              "count": 225,
+              "assignment_type": "derived_from_train"
+            }
+          ]
+        },
+        {
+          "dataset_name": "bdd_100k_det_val",
+          "allocations": [
+            {
+              "split": "validation",
+              "count": 225,
+              "assignment_type": "official_split"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "train_data_ratio": 0.8,
+  "val_data_ratio": 0.1,
+  "test_data_ratio": 0.1,
+  "num_epochs": 40,
+  "patience": 5,
+  "batch_size": 4,
+  "input_size": 640,
+  "track_metric": "val_mAP",
+  "model_name": "yolov8_n",
+  "model_weights": "default",
+  "training_recipe_id": "",
+  "scheduler_name": "linear",
+  "final_learning_rate_factor": 0.1,
+  "data_plan_constraints": {
+    "minimum_unique_pool_images": 0,
+    "preferred_unique_pool_images": 0,
+    "preferred_target_is_strict": false,
+    "group_isolation_keys": []
+  },
+  "warmup_epochs": 3.0,
+  "warmup_momentum": 0.9,
+  "amp": true,
+  "lambda_box": 1.0,
+  "lambda_cls": 1.0,
+  "lambda_dfl": 0.0,
+  "mosaic": 0.0,
+  "mixup": 0.0,
+  "cutmix": 0.0,
+  "copy_paste": 0.0,
+  "degrees": 0.0,
+  "translate": 0.0,
+  "scale": 0.0,
+  "fliplr": 0.0,
+  "hsv_h": 0.0,
+  "hsv_s": 0.0,
+  "hsv_v": 0.0,
+  "close_mosaic": 0,
+  "single_cls": true,
+  "rect": false,
+  "multi_scale": 0.0,
+  "confidence_threshold": 0.25,
+  "nms_iou_threshold": 0.45,
+  "max_detections": 300,
+  "workers": 4,
+  "seed": 42,
+  "freeze": 0,
+  "optimizer_name": "sgd",
+  "learning_rate": 0.001,
+  "weight_decay": 0.0005,
+  "momentum": 0.9
+}

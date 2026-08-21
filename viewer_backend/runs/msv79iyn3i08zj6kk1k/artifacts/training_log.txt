@@ -1,0 +1,75 @@
+2026-08-16 04:50:13,305 INFO Logging initialized
+2026-08-16 04:50:14,557 INFO Configured precision=fp32; effective precision=fp32 on cuda
+2026-08-16 04:50:14,559 INFO Starting training
+2026-08-16 04:50:57,688 INFO Epoch 01/12 train_loss=2.1958 train_acc=0.2928 val_loss=2.1234 val_acc=0.3760 macro_f1=0.2866 micro_f1=0.3760 val_acc=0.3760 elapsed=43.1s
+2026-08-16 04:50:57,729 INFO New best checkpoint on val_acc=0.3760 at epoch 1
+2026-08-16 04:51:38,054 INFO Epoch 02/12 train_loss=1.8788 train_acc=0.4108 val_loss=1.7299 val_acc=0.4960 macro_f1=0.4701 micro_f1=0.4960 val_acc=0.4960 elapsed=40.3s
+2026-08-16 04:51:38,098 INFO New best checkpoint on val_acc=0.4960 at epoch 2
+2026-08-16 04:51:38,098 INFO Unfroze mobilenet_v2 backbone at epoch 3
+2026-08-16 04:52:48,841 INFO Epoch 03/12 train_loss=1.9779 train_acc=0.3338 val_loss=1.7923 val_acc=0.3920 macro_f1=0.3694 micro_f1=0.3920 val_acc=0.3920 elapsed=70.7s
+2026-08-16 04:54:03,390 INFO Epoch 04/12 train_loss=1.4828 train_acc=0.5241 val_loss=1.9906 val_acc=0.3047 macro_f1=0.2959 micro_f1=0.3047 val_acc=0.3047 elapsed=74.5s
+2026-08-16 04:55:19,113 INFO Epoch 05/12 train_loss=1.1077 train_acc=0.6787 val_loss=2.1179 val_acc=0.2267 macro_f1=0.2002 micro_f1=0.2267 val_acc=0.2267 elapsed=75.7s
+2026-08-16 04:56:32,367 INFO Epoch 06/12 train_loss=0.8347 train_acc=0.7778 val_loss=2.0446 val_acc=0.2540 macro_f1=0.1755 micro_f1=0.2540 val_acc=0.2540 elapsed=73.3s
+2026-08-16 04:57:47,317 INFO Epoch 07/12 train_loss=0.6600 train_acc=0.8323 val_loss=1.8489 val_acc=0.2907 macro_f1=0.2735 micro_f1=0.2907 val_acc=0.2907 elapsed=74.9s
+2026-08-16 04:58:58,111 INFO Epoch 08/12 train_loss=0.5310 train_acc=0.8704 val_loss=2.2137 val_acc=0.1793 macro_f1=0.1442 micro_f1=0.1793 val_acc=0.1793 elapsed=70.8s
+2026-08-16 05:00:09,281 INFO Epoch 09/12 train_loss=0.4304 train_acc=0.8962 val_loss=2.1015 val_acc=0.1807 macro_f1=0.1559 micro_f1=0.1807 val_acc=0.1807 elapsed=71.2s
+2026-08-16 05:01:19,976 INFO Epoch 10/12 train_loss=0.3862 train_acc=0.9115 val_loss=2.3232 val_acc=0.1273 macro_f1=0.1136 micro_f1=0.1273 val_acc=0.1273 elapsed=70.7s
+2026-08-16 05:02:31,091 INFO Epoch 11/12 train_loss=0.3302 train_acc=0.9247 val_loss=2.3946 val_acc=0.2007 macro_f1=0.1857 micro_f1=0.2007 val_acc=0.2007 elapsed=71.1s
+2026-08-16 05:03:49,253 INFO Epoch 12/12 train_loss=0.2881 train_acc=0.9330 val_loss=2.2306 val_acc=0.2527 macro_f1=0.2200 micro_f1=0.2527 val_acc=0.2527 elapsed=78.2s
+2026-08-16 05:09:28,134 INFO HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2026-08-16 05:09:33,008 INFO HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2026-08-16 05:09:34,123 INFO HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2026-08-16 05:10:03,186 INFO HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2026-08-16 05:10:04,756 INFO HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2026-08-16 05:10:31,362 INFO HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2026-08-16 05:10:35,175 INFO HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2026-08-16 05:11:39,040 INFO HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2026-08-16 05:11:40,658 INFO HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2026-08-16 05:12:34,110 INFO HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-16 05:13:18,645 INFO HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-16 05:14:16,507 INFO HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-16 05:30:34,173 INFO HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2026-08-16 05:30:35,614 INFO HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2026-08-16 05:30:39,852 INFO HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2026-08-16 05:31:08,713 INFO HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2026-08-16 05:31:10,350 INFO HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2026-08-16 05:31:15,675 INFO HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2026-08-16 05:31:49,463 INFO HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2026-08-16 05:31:51,754 INFO HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2026-08-16 05:32:27,713 INFO HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2026-08-16 05:32:32,556 INFO HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2026-08-16 05:33:33,064 INFO HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2026-08-16 05:33:38,102 INFO HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2026-08-16 05:35:03,656 INFO HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-16 05:35:59,435 INFO HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-16 05:36:49,713 INFO HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-16 06:05:58,980 INFO HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2026-08-16 06:06:01,996 INFO HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2026-08-16 06:06:05,019 INFO HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2026-08-16 06:06:43,329 INFO HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2026-08-16 06:06:45,464 INFO HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2026-08-16 06:07:15,989 INFO HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2026-08-16 06:07:20,877 INFO HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2026-08-16 06:07:41,713 INFO HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2026-08-16 06:07:46,925 INFO HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2026-08-16 06:08:37,287 INFO HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-16 06:09:08,880 INFO HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-16 06:09:33,681 INFO HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-16 06:10:00,673 INFO HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-16 06:10:12,640 INFO HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2026-08-16 06:10:15,888 INFO HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2026-08-16 06:10:17,994 INFO HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2026-08-16 06:10:51,643 INFO HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2026-08-16 06:10:53,644 INFO HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2026-08-16 06:11:33,146 INFO HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2026-08-16 06:11:34,068 INFO HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2026-08-16 06:12:27,640 INFO HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2026-08-16 06:12:29,546 INFO HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2026-08-16 06:12:52,612 INFO HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2026-08-16 06:12:54,945 INFO HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2026-08-16 06:13:46,723 INFO HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-16 06:14:33,752 INFO HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-16 06:15:10,996 INFO HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-16 06:17:36,695 INFO HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-16 06:18:13,981 INFO HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2026-08-16 06:18:41,231 INFO HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"

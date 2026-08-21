@@ -1,0 +1,16 @@
+[
+  {
+    "timestamp": "2026-08-16T14:13:19.714026+00:00",
+    "job_id": "msvvqswq41mnpnomt4o",
+    "endpoint": "/api/v1/planning/choose-hyperparameters",
+    "status_code": 504,
+    "error_type": "HTTPException",
+    "error": {
+      "message": "A hyperparameter model call timed out.",
+      "phase": "optimizer",
+      "round": 1,
+      "timeout_seconds": 180,
+      "reason": "The individual optimizer/evaluator request did not return in time; earlier successful phases are not evidence of a general API outage."
+    }
+  }
+]

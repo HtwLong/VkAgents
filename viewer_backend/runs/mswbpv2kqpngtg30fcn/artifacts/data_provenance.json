@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "job_id": "mswbpv2kqpngtg30fcn",
+  "task": "detection",
+  "assignment_fingerprint": "ccad1d7a3f64ea112a99733290ab0588362cf4ea6b14ce1cde90bbe76ca13c89",
+  "manifest_sha256": "88598f939538205d15a4abddf1f1f910cf0ed076da492d23af5d9cea91b1241d",
+  "official_counts": {
+    "train": 5489,
+    "validation": 586,
+    "test": 0
+  },
+  "derived_counts": {
+    "train": 0,
+    "validation": 0,
+    "test": 675
+  },
+  "stages": {
+    "training": {
+      "splits": {
+        "train": {
+          "path": "C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\runs\\mswbpv2kqpngtg30fcn\\data\\train_annotations.json",
+          "sha256": "0dc97c7e1db0e3f6bc98c6782e01f5c8d2aad7c1e243196008c2938018f3c6ef",
+          "sample_count": 5489
+        },
+        "validation": {
+          "path": "C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\runs\\mswbpv2kqpngtg30fcn\\data\\val_annotations.json",
+          "sha256": "946736beb35cb07cafe449d33e07a2946ccc6d4622ff59cc7a79c601e88c2736",
+          "sample_count": 586
+        }
+      }
+    },
+    "evaluation": {
+      "splits": {
+        "test": {
+          "path": "C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\runs\\mswbpv2kqpngtg30fcn\\data\\test_annotations.json",
+          "sha256": "9d2ede8a9f90d407913c9ab373589b7d841d7c2a3670143f1718db35f25822c0",
+          "sample_count": 675
+        }
+      }
+    }
+  }
+}

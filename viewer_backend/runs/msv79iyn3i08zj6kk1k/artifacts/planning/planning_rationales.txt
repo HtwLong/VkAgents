@@ -1,0 +1,1062 @@
+
+================================================================================
+STEP: Hyperparameter Negotiation (Round 1)
+TIMESTAMP: 2026-08-16 04:46:54
+--------------------------------------------------------------------------------
+INPUT CONTEXT / CONSTRAINTS:
+Constraints:
+{"task":"classification","application_domain":null,"user_query":"I need a lightweight image classification model that recognizes handwritten numbers. The model will run on a CPU-only system with 4 GB of RAM. It should aim for accuracy of at least 95%, use less than approximately 500 MB of runtime memory, and process an image within 200 milliseconds.","use_case_description":null,"questions_list":null,"classes":["0","1","2","3","4","5","6","7","8","9"],"available_data":[{"class_name":"0","sources":[{"dataset_name":"mnist_cls_train","count":5923},{"dataset_name":"mnist_cls_test","count":980}]},{"class_name":"1","sources":[{"dataset_name":"mnist_cls_train","count":6742},{"dataset_name":"mnist_cls_test","count":1135}]},{"class_name":"2","sources":[{"dataset_name":"mnist_cls_train","count":5958},{"dataset_name":"mnist_cls_test","count":1032}]},{"class_name":"3","sources":[{"dataset_name":"mnist_cls_train","count":6131},{"dataset_name":"mnist_cls_test","count":1010}]},{"class_name":"4","sources":[{"dataset_name":"mnist_cls_train","count":5842},{"dataset_name":"mnist_cls_test","count":982}]},{"class_name":"5","sources":[{"dataset_name":"mnist_cls_train","count":5421},{"dataset_name":"mnist_cls_test","count":892}]},{"class_name":"6","sources":[{"dataset_name":"mnist_cls_train","count":5918},{"dataset_name":"mnist_cls_test","count":958}]},{"class_name":"7","sources":[{"dataset_name":"mnist_cls_train","count":6265},{"dataset_name":"mnist_cls_test","count":1028}]},{"class_name":"8","sources":[{"dataset_name":"mnist_cls_train","count":5851},{"dataset_name":"mnist_cls_test","count":974}]},{"class_name":"9","sources":[{"dataset_name":"mnist_cls_train","count":5949},{"dataset_name":"mnist_cls_test","count":1009}]}],"selected_data":[{"class_name":"0","sources":[{"dataset_name":"mnist_cls_train","allocations":[{"split":"train","count":1200,"assignment_type":"official_split"},{"split":"validation","count":150,"assignment_type":"derived_from_train"}]},{"dataset_name":"mnist_cls_test","allocations":[{"split":"test","count":150,"assignment_type":"official_split"}]}]},{"class_name":"1","sources":[{"dataset_name":"mnist_cls_train","allocations":[{"split":"train","count":1200,"assignment_type":"official_split"},{"split":"validation","count":150,"assignment_type":"derived_from_train"}]},{"dataset_name":"mnist_cls_test","allocations":[{"split":"test","count":150,"assignment_type":"official_split"}]}]},{"class_name":"2","sources":[{"dataset_name":"mnist_cls_train","allocations":[{"split":"train","count":1200,"assignment_type":"official_split"},{"split":"validation","count":150,"assignment_type":"derived_from_train"}]},{"dataset_name":"mnist_cls_test","allocations":[{"split":"test","count":150,"assignment_type":"official_split"}]}]},{"class_name":"3","sources":[{"dataset_name":"mnist_cls_train","allocations":[{"split":"train","count":1200,"assignment_type":"official_split"},{"split":"validation","count":150,"assignment_type":"derived_from_train"}]},{"dataset_name":"mnist_cls_test","allocations":[{"split":"test","count":150,"assignment_type":"official_split"}]}]},{"class_name":"4","sources":[{"dataset_name":"mnist_cls_train","allocations":[{"split":"train","count":1200,"assignment_type":"official_split"},{"split":"validation","count":150,"assignment_type":"derived_from_train"}]},{"dataset_name":"mnist_cls_test","allocations":[{"split":"test","count":150,"assignment_type":"official_split"}]}]},{"class_name":"5","sources":[{"dataset_name":"mnist_cls_train","allocations":[{"split":"train","count":1200,"assignment_type":"official_split"},{"split":"validation","count":150,"assignment_type":"derived_from_train"}]},{"dataset_name":"mnist_cls_test","allocations":[{"split":"test","count":150,"assignment_type":"official_split"}]}]},{"class_name":"6","sources":[{"dataset_name":"mnist_cls_train","allocations":[{"split":"train","count":1200,"assignment_type":"official_split"},{"split":"validation","count":150,"assignment_type":"derived_from_train"}]},{"dataset_name":"mnist_cls_test","allocations":[{"split":"test","count":150,"assignment_type":"official_split"}]}]},{"class_name":"7","sources":[{"dataset_name":"mnist_cls_train","allocations":[{"split":"train","count":1200,"assignment_type":"official_split"},{"split":"validation","count":150,"assignment_type":"derived_from_train"}]},{"dataset_name":"mnist_cls_test","allocations":[{"split":"test","count":150,"assignment_type":"official_split"}]}]},{"class_name":"8","sources":[{"dataset_name":"mnist_cls_train","allocations":[{"split":"train","count":1200,"assignment_type":"official_split"},{"split":"validation","count":150,"assignment_type":"derived_from_train"}]},{"dataset_name":"mnist_cls_test","allocations":[{"split":"test","count":150,"assignment_type":"official_split"}]}]},{"class_name":"9","sources":[{"dataset_name":"mnist_cls_train","allocations":[{"split":"train","count":1200,"assignment_type":"official_split"},{"split":"validation","count":150,"assignment_type":"derived_from_train"}]},{"dataset_name":"mnist_cls_test","allocations":[{"split":"test","count":150,"assignment_type":"official_split"}]}]}],"performance_requirements":{"primary_metric":"accuracy","target_value":0.95,"target_is_hard":true,"latency_category":"Low","accuracy_category":"High","other_constraints":[]},"constraint_strengths":{"accuracy":"hard","latency":"soft","runtime_memory":"hard","model_size":"unspecified","training_time":"unspecified"},"robustness_requirements":{"lighting":[],"weather":[],"object_scale":[],"scene_density":[],"motion_blur":false,"occlusion":false,"viewpoint":[],"color_semantics":false,"horizontal_flip_safe":null,"text_or_symbols_present":false},"deployment_constraints":{"memory_category":"Low","max_runtime_memory_mb":500.0,"max_model_size_mb":null,"max_parameters_m":null,"max_cpu_latency_ms":200.0,"hard_limits":["max_cpu_latency_ms"]},"available_hardware":{"hardware_category":"ConsumerCPU","cpu_cores":null,"gpu_type":null,"gpu_count":null,"vram_gb":null,"ram_gb":4.0,"storage_gb":null,"details":null},"model_requirements":null,"augmentation":null,"preprocessing":null,"num_qa_pairs":null,"training_hardware":{"profile_id":"rtx2060_6gb_ryzen5600x_16gb","accelerator":"cuda","hardware_category":"ConsumerGPU","gpu_type":"ASUS Dual NVIDIA GeForce RTX 2060 EVO 6GB","gpu_count":1,"vram_gb":6.0,"ram_gb":16.0,"unified_memory":false,"training_memory_budget_gb":5.0,"max_batch_size":4,"workers":4,"supports_amp":true},"class_expansions":{},"model_selection_graph_context":null,"dataset_selection_graph_context":null,"hyperparameter_graph_context":null,"use_graphrag":false,"selected_model_info":{"model":{"model_architecture":"mobilenet_v2","description":"Lightweight inverted residual CNN optimized for CPU inference. Small footprint, fast runtime, and strong baseline accuracy on small inputs such as 28x28 MNIST digits. Suited for CPU-only deployment with a 500 MB runtime memory limit.","architecture_family":"mobilenet"}},"hpo_config":null,"hpo_decision":null,"model_selection_decision_evidence":{"decision_type":"model_selection","decision":{"model":{"model_architecture":"mobilenet_v2","description":"Lightweight inverted residual CNN optimized for CPU inference. Small footprint, fast runtime, and strong baseline accuracy on small inputs such as 28x28 MNIST digits. Suited for CPU-only deployment with a 500 MB runtime memory limit.","architecture_family":"mobilenet"}},"rationale":"The task is MNIST-style handwritten digit classification on a CPU-only system with a strict runtime memory cap and latency target. Mobilenet_v2 offers the best practical balance among common lightweight architectures: very low memory usage, fast CPU inference, and sufficient capacity for MNIST with proper training. ResNet-50, while capable, is heavier and may approach or exceed latency/memory targets on typical CPUs; it remains a viable fallback if a modestly higher accuracy or specific transfer-learning setup is required. Other candidates (e.g., mobilenet_v3_small, efficientnet_b0) are also feasible, but mobilenet_v2 generally provides a robust baseline with simpler deployment. If latency becomes an issue, consider a smaller variant or quantization.","selection_policy":null,"retrieved_facts":[],"evidence_sources":[],"grounded":false,"evidence_backed":false,"match_scope":null,"grounding":{"status":"ungrounded","fact_count":0,"support_counts":{},"evidence_coverage":0},"evaluated_candidates":[{"candidate_id":"mobilenet_v2","advantages":["Very small runtime memory footprint","Fast CPU inference on common hardware","Strong baseline accuracy after MNIST-style fine-tuning","Extensive framework support and ease of deployment"],"risks":["May offer limited gains on highly complex or non-MNIST-like data without additional tuning"],"constraint_status":"feasible"},{"candidate_id":"resnet50","advantages":["Higher capacity which can help with potential data variations or augmentations","Widely supported with straightforward transfer learning"],"risks":["Higher latency on CPU and larger memory footprint than mobilenet_v2","Potentially unnecessary complexity for MNIST-scale tasks"],"constraint_status":"feasible"}],"uncertainties":["Exact inference latency on the target CPU depends on the runtime library, compilation, and processor model.","Actual MNIST accuracy achievable depends on the training protocol (epochs, augmentation, optimization) and pre-processing steps.","Overheads from the deployment stack (CPU scheduling, Python interpreter, data I/O) can affect real-time performance."],"comparison_warnings":[],"selection_confidence":"standard"},"dataset_selection_decision_evidence":{"decision_type":"dataset_selection","decision":[{"class_name":"0","sources":[{"dataset_name":"mnist_cls_train","allocations":[{"split":"train","count":1200,"assignment_type":"official_split"},{"split":"validation","count":150,"assignment_type":"derived_from_train"}]},{"dataset_name":"mnist_cls_test","allocations":[{"split":"test","count":150,"assignment_type":"official_split"}]}]},{"class_name":"1","sources":[{"dataset_name":"mnist_cls_train","allocations":[{"split":"train","count":1200,"assignment_type":"official_split"},{"split":"validation","count":150,"assignment_type":"derived_from_train"}]},{"dataset_name":"mnist_cls_test","allocations":[{"split":"test","count":150,"assignment_type":"official_split"}]}]},{"class_name":"2","sources":[{"dataset_name":"mnist_cls_train","allocations":[{"split":"train","count":1200,"assignment_type":"official_split"},{"split":"validation","count":150,"assignment_type":"derived_from_train"}]},{"dataset_name":"mnist_cls_test","allocations":[{"split":"test","count":150,"assignment_type":"official_split"}]}]},{"class_name":"3","sources":[{"dataset_name":"mnist_cls_train","allocations":[{"split":"train","count":1200,"assignment_type":"official_split"},{"split":"validation","count":150,"assignment_type":"derived_from_train"}]},{"dataset_name":"mnist_cls_test","allocations":[{"split":"test","count":150,"assignment_type":"official_split"}]}]},{"class_name":"4","sources":[{"dataset_name":"mnist_cls_train","allocations":[{"split":"train","count":1200,"assignment_type":"official_split"},{"split":"validation","count":150,"assignment_type":"derived_from_train"}]},{"dataset_name":"mnist_cls_test","allocations":[{"split":"test","count":150,"assignment_type":"official_split"}]}]},{"class_name":"5","sources":[{"dataset_name":"mnist_cls_train","allocations":[{"split":"train","count":1200,"assignment_type":"official_split"},{"split":"validation","count":150,"assignment_type":"derived_from_train"}]},{"dataset_name":"mnist_cls_test","allocations":[{"split":"test","count":150,"assignment_type":"official_split"}]}]},{"class_name":"6","sources":[{"dataset_name":"mnist_cls_train","allocations":[{"split":"train","count":1200,"assignment_type":"official_split"},{"split":"validation","count":150,"assignment_type":"derived_from_train"}]},{"dataset_name":"mnist_cls_test","allocations":[{"split":"test","count":150,"assignment_type":"official_split"}]}]},{"class_name":"7","sources":[{"dataset_name":"mnist_cls_train","allocations":[{"split":"train","count":1200,"assignment_type":"official_split"},{"split":"validation","count":150,"assignment_type":"derived_from_train"}]},{"dataset_name":"mnist_cls_test","allocations":[{"split":"test","count":150,"assignment_type":"official_split"}]}]},{"class_name":"8","sources":[{"dataset_name":"mnist_cls_train","allocations":[{"split":"train","count":1200,"assignment_type":"official_split"},{"split":"validation","count":150,"assignment_type":"derived_from_train"}]},{"dataset_name":"mnist_cls_test","allocations":[{"split":"test","count":150,"assignment_type":"official_split"}]}]},{"class_name":"9","sources":[{"dataset_name":"mnist_cls_train","allocations":[{"split":"train","count":1200,"assignment_type":"official_split"},{"split":"validation","count":150,"assignment_type":"derived_from_train"}]},{"dataset_name":"mnist_cls_test","allocations":[{"split":"test","count":150,"assignment_type":"official_split"}]}]}],"rationale":"Diagnosis and plan: For handwritten digit classification with the given constraints, MNIST training splits provide ample per-class coverage and are the canonical source for learning digits in grayscale. Allowed_sources_by_class map every digit to mnist_cls_train (and mnist_cls_test for evaluation). Since the target_images_per_class is 1500, we select 1500 training samples per class from mnist_cls_train as the primary pool. This yields a balanced, domain-consistent, and compact dataset suitable for CPU inference on a 4 GB RAM machine when paired with a lightweight model like MobileNetV2. We do not include mnist_cls_test in the training pool per the official-splits guidance. Per-class pool size: 1500 images for digits 0–9, total primary pool 15,000 images. Approximate total download size (raw digits): about 15,000 images × 28 × 28 × 1 byte ≈ 12 MB for image data, plus labels and overhead, typically under 15–25 MB in practice. This size comfortably fits the 500 MB runtime memory budget and aligns with the requirement to process images efficiently on CPU. The default download budget does not appear to constrain this choice since 15k MNIST train samples are well within typical provisioning expectations. If higher diversity or robustness were needed, one could consider careful domain-generalization augmentation or a small supplementary source, but given the strict per-class, domain-consistent constraint and the performance target, sticking to the mnist_train pool provides a clean, reliable baseline.","retrieved_facts":[],"evidence_sources":[],"grounded":false,"evidence_backed":false,"grounding":{"status":"ungrounded","fact_count":0,"support_counts":{},"evidence_coverage":0},"mode":"llm_validated","correctness_source":"local_registry","graphrag_requested":false,"graphrag_used":false,"guidance_source":"local_registry","validation_findings":[],"dataset_identifier_normalizations":[],"fallback_validation_findings":[],"proposed_selection":[{"class_name":"0","sources":[{"dataset_name":"mnist_cls_train","count":1500}]},{"class_name":"1","sources":[{"dataset_name":"mnist_cls_train","count":1500}]},{"class_name":"2","sources":[{"dataset_name":"mnist_cls_train","count":1500}]},{"class_name":"3","sources":[{"dataset_name":"mnist_cls_train","count":1500}]},{"class_name":"4","sources":[{"dataset_name":"mnist_cls_train","count":1500}]},{"class_name":"5","sources":[{"dataset_name":"mnist_cls_train","count":1500}]},{"class_name":"6","sources":[{"dataset_name":"mnist_cls_train","count":1500}]},{"class_name":"7","sources":[{"dataset_name":"mnist_cls_train","count":1500}]},{"class_name":"8","sources":[{"dataset_name":"mnist_cls_train","count":1500}]},{"class_name":"9","sources":[{"dataset_name":"mnist_cls_train","count":1500}]}],"fallback_selection":null,"dropped_inferred_classes":[],"eligible_dataset_ids":["mnist_cls_test","mnist_cls_train"],"selected_dataset_ids":["mnist_cls_test","mnist_cls_train"],"dataset_profile":{"total_selected_images":15000,"minimum_images_per_class":1500,"maximum_images_per_class":1500,"class_balance_ratio":1,"number_of_sources":2,"domains":["digits","grayscale"],"multi_domain":false,"characteristics":[],"characteristic_support":{},"target_unique_images":15000,"verified_unique_images":null,"minimum_images_by_class":{"0":1500,"1":1500,"2":1500,"3":1500,"4":1500,"5":1500,"6":1500,"7":1500,"8":1500,"9":1500},"verified_images_by_class":{},"small_object_fraction":null,"median_short_side_px_at_640":null,"fraction_below_8px_at_640":null,"planned_counts":{"train":12000,"validation":1500,"test":1500},"official_counts":{"train":12000,"validation":0,"test":1500},"derived_counts":{"train":0,"validation":1500,"test":0}},"split_construction_summary":{"strategy":"source_stratified_primary_holdouts","multi_family_policy":"derive_holdouts_from_sufficiently_represented_training_sources","single_family_policy":"prefer_compatible_official_holdouts_and_derive_missing_holdouts","total":15000,"counts":{"train":12000,"validation":1500,"test":1500},"ratios":{"train":0.8,"validation":0.1,"test":0.1},"classes":[{"class_name":"0","total":1500,"counts":{"train":1200,"validation":150,"test":150},"ratios":{"train":0.8,"validation":0.1,"test":0.1},"families_by_split":{"train":["mnist"],"validation":["mnist"],"test":["mnist"]},"sources":[{"dataset_name":"mnist_cls_train","family":"mnist","counts":{"train":1200,"validation":150,"test":0}},{"dataset_name":"mnist_cls_test","family":"mnist","counts":{"train":0,"validation":0,"test":150}}]},{"class_name":"1","total":1500,"counts":{"train":1200,"validation":150,"test":150},"ratios":{"train":0.8,"validation":0.1,"test":0.1},"families_by_split":{"train":["mnist"],"validation":["mnist"],"test":["mnist"]},"sources":[{"dataset_name":"mnist_cls_train","family":"mnist","counts":{"train":1200,"validation":150,"test":0}},{"dataset_name":"mnist_cls_test","family":"mnist","counts":{"train":0,"validation":0,"test":150}}]},{"class_name":"2","total":1500,"counts":{"train":1200,"validation":150,"test":150},"ratios":{"train":0.8,"validation":0.1,"test":0.1},"families_by_split":{"train":["mnist"],"validation":["mnist"],"test":["mnist"]},"sources":[{"dataset_name":"mnist_cls_train","family":"mnist","counts":{"train":1200,"validation":150,"test":0}},{"dataset_name":"mnist_cls_test","family":"mnist","counts":{"train":0,"validation":0,"test":150}}]},{"class_name":"3","total":1500,"counts":{"train":1200,"validation":150,"test":150},"ratios":{"train":0.8,"validation":0.1,"test":0.1},"families_by_split":{"train":["mnist"],"validation":["mnist"],"test":["mnist"]},"sources":[{"dataset_name":"mnist_cls_train","family":"mnist","counts":{"train":1200,"validation":150,"test":0}},{"dataset_name":"mnist_cls_test","family":"mnist","counts":{"train":0,"validation":0,"test":150}}]},{"class_name":"4","total":1500,"counts":{"train":1200,"validation":150,"test":150},"ratios":{"train":0.8,"validation":0.1,"test":0.1},"families_by_split":{"train":["mnist"],"validation":["mnist"],"test":["mnist"]},"sources":[{"dataset_name":"mnist_cls_train","family":"mnist","counts":{"train":1200,"validation":150,"test":0}},{"dataset_name":"mnist_cls_test","family":"mnist","counts":{"train":0,"validation":0,"test":150}}]},{"class_name":"5","total":1500,"counts":{"train":1200,"validation":150,"test":150},"ratios":{"train":0.8,"validation":0.1,"test":0.1},"families_by_split":{"train":["mnist"],"validation":["mnist"],"test":["mnist"]},"sources":[{"dataset_name":"mnist_cls_train","family":"mnist","counts":{"train":1200,"validation":150,"test":0}},{"dataset_name":"mnist_cls_test","family":"mnist","counts":{"train":0,"validation":0,"test":150}}]},{"class_name":"6","total":1500,"counts":{"train":1200,"validation":150,"test":150},"ratios":{"train":0.8,"validation":0.1,"test":0.1},"families_by_split":{"train":["mnist"],"validation":["mnist"],"test":["mnist"]},"sources":[{"dataset_name":"mnist_cls_train","family":"mnist","counts":{"train":1200,"validation":150,"test":0}},{"dataset_name":"mnist_cls_test","family":"mnist","counts":{"train":0,"validation":0,"test":150}}]},{"class_name":"7","total":1500,"counts":{"train":1200,"validation":150,"test":150},"ratios":{"train":0.8,"validation":0.1,"test":0.1},"families_by_split":{"train":["mnist"],"validation":["mnist"],"test":["mnist"]},"sources":[{"dataset_name":"mnist_cls_train","family":"mnist","counts":{"train":1200,"validation":150,"test":0}},{"dataset_name":"mnist_cls_test","family":"mnist","counts":{"train":0,"validation":0,"test":150}}]},{"class_name":"8","total":1500,"counts":{"train":1200,"validation":150,"test":150},"ratios":{"train":0.8,"validation":0.1,"test":0.1},"families_by_split":{"train":["mnist"],"validation":["mnist"],"test":["mnist"]},"sources":[{"dataset_name":"mnist_cls_train","family":"mnist","counts":{"train":1200,"validation":150,"test":0}},{"dataset_name":"mnist_cls_test","family":"mnist","counts":{"train":0,"validation":0,"test":150}}]},{"class_name":"9","total":1500,"counts":{"train":1200,"validation":150,"test":150},"ratios":{"train":0.8,"validation":0.1,"test":0.1},"families_by_split":{"train":["mnist"],"validation":["mnist"],"test":["mnist"]},"sources":[{"dataset_name":"mnist_cls_train","family":"mnist","counts":{"train":1200,"validation":150,"test":0}},{"dataset_name":"mnist_cls_test","family":"mnist","counts":{"train":0,"validation":0,"test":150}}]}],"warnings":[]},"source_selection_rationale":"Diagnosis and plan: For handwritten digit classification with the given constraints, MNIST training splits provide ample per-class coverage and are the canonical source for learning digits in grayscale. Allowed_sources_by_class map every digit to mnist_cls_train (and mnist_cls_test for evaluation). Since the target_images_per_class is 1500, we select 1500 training samples per class from mnist_cls_train as the primary pool. This yields a balanced, domain-consistent, and compact dataset suitable for CPU inference on a 4 GB RAM machine when paired with a lightweight model like MobileNetV2. We do not include mnist_cls_test in the training pool per the official-splits guidance. Per-class pool size: 1500 images for digits 0–9, total primary pool 15,000 images. Approximate total download size (raw digits): about 15,000 images × 28 × 28 × 1 byte ≈ 12 MB for image data, plus labels and overhead, typically under 15–25 MB in practice. This size comfortably fits the 500 MB runtime memory budget and aligns with the requirement to process images efficiently on CPU. The default download budget does not appear to constrain this choice since 15k MNIST train samples are well within typical provisioning expectations. If higher diversity or robustness were needed, one could consider careful domain-generalization augmentation or a small supplementary source, but given the strict per-class, domain-consistent constraint and the performance target, sticking to the mnist_train pool provides a clean, reliable baseline.","deployment_coverage_warnings":[{"code":"DEPLOYMENT_COVERAGE_UNVERIFIED","severity":"warning","dimensions":["lighting"],"reason":"The split is source-stratified, but the available sample metadata does not verify coverage of these requested deployment characteristics."}],"data_selection_policy":{"policy_ids":[],"target_images_per_class":1500,"min_mixed_source_count":null,"min_mixed_source_share":null,"reject_unpaired_original_derived_mix":false,"requested_robustness_dimensions":["lighting"]},"assignments_authoritative":true,"split_policy":{"official_splits_preserved":true,"missing_holdouts":"derived_from_train","derived_holdout_sizing":"adaptive_by_selected_training_pool","derived_holdouts_source_stratified":true,"multi_family_primary_holdouts":"derived_from_sufficiently_represented_training_sources","single_family_primary_holdouts":"prefer_compatible_official_splits","official_holdouts_require_selected_training_family":true,"classification_default_pool_per_class":1500,"classification_max_pool_per_class":10000,"classification_max_selected_images":50000,"detection_default_pool_per_class":1000,"detection_medium_high_pool_per_class":1500,"detection_recommended_pool_per_class":null,"detection_sizing_recommendation":null,"selection_target_images_per_class":1500,"detection_max_pool_per_class":10000,"detection_max_selected_image_allocations":50000,"detection_max_instances_per_class":null,"detection_instance_limit_enforced":false,"detection_shared_backbone_required_when_available":true,"detection_shared_backbone_min_available_images":50,"detection_shared_backbone_min_share":0.25,"detection_shared_backbone_target_images":500,"explicit_images_per_class":null,"test_used_for_model_selection":false}},"hyperparameter_decision_evidence":null,"dataset_profile":{"total_selected_images":15000,"minimum_images_per_class":1500,"maximum_images_per_class":1500,"class_balance_ratio":1.0,"number_of_sources":2,"domains":["digits","grayscale"],"multi_domain":false,"characteristics":[],"characteristic_support":{},"target_unique_images":15000,"verified_unique_images":null,"minimum_images_by_class":{"0":1500,"1":1500,"2":1500,"3":1500,"4":1500,"5":1500,"6":1500,"7":1500,"8":1500,"9":1500},"verified_images_by_class":{},"small_object_fraction":null,"median_short_side_px_at_640":null,"fraction_below_8px_at_640":null,"planned_counts":{"train":12000,"validation":1500,"test":1500},"official_counts":{"train":12000,"validation":0,"test":1500},"derived_counts":{"train":0,"validation":1500,"test":0}},"step_history":["Task Interpretation Completed","Data Availability Checked","GraphRAG Model Suggestions: disabled for this run.","Model Selection Rationale: The task is MNIST-style handwritten digit classification on a CPU-only system with a strict runtime memory cap and latency target. Mobilenet_v2 offers the best practical balance among common lightweight architectures: very low memory usage, fast CPU inference, and sufficient capacity for MNIST with proper training. ResNet-50, while capable, is heavier and may approach or exceed latency/memory targets on typical CPUs; it remains a viable fallback if a modestly higher accuracy or specific transfer-learning setup is required. Other candidates (e.g., mobilenet_v3_small, efficientnet_b0) are also feasible, but mobilenet_v2 generally provides a robust baseline with simpler deployment. If latency becomes an issue, consider a smaller variant or quantization.","Model Selection Completed","Data Selection Rationale: Diagnosis and plan: For handwritten digit classification with the given constraints, MNIST training splits provide ample per-class coverage and are the canonical source for learning digits in grayscale. Allowed_sources_by_class map every digit to mnist_cls_train (and mnist_cls_test for evaluation). Since the target_images_per_class is 1500, we select 1500 training samples per class from mnist_cls_train as the primary pool. This yields a balanced, domain-consistent, and compact dataset suitable for CPU inference on a 4 GB RAM machine when paired with a lightweight model like MobileNetV2. We do not include mnist_cls_test in the training pool per the official-splits guidance. Per-class pool size: 1500 images for digits 0–9, total primary pool 15,000 images. Approximate total download size (raw digits): about 15,000 images × 28 × 28 × 1 byte ≈ 12 MB for image data, plus labels and overhead, typically under 15–25 MB in practice. This size comfortably fits the 500 MB runtime memory budget and aligns with the requirement to process images efficiently on CPU. The default download budget does not appear to constrain this choice since 15k MNIST train samples are well within typical provisioning expectations. If higher diversity or robustness were needed, one could consider careful domain-generalization augmentation or a small supplementary source, but given the strict per-class, domain-consistent constraint and the performance target, sticking to the mnist_train pool provides a clean, reliable baseline.","Dataset Selection Completed","Hyperparameter GraphRAG: disabled for this run."],"last_updated":"2026-08-16T04:44:28.823220","revision":{"active":null,"history":[]}}
+
+--------------------------------------------------------------------------------
+RATIONALE & REASONING:
+--- Suggester Rationale ---
+CPU-focused MobileNetV2 fine-tuning on MNIST-like 32x32 grayscale digits with a staged_fine_tune strategy; memory limits and latency targets drive small batch, low memory footprint, and small image size while aiming for >=95% accuracy. Executable constraints applied: min_learning_rate=1e-06 (Cosine decay requires a non-negative floor below the base learning rate.); alpha=0.99 (The field is inactive for the selected optimizer or scheduler.)
+
+--- Optimizer Decision ---
+Accepted: True
+Reasoning: The proposed Active Runtime Configuration is consistent with the available hardware (RTX 2060 GPU for training with a 6 GB VRAM budget and CPU limits), dataset splits, and the MobileNetV2 backbone. It adheres to the latency target (Low) and accuracy target (High) given the small, CPU/GPU-accelerated training setup and the 32x32 MNIST-like inputs. No blocking incompatibilities detected. The following items are optional improvements (preferences) to consider if further margin is desired.
+Suggestions: ['Set precision to fp16 (mixed precision) to leverage AMP on the CUDA GPU and reduce memory footprint.', 'Consider enabling model EMA (use_model_ema = true) to potentially improve validation accuracy and generalization.', 'Monitor memory usage during training; if needed, re-evaluate gradient_clip_norm or gradient_accumulation_steps to balance stability and throughput.']
+--------------------------------------------------------------------------------
+OUTPUT / DECISION:
+{
+  "proposal": {
+    "classes": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9"
+    ],
+    "selected_data": [
+      {
+        "class_name": "0",
+        "sources": [
+          {
+            "dataset_name": "mnist_cls_train",
+            "allocations": [
+              {
+                "split": "train",
+                "count": 1200,
+                "assignment_type": "official_split"
+              },
+              {
+                "split": "validation",
+                "count": 150,
+                "assignment_type": "derived_from_train"
+              }
+            ]
+          },
+          {
+            "dataset_name": "mnist_cls_test",
+            "allocations": [
+              {
+                "split": "test",
+                "count": 150,
+                "assignment_type": "official_split"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "class_name": "1",
+        "sources": [
+          {
+            "dataset_name": "mnist_cls_train",
+            "allocations": [
+              {
+                "split": "train",
+                "count": 1200,
+                "assignment_type": "official_split"
+              },
+              {
+                "split": "validation",
+                "count": 150,
+                "assignment_type": "derived_from_train"
+              }
+            ]
+          },
+          {
+            "dataset_name": "mnist_cls_test",
+            "allocations": [
+              {
+                "split": "test",
+                "count": 150,
+                "assignment_type": "official_split"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "class_name": "2",
+        "sources": [
+          {
+            "dataset_name": "mnist_cls_train",
+            "allocations": [
+              {
+                "split": "train",
+                "count": 1200,
+                "assignment_type": "official_split"
+              },
+              {
+                "split": "validation",
+                "count": 150,
+                "assignment_type": "derived_from_train"
+              }
+            ]
+          },
+          {
+            "dataset_name": "mnist_cls_test",
+            "allocations": [
+              {
+                "split": "test",
+                "count": 150,
+                "assignment_type": "official_split"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "class_name": "3",
+        "sources": [
+          {
+            "dataset_name": "mnist_cls_train",
+            "allocations": [
+              {
+                "split": "train",
+                "count": 1200,
+                "assignment_type": "official_split"
+              },
+              {
+                "split": "validation",
+                "count": 150,
+                "assignment_type": "derived_from_train"
+              }
+            ]
+          },
+          {
+            "dataset_name": "mnist_cls_test",
+            "allocations": [
+              {
+                "split": "test",
+                "count": 150,
+                "assignment_type": "official_split"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "class_name": "4",
+        "sources": [
+          {
+            "dataset_name": "mnist_cls_train",
+            "allocations": [
+              {
+                "split": "train",
+                "count": 1200,
+                "assignment_type": "official_split"
+              },
+              {
+                "split": "validation",
+                "count": 150,
+                "assignment_type": "derived_from_train"
+              }
+            ]
+          },
+          {
+            "dataset_name": "mnist_cls_test",
+            "allocations": [
+              {
+                "split": "test",
+                "count": 150,
+                "assignment_type": "official_split"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "class_name": "5",
+        "sources": [
+          {
+            "dataset_name": "mnist_cls_train",
+            "allocations": [
+              {
+                "split": "train",
+                "count": 1200,
+                "assignment_type": "official_split"
+              },
+              {
+                "split": "validation",
+                "count": 150,
+                "assignment_type": "derived_from_train"
+              }
+            ]
+          },
+          {
+            "dataset_name": "mnist_cls_test",
+            "allocations": [
+              {
+                "split": "test",
+                "count": 150,
+                "assignment_type": "official_split"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "class_name": "6",
+        "sources": [
+          {
+            "dataset_name": "mnist_cls_train",
+            "allocations": [
+              {
+                "split": "train",
+                "count": 1200,
+                "assignment_type": "official_split"
+              },
+              {
+                "split": "validation",
+                "count": 150,
+                "assignment_type": "derived_from_train"
+              }
+            ]
+          },
+          {
+            "dataset_name": "mnist_cls_test",
+            "allocations": [
+              {
+                "split": "test",
+                "count": 150,
+                "assignment_type": "official_split"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "class_name": "7",
+        "sources": [
+          {
+            "dataset_name": "mnist_cls_train",
+            "allocations": [
+              {
+                "split": "train",
+                "count": 1200,
+                "assignment_type": "official_split"
+              },
+              {
+                "split": "validation",
+                "count": 150,
+                "assignment_type": "derived_from_train"
+              }
+            ]
+          },
+          {
+            "dataset_name": "mnist_cls_test",
+            "allocations": [
+              {
+                "split": "test",
+                "count": 150,
+                "assignment_type": "official_split"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "class_name": "8",
+        "sources": [
+          {
+            "dataset_name": "mnist_cls_train",
+            "allocations": [
+              {
+                "split": "train",
+                "count": 1200,
+                "assignment_type": "official_split"
+              },
+              {
+                "split": "validation",
+                "count": 150,
+                "assignment_type": "derived_from_train"
+              }
+            ]
+          },
+          {
+            "dataset_name": "mnist_cls_test",
+            "allocations": [
+              {
+                "split": "test",
+                "count": 150,
+                "assignment_type": "official_split"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "class_name": "9",
+        "sources": [
+          {
+            "dataset_name": "mnist_cls_train",
+            "allocations": [
+              {
+                "split": "train",
+                "count": 1200,
+                "assignment_type": "official_split"
+              },
+              {
+                "split": "validation",
+                "count": 150,
+                "assignment_type": "derived_from_train"
+              }
+            ]
+          },
+          {
+            "dataset_name": "mnist_cls_test",
+            "allocations": [
+              {
+                "split": "test",
+                "count": 150,
+                "assignment_type": "official_split"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "train_data_ratio": 0.8,
+    "val_data_ratio": 0.1,
+    "test_data_ratio": 0.1,
+    "num_epochs": 12,
+    "patience": 0,
+    "batch_size": 4,
+    "image_size": 32,
+    "precision": "fp32",
+    "scheduler_name": "cosine",
+    "min_learning_rate": 1e-06,
+    "scheduler_step_size": 1,
+    "scheduler_gamma": 0.0034,
+    "warmup_epochs": 2,
+    "warmup_start_factor": 0.1,
+    "gradient_accumulation_steps": 1,
+    "gradient_clip_norm": 1.0,
+    "freeze_backbone_epochs": 2,
+    "head_learning_rate_multiplier": 2.0,
+    "mixup_alpha": 0.0,
+    "cutmix_alpha": 0.0,
+    "random_erasing": 0.0,
+    "auto_augment_policy": "none",
+    "random_resized_crop_scale_min": 0.8,
+    "horizontal_flip_probability": 0.0,
+    "use_model_ema": false,
+    "model_ema_decay": 0.99998,
+    "model_ema_steps": 32,
+    "repeated_augmentation_repetitions": 1,
+    "use_activation_checkpointing": false,
+    "track_metric": "val_acc",
+    "model_name": "mobilenet_v2",
+    "model_weights": "default",
+    "training_mode": "staged_fine_tune",
+    "training_recipe_id": "",
+    "lora_rank": 8,
+    "lora_alpha": 16,
+    "lora_dropout": 0.05,
+    "optimizer_name": "adamw",
+    "learning_rate": 0.0003,
+    "weight_decay": 0.0005,
+    "eps": 1e-08,
+    "beta1": 0.9,
+    "beta2": 0.999,
+    "nesterov": false,
+    "momentum": 0.0,
+    "alpha": 0.99,
+    "centered": false,
+    "criterion_name": "cross_entropy",
+    "label_smoothing": 0.0,
+    "pos_weight": 1.0,
+    "rationale": "CPU-focused MobileNetV2 fine-tuning on MNIST-like 32x32 grayscale digits with a staged_fine_tune strategy; memory limits and latency targets drive small batch, low memory footprint, and small image size while aiming for >=95% accuracy. Executable constraints applied: min_learning_rate=1e-06 (Cosine decay requires a non-negative floor below the base learning rate.); alpha=0.99 (The field is inactive for the selected optimizer or scheduler.)",
+    "llm_field_rationales": [
+      {
+        "field": "training_mode",
+        "reason": "Changed to staged_fine_tune to respect non-zero freeze_backbone_epochs and avoid full retraining of the pretrained backbone."
+      },
+      {
+        "field": "freeze_backbone_epochs",
+        "reason": "2 epochs of backbone freezing to allow head adaptation on MNIST-like data while preserving pretrained features."
+      },
+      {
+        "field": "head_learning_rate_multiplier",
+        "reason": "In staged_fine_tune, a higher head LR accelerates adaptation of the newly initialized classifier head."
+      },
+      {
+        "field": "image_size",
+        "reason": "32 chosen to satisfy memory constraints and align with the model\u2019s configurable input size."
+      },
+      {
+        "field": "batch_size",
+        "reason": "4 selected to fit within the 500 MB runtime memory cap and CPU constraints; small batches with AdamW stability."
+      },
+      {
+        "field": "precision",
+        "reason": "fp32 for stability on CPU inference, avoiding potential AMP issues."
+      },
+      {
+        "field": "scheduler_name",
+        "reason": "Cosine decay provides smooth LR reduction suitable for small datasets and CPU training stability."
+      },
+      {
+        "field": "min_learning_rate",
+        "reason": "1e-06 as floor for cosine schedule to prevent vanishing updates."
+      },
+      {
+        "field": "warmup_epochs",
+        "reason": "Warmup reduces instability at start of training when backbone is freezing and head is adapting."
+      },
+      {
+        "field": "warmup_start_factor",
+        "reason": "Start warmup at 0.1 of base LR to prevent large initial steps."
+      },
+      {
+        "field": "gradient_accumulation_steps",
+        "reason": "1 to keep memory usage low given small batch size on CPU."
+      },
+      {
+        "field": "gradient_clip_norm",
+        "reason": "Clip gradients to prevent exploding updates on CPU."
+      },
+      {
+        "field": "optimizer_name",
+        "reason": "AdamW provides stable convergence for CNNs on CPU."
+      },
+      {
+        "field": "learning_rate",
+        "reason": "0.0003 balances convergence speed with stability in staged_fine_tune."
+      },
+      {
+        "field": "weight_decay",
+        "reason": "0.0005 standard L2 regularization to prevent overfitting on MNIST-scale data."
+      },
+      {
+        "field": "eps",
+        "reason": "AdamW stability constant 1e-08."
+      },
+      {
+        "field": "beta1",
+        "reason": "Default beta1 for AdamW."
+      },
+      {
+        "field": "beta2",
+        "reason": "Default beta2 for AdamW."
+      },
+      {
+        "field": "nesterov",
+        "reason": "Nesterov momentum not applicable to AdamW; set to false."
+      },
+      {
+        "field": "criterion_name",
+        "reason": "Cross-entropy for multi-class digits."
+      },
+      {
+        "field": "label_smoothing",
+        "reason": "0.0 to keep sharp digit boundaries."
+      },
+      {
+        "field": "pos_weight",
+        "reason": "Balanced classes; dataset is balanced; pos_weight=1.0."
+      },
+      {
+        "field": "model_name",
+        "reason": "Mobilenet_v2 chosen for low memory footprint and CPU efficiency; good baseline on MNIST."
+      },
+      {
+        "field": "model_weights",
+        "reason": "Default pretrained weights to accelerate convergence."
+      },
+      {
+        "field": "training_mode",
+        "reason": "Using staged_fine_tune instead of fine_tune_pretrained to respect non-zero freeze_backbone_epochs."
+      },
+      {
+        "field": "training_recipe_id",
+        "reason": "No GraphRAG recipe applied; kept as empty provenance."
+      },
+      {
+        "field": "track_metric",
+        "reason": "val_acc chosen as early-stopping/monitor metric for multi-class validation."
+      },
+      {
+        "field": "train_data_ratio",
+        "reason": "0.8 aligns with the dataset split plan (train vs validation/test)."
+      },
+      {
+        "field": "val_data_ratio",
+        "reason": "0.1 aligns with per-class validation holdout of 150 samples."
+      },
+      {
+        "field": "test_data_ratio",
+        "reason": "0.1 aligns with per-class test holdout of 150 samples."
+      },
+      {
+        "field": "num_epochs",
+        "reason": "12 epochs as a safe executable starting point for CPU fine-tuning with 12k training samples."
+      }
+    ]
+  },
+  "decision": {
+    "accept": true,
+    "reason": "The proposed Active Runtime Configuration is consistent with the available hardware (RTX 2060 GPU for training with a 6 GB VRAM budget and CPU limits), dataset splits, and the MobileNetV2 backbone. It adheres to the latency target (Low) and accuracy target (High) given the small, CPU/GPU-accelerated training setup and the 32x32 MNIST-like inputs. No blocking incompatibilities detected. The following items are optional improvements (preferences) to consider if further margin is desired.",
+    "findings": [
+      {
+        "field": "precision",
+        "severity": "preference",
+        "reason": "The training_hardware supports AMP, and using fp16 mixed precision can substantially reduce memory footprint and potentially increase throughput on the RTX 2060. The current setting is fp32.",
+        "recommended_value": "fp16",
+        "rule_id": null
+      },
+      {
+        "field": "use_model_ema",
+        "severity": "preference",
+        "reason": "Enabling model EMA (use_model_ema = true) can improve generalization on MNIST-like data, especially with small batch sizes and staged_fine_tune. Currently set to false.",
+        "recommended_value": "true",
+        "rule_id": null
+      }
+    ],
+    "suggestions": [
+      "Set precision to fp16 (mixed precision) to leverage AMP on the CUDA GPU and reduce memory footprint.",
+      "Consider enabling model EMA (use_model_ema = true) to potentially improve validation accuracy and generalization.",
+      "Monitor memory usage during training; if needed, re-evaluate gradient_clip_norm or gradient_accumulation_steps to balance stability and throughput."
+    ]
+  },
+  "diagnostics": [
+    {
+      "round": 1,
+      "phase": "schema_validation",
+      "reason": "pydantic_validation_error",
+      "errors": [
+        {
+          "field": "<root>",
+          "message": "Value error, fine_tune_pretrained trains the full pretrained model immediately; use staged_fine_tune or head_only when freeze_backbone_epochs is non-zero.",
+          "error_type": "value_error",
+          "input": {
+            "classes": [
+              "0",
+              "1",
+              "2",
+              "3",
+              "4",
+              "5",
+              "6",
+              "7",
+              "8",
+              "9"
+            ],
+            "selected_data": [
+              {
+                "class_name": "0",
+                "sources": [
+                  {
+                    "dataset_name": "mnist_cls_train",
+                    "allocations": [
+                      {
+                        "split": "train",
+                        "count": 1200,
+                        "assignment_type": "official_split"
+                      },
+                      {
+                        "split": "validation",
+                        "count": 150,
+                        "assignment_type": "derived_from_train"
+                      }
+                    ]
+                  },
+                  {
+                    "dataset_name": "mnist_cls_test",
+                    "allocations": [
+                      {
+                        "split": "test",
+                        "count": 150,
+                        "assignment_type": "official_split"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "class_name": "1",
+                "sources": [
+                  {
+                    "dataset_name": "mnist_cls_train",
+                    "allocations": [
+                      {
+                        "split": "train",
+                        "count": 1200,
+                        "assignment_type": "official_split"
+                      },
+                      {
+                        "split": "validation",
+                        "count": 150,
+                        "assignment_type": "derived_from_train"
+                      }
+                    ]
+                  },
+                  {
+                    "dataset_name": "mnist_cls_test",
+                    "allocations": [
+                      {
+                        "split": "test",
+                        "count": 150,
+                        "assignment_type": "official_split"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "class_name": "2",
+                "sources": [
+                  {
+                    "dataset_name": "mnist_cls_train",
+                    "allocations": [
+                      {
+                        "split": "train",
+                        "count": 1200,
+                        "assignment_type": "official_split"
+                      },
+                      {
+                        "split": "validation",
+                        "count": 150,
+                        "assignment_type": "derived_from_train"
+                      }
+                    ]
+                  },
+                  {
+                    "dataset_name": "mnist_cls_test",
+                    "allocations": [
+                      {
+                        "split": "test",
+                        "count": 150,
+                        "assignment_type": "official_split"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "class_name": "3",
+                "sources": [
+                  {
+                    "dataset_name": "mnist_cls_train",
+                    "allocations": [
+                      {
+                        "split": "train",
+                        "count": 1200,
+                        "assignment_type": "official_split"
+                      },
+                      {
+                        "split": "validation",
+                        "count": 150,
+                        "assignment_type": "derived_from_train"
+                      }
+                    ]
+                  },
+                  {
+                    "dataset_name": "mnist_cls_test",
+                    "allocations": [
+                      {
+                        "split": "test",
+                        "count": 150,
+                        "assignment_type": "official_split"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "class_name": "4",
+                "sources": [
+                  {
+                    "dataset_name": "mnist_cls_train",
+                    "allocations": [
+                      {
+                        "split": "train",
+                        "count": 1200,
+                        "assignment_type": "official_split"
+                      },
+                      {
+                        "split": "validation",
+                        "count": 150,
+                        "assignment_type": "derived_from_train"
+                      }
+                    ]
+                  },
+                  {
+                    "dataset_name": "mnist_cls_test",
+                    "allocations": [
+                      {
+                        "split": "test",
+                        "count": 150,
+                        "assignment_type": "official_split"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "class_name": "5",
+                "sources": [
+                  {
+                    "dataset_name": "mnist_cls_train",
+                    "allocations": [
+                      {
+                        "split": "train",
+                        "count": 1200,
+                        "assignment_type": "official_split"
+                      },
+                      {
+                        "split": "validation",
+                        "count": 150,
+                        "assignment_type": "derived_from_train"
+                      }
+                    ]
+                  },
+                  {
+                    "dataset_name": "mnist_cls_test",
+                    "allocations": [
+                      {
+                        "split": "test",
+                        "count": 150,
+                        "assignment_type": "official_split"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "class_name": "6",
+                "sources": [
+                  {
+                    "dataset_name": "mnist_cls_train",
+                    "allocations": [
+                      {
+                        "split": "train",
+                        "count": 1200,
+                        "assignment_type": "official_split"
+                      },
+                      {
+                        "split": "validation",
+                        "count": 150,
+                        "assignment_type": "derived_from_train"
+                      }
+                    ]
+                  },
+                  {
+                    "dataset_name": "mnist_cls_test",
+                    "allocations": [
+                      {
+                        "split": "test",
+                        "count": 150,
+                        "assignment_type": "official_split"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "class_name": "7",
+                "sources": [
+                  {
+                    "dataset_name": "mnist_cls_train",
+                    "allocations": [
+                      {
+                        "split": "train",
+                        "count": 1200,
+                        "assignment_type": "official_split"
+                      },
+                      {
+                        "split": "validation",
+                        "count": 150,
+                        "assignment_type": "derived_from_train"
+                      }
+                    ]
+                  },
+                  {
+                    "dataset_name": "mnist_cls_test",
+                    "allocations": [
+                      {
+                        "split": "test",
+                        "count": 150,
+                        "assignment_type": "official_split"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "class_name": "8",
+                "sources": [
+                  {
+                    "dataset_name": "mnist_cls_train",
+                    "allocations": [
+                      {
+                        "split": "train",
+                        "count": 1200,
+                        "assignment_type": "official_split"
+                      },
+                      {
+                        "split": "validation",
+                        "count": 150,
+                        "assignment_type": "derived_from_train"
+                      }
+                    ]
+                  },
+                  {
+                    "dataset_name": "mnist_cls_test",
+                    "allocations": [
+                      {
+                        "split": "test",
+                        "count": 150,
+                        "assignment_type": "official_split"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "class_name": "9",
+                "sources": [
+                  {
+                    "dataset_name": "mnist_cls_train",
+                    "allocations": [
+                      {
+                        "split": "train",
+                        "count": 1200,
+                        "assignment_type": "official_split"
+                      },
+                      {
+                        "split": "validation",
+                        "count": 150,
+                        "assignment_type": "derived_from_train"
+                      }
+                    ]
+                  },
+                  {
+                    "dataset_name": "mnist_cls_test",
+                    "allocations": [
+                      {
+                        "split": "test",
+                        "count": 150,
+                        "assignment_type": "official_split"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "train_data_ratio": 0.8,
+            "val_data_ratio": 0.1,
+            "test_data_ratio": 0.1,
+            "num_epochs": 12,
+            "patience": 0,
+            "batch_size": 4,
+            "image_size": 32,
+            "precision": "fp32",
+            "scheduler_name": "cosine",
+            "min_learning_rate": 1e-06,
+            "scheduler_step_size": 1,
+            "scheduler_gamma": 0.0034,
+            "warmup_epochs": 2,
+            "warmup_start_factor": 0.1,
+            "gradient_accumulation_steps": 1,
+            "gradient_clip_norm": 1.0,
+            "freeze_backbone_epochs": 2,
+            "head_learning_rate_multiplier": 2.0,
+            "mixup_alpha": 0.0,
+            "cutmix_alpha": 0.0,
+            "random_erasing": 0.0,
+            "auto_augment_policy": "none",
+            "random_resized_crop_scale_min": 0.8,
+            "horizontal_flip_probability": 0.0,
+            "use_model_ema": false,
+            "repeated_augmentation_repetitions": 1,
+            "use_activation_checkpointing": false,
+            "track_metric": "val_acc",
+            "model_name": "mobilenet_v2",
+            "model_weights": "default",
+            "training_mode": "fine_tune_pretrained",
+            "training_recipe_id": "",
+            "optimizer_name": "adamw",
+            "learning_rate": 0.0003,
+            "weight_decay": 0.0005,
+            "eps": 1e-08,
+            "beta1": 0.9,
+            "beta2": 0.999,
+            "criterion_name": "cross_entropy",
+            "label_smoothing": 0.0,
+            "rationale": "Lightweight, CPU-friendly MobileNetV2 backbone fine-tuned on 32x32 MNIST-like grayscale digits. Batch size limited to 4 to meet the 500 MB runtime-memory cap and CPU latency constraints; cosine LR scheduling with a small warmup improves stability on a small dataset. Training uses a pretrained backbone with a head-specific LR multiplier to accelerate head adaptation while preserving learned features. Augmentations are kept minimal to avoid distorting digit structure. The configuration targets 95%+ accuracy while maintaining CPU-friendly performance and memory usage. Executable constraints applied: lora_rank=8 (LoRA rank is inactive outside LoRA training.); lora_alpha=16 (LoRA alpha is inactive outside LoRA training.); lora_dropout=0.05 (LoRA dropout is inactive outside LoRA training.); min_learning_rate=1e-06 (Cosine decay requires a non-negative floor below the base learning rate.); alpha=0.99 (The field is inactive for the selected optimizer or scheduler.)",
+            "llm_field_rationales": [
+              {
+                "field": "train_data_ratio",
+                "reason": "Derived from per-class official_train (12000) and derived validation (1500) split counts; ensures training configuration matches the planned data usage."
+              },
+              {
+                "field": "val_data_ratio",
+                "reason": "Directly corresponds to the 1500 validation samples per class; supports stable validation during training."
+              },
+              {
+                "field": "test_data_ratio",
+                "reason": "Per-class test split of 150 ensures evaluation against held-out data."
+              },
+              {
+                "field": "num_epochs",
+                "reason": "12 epochs provide a safe, executable starting point given CPU training and 12k train samples per run; balances training time with convergence likelihood."
+              },
+              {
+                "field": "batch_size",
+                "reason": "Batch size of 4 selected to respect the 500 MB runtime memory cap and the training hardware's max batch guidance; small batches with gradient accumulation are safer on CPU."
+              },
+              {
+                "field": "image_size",
+                "reason": "Configured to 32 to respect the model's configurable input while preserving digit structure; 28 would violate the 32+ constraint and increase memory per sample when scaled to 224 default."
+              },
+              {
+                "field": "precision",
+                "reason": "fp32 chosen for stability on CPU and to avoid potential precision-related issues on CPU inference."
+              },
+              {
+                "field": "scheduler_name",
+                "reason": "Cosine scheduler provides smooth LR decay suitable for small datasets and CPU training stability."
+              },
+              {
+                "field": "min_learning_rate",
+                "reason": "1e-5 provides a lower bound for cosine decay to avoid vanishing updates near the end of training."
+              },
+              {
+                "field": "warmup_epochs",
+                "reason": "Warmup helps stabilize early optimization on a new head while the backbone is adapting."
+              },
+              {
+                "field": "warmup_start_factor",
+                "reason": "0.1 starts the warmup at a small fraction of the base LR to prevent abrupt large updates."
+              },
+              {
+                "field": "gradient_accumulation_steps",
+                "reason": "Keeping it at 1 avoids additional memory and complexity given small batch size."
+              },
+              {
+                "field": "gradient_clip_norm",
+                "reason": "Clipping mitigates gradient explosion on CPU during Training with small batches."
+              },
+              {
+                "field": "freeze_backbone_epochs",
+                "reason": "Freeze backbone for initial epochs to train head quickly on MNIST-like data with limited samples."
+              },
+              {
+                "field": "head_learning_rate_multiplier",
+                "reason": "Doubling head LR accelerates adaptation of newly initialized classifier head while backbone remains relatively stable."
+              },
+              {
+                "field": "mixup_alpha",
+                "reason": "Disables MixUp to avoid distorting digits in MNIST-like grayscale data."
+              },
+              {
+                "field": "cutmix_alpha",
+                "reason": "Disables CutMix for the same stability/structure reasons as MixUp."
+              },
+              {
+                "field": "random_erasing",
+                "reason": "Set to 0 to preserve digit integrity; MNIST digits are small and clear under standard lighting."
+              },
+              {
+                "field": "auto_augment_policy",
+                "reason": "NoAutoAugment to prevent aggressive augmentations that could distort digits."
+              },
+              {
+                "field": "random_resized_crop_scale_min",
+                "reason": "Conservative crop factor to prevent digits from being cropped too aggressively."
+              },
+              {
+                "field": "horizontal_flip_probability",
+                "reason": "Digits are not semantically flip-invariant; avoid horizontal flips."
+              },
+              {
+                "field": "use_model_ema",
+                "reason": "Disabled to minimize memory footprint during training; not essential for this starting configuration."
+              },
+              {
+                "field": "model_name",
+                "reason": "Mobilenet_v2 chosen for its low memory footprint and CPU efficiency, aligning with constraints."
+              },
+              {
+                "field": "model_weights",
+                "reason": "Default pretrained weights accelerate convergence and provide reasonable starting features for MNIST digits."
+              },
+              {
+                "field": "training_mode",
+                "reason": "Fine-tune pretrained backbone to adapt to MNIST digits without retraining from scratch."
+              },
+              {
+                "field": "training_recipe_id",
+                "reason": "No GraphRAG-based recipe applied in this run; hence empty provenance."
+              },
+              {
+                "field": "optimizer_name",
+                "reason": "AdamW provides stable convergence for CNNs on small datasets and is well-supported on CPU."
+              },
+              {
+                "field": "learning_rate",
+                "reason": "0.0003 balances rapid convergence with stability during fine-tuning of the head and backbone."
+              },
+              {
+                "field": "weight_decay",
+                "reason": "0.0005 standard L2 regularization for CNNs to reduce overfitting on MNIST-scale data."
+              },
+              {
+                "field": "eps",
+                "reason": "AdamW numerical stability parameter chosen as a small constant."
+              },
+              {
+                "field": "beta1",
+                "reason": "Common default for AdamW optimizers; helps with stable first-moment estimates."
+              },
+              {
+                "field": "beta2",
+                "reason": "Common default for AdamW optimizers; helps with stable second-moment estimates."
+              },
+              {
+                "field": "nesterov",
+                "reason": "Nesterov momentum not applicable for AdamW; set to false."
+              },
+              {
+                "field": "criterion_name",
+                "reason": "Cross-entropy appropriate for multi-class digit classification."
+              },
+              {
+                "field": "label_smoothing",
+                "reason": "No label smoothing for a clean digit boundary optimization."
+              },
+              {
+                "field": "pos_weight",
+                "reason": "Binary-class weighting not applicable; dataset is balanced; set to 1.0."
+              },
+              {
+                "field": "rationale",
+                "reason": "Concise justification of design decisions tied to CPU constraints, memory cap, and the 95% accuracy target on MNIST-like data."
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
+================================================================================

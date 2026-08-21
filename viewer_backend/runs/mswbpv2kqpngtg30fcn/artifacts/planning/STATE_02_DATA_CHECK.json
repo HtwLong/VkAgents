@@ -1,0 +1,298 @@
+{
+  "task": "detection",
+  "application_domain": "general",
+  "user_query": "I need an object detection model to locate people, dogs, and cats in indoor and outdoor photographs. The objects may appear at different scales, under varied lighting, and may be partially occluded by furniture or other people. The model will run locally on a MacBook Air with an Apple M4 chip and 16 GB of unified memory, using Metal acceleration where supported. It should aim for a mAP@0.5:0.95 of approximately 0.40 or higher and recall of at least 0.75 for each class. Processing an image within roughly 500 milliseconds would be desirable.",
+  "use_case_description": "Object detection to locate people, dogs, and cats in indoor and outdoor photographs; objects may appear at different scales, under varied lighting, and may be occluded by furniture or other people; runs locally on a MacBook Air with Apple M4 and 16 GB unified memory using Metal acceleration where supported; target mAP@0.5:0.95 around 0.40+ and recall \u22650.75 per class; processing an image in ~500 ms desirable.",
+  "questions_list": null,
+  "classes": [
+    "person",
+    "dog",
+    "cat"
+  ],
+  "available_data": [
+    {
+      "class_name": "person",
+      "sources": [
+        {
+          "dataset_name": "objects365_det_train",
+          "count": 191153
+        },
+        {
+          "dataset_name": "coco2017_det_train",
+          "count": 64115
+        },
+        {
+          "dataset_name": "objects365_det_val",
+          "count": 33217
+        },
+        {
+          "dataset_name": "openimages_challenge_2019_det_val",
+          "count": 11225
+        },
+        {
+          "dataset_name": "voc0712_det_val",
+          "count": 3257
+        },
+        {
+          "dataset_name": "voc0712_det_train",
+          "count": 3212
+        },
+        {
+          "dataset_name": "coco2017_det_val",
+          "count": 2693
+        },
+        {
+          "dataset_name": "voc12_det_val",
+          "count": 2232
+        },
+        {
+          "dataset_name": "voc12_det_train",
+          "count": 2142
+        },
+        {
+          "dataset_name": "LVIS_det_train",
+          "count": 1928
+        },
+        {
+          "dataset_name": "voc07_det_train",
+          "count": 1070
+        },
+        {
+          "dataset_name": "voc07_det_test",
+          "count": 1025
+        },
+        {
+          "dataset_name": "voc07_det_val",
+          "count": 1025
+        },
+        {
+          "dataset_name": "ACDC_FDA_day2night_det_train",
+          "count": 634
+        },
+        {
+          "dataset_name": "cityscapes_det_val",
+          "count": 401
+        },
+        {
+          "dataset_name": "ACDC_det_val_night",
+          "count": 57
+        }
+      ]
+    },
+    {
+      "class_name": "dog",
+      "sources": [
+        {
+          "dataset_name": "objects365_det_train",
+          "count": 26134
+        },
+        {
+          "dataset_name": "openimages_challenge_2019_det_train",
+          "count": 20602
+        },
+        {
+          "dataset_name": "coco2017_det_train",
+          "count": 4385
+        },
+        {
+          "dataset_name": "LVIS_det_train",
+          "count": 1938
+        },
+        {
+          "dataset_name": "openimages_challenge_2019_det_val",
+          "count": 1585
+        },
+        {
+          "dataset_name": "objects365_det_val",
+          "count": 956
+        },
+        {
+          "dataset_name": "voc0712_det_val",
+          "count": 881
+        },
+        {
+          "dataset_name": "voc0712_det_train",
+          "count": 846
+        },
+        {
+          "dataset_name": "voc12_det_val",
+          "count": 661
+        },
+        {
+          "dataset_name": "voc12_det_train",
+          "count": 636
+        },
+        {
+          "dataset_name": "voc07_det_test",
+          "count": 220
+        },
+        {
+          "dataset_name": "voc07_det_val",
+          "count": 220
+        },
+        {
+          "dataset_name": "voc07_det_train",
+          "count": 210
+        },
+        {
+          "dataset_name": "coco2017_det_val",
+          "count": 177
+        }
+      ]
+    },
+    {
+      "class_name": "cat",
+      "sources": [
+        {
+          "dataset_name": "openimages_challenge_2019_det_train",
+          "count": 12511
+        },
+        {
+          "dataset_name": "objects365_det_train",
+          "count": 9157
+        },
+        {
+          "dataset_name": "coco2017_det_train",
+          "count": 4114
+        },
+        {
+          "dataset_name": "LVIS_det_train",
+          "count": 1918
+        },
+        {
+          "dataset_name": "objects365_det_val",
+          "count": 920
+        },
+        {
+          "dataset_name": "voc0712_det_val",
+          "count": 722
+        },
+        {
+          "dataset_name": "voc0712_det_train",
+          "count": 706
+        },
+        {
+          "dataset_name": "voc12_det_val",
+          "count": 544
+        },
+        {
+          "dataset_name": "voc12_det_train",
+          "count": 540
+        },
+        {
+          "dataset_name": "openimages_challenge_2019_det_val",
+          "count": 345
+        },
+        {
+          "dataset_name": "coco2017_det_val",
+          "count": 184
+        },
+        {
+          "dataset_name": "voc07_det_test",
+          "count": 178
+        },
+        {
+          "dataset_name": "voc07_det_val",
+          "count": 178
+        },
+        {
+          "dataset_name": "voc07_det_train",
+          "count": 166
+        }
+      ]
+    }
+  ],
+  "selected_data": null,
+  "performance_requirements": {
+    "primary_metric": "mAP@0.5:0.95",
+    "target_value": 0.4,
+    "target_is_hard": false,
+    "latency_category": "Medium",
+    "accuracy_category": "MediumHigh",
+    "other_constraints": [
+      "latency_target_ms=500"
+    ]
+  },
+  "constraint_strengths": {
+    "accuracy": "hard",
+    "latency": "hard",
+    "runtime_memory": "preference",
+    "model_size": "unspecified",
+    "training_time": "unspecified"
+  },
+  "robustness_requirements": {
+    "lighting": [
+      "varied"
+    ],
+    "weather": [],
+    "object_scale": [],
+    "scene_density": [
+      "varied"
+    ],
+    "motion_blur": false,
+    "occlusion": true,
+    "viewpoint": [
+      "varied"
+    ],
+    "color_semantics": false,
+    "horizontal_flip_safe": null,
+    "text_or_symbols_present": false
+  },
+  "deployment_constraints": {
+    "memory_category": null,
+    "max_runtime_memory_mb": null,
+    "max_model_size_mb": null,
+    "max_parameters_m": null,
+    "max_cpu_latency_ms": 500.0,
+    "hard_limits": []
+  },
+  "available_hardware": {
+    "hardware_category": "ConsumerCPU",
+    "cpu_cores": null,
+    "gpu_type": null,
+    "gpu_count": null,
+    "vram_gb": null,
+    "ram_gb": 16.0,
+    "storage_gb": null,
+    "details": "MacBook Air with Apple M4, Metal acceleration supported"
+  },
+  "model_requirements": null,
+  "augmentation": null,
+  "preprocessing": null,
+  "num_qa_pairs": null,
+  "training_hardware": {
+    "profile_id": "rtx2060_6gb_ryzen5600x_16gb",
+    "accelerator": "cuda",
+    "hardware_category": "ConsumerGPU",
+    "gpu_type": "ASUS Dual NVIDIA GeForce RTX 2060 EVO 6GB",
+    "gpu_count": 1,
+    "vram_gb": 6.0,
+    "ram_gb": 16.0,
+    "unified_memory": false,
+    "training_memory_budget_gb": 5.0,
+    "max_batch_size": 4,
+    "workers": 4,
+    "supports_amp": true
+  },
+  "class_expansions": {},
+  "model_selection_graph_context": null,
+  "dataset_selection_graph_context": null,
+  "hyperparameter_graph_context": null,
+  "use_graphrag": false,
+  "selected_model_info": null,
+  "hpo_config": null,
+  "hpo_decision": null,
+  "model_selection_decision_evidence": null,
+  "dataset_selection_decision_evidence": null,
+  "hyperparameter_decision_evidence": null,
+  "dataset_profile": null,
+  "step_history": [
+    "Task Interpretation Completed",
+    "Data Availability Checked"
+  ],
+  "last_updated": "2026-08-16T23:36:16.815762",
+  "revision": {
+    "active": null,
+    "history": []
+  }
+}

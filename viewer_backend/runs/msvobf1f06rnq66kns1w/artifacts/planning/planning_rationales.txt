@@ -1,0 +1,422 @@
+
+================================================================================
+STEP: Hyperparameter Negotiation (Round 1)
+TIMESTAMP: 2026-08-16 12:57:47
+--------------------------------------------------------------------------------
+INPUT CONTEXT / CONSTRAINTS:
+Constraints:
+{"task":"detection","application_domain":"indoor","user_query":"I need an object detection model to locate nightstands, coffee tables and desks in indoor photographs. It should handle cluttered rooms, partial occlusion, varied lighting, and objects viewed from different angles. Inference will run on CPU-only backend servers with approximately 8 CPU cores and 16 GB of RAM. The model should aim for a mAP@0.5:0.95 of approximately 0.30 or higher.","use_case_description":"Detect furniture items (nightstand, coffee table, desk) in indoor photos, robust to clutter, partial occlusion, varied lighting, and varied viewing angles.","questions_list":null,"classes":["nightstand","coffee table","desk"],"available_data":[{"class_name":"nightstand","sources":[{"dataset_name":"objects365_det_train","count":14101},{"dataset_name":"openimages_challenge_2019_det_train","count":773},{"dataset_name":"objects365_det_val","count":759},{"dataset_name":"openimages_challenge_2019_det_val","count":45}]},{"class_name":"coffee table","sources":[{"dataset_name":"objects365_det_train","count":6959},{"dataset_name":"openimages_challenge_2019_det_train","count":2840},{"dataset_name":"LVIS_det_train","count":592},{"dataset_name":"objects365_det_val","count":307},{"dataset_name":"openimages_challenge_2019_det_val","count":45}]},{"class_name":"desk","sources":[{"dataset_name":"objects365_det_train","count":324466},{"dataset_name":"objects365_det_val","count":14423},{"dataset_name":"openimages_challenge_2019_det_train","count":9464},{"dataset_name":"LVIS_det_train","count":1100},{"dataset_name":"openimages_challenge_2019_det_val","count":133}]}],"selected_data":[{"class_name":"nightstand","sources":[{"dataset_name":"objects365_det_train","allocations":[{"split":"train","count":1920,"assignment_type":"official_split"},{"split":"validation","count":240,"assignment_type":"derived_from_train"},{"split":"test","count":240,"assignment_type":"derived_from_train"}]},{"dataset_name":"openimages_challenge_2019_det_train","allocations":[{"split":"train","count":480,"assignment_type":"official_split"},{"split":"validation","count":60,"assignment_type":"derived_from_train"},{"split":"test","count":60,"assignment_type":"derived_from_train"}]}]},{"class_name":"coffee table","sources":[{"dataset_name":"objects365_det_train","allocations":[{"split":"train","count":1920,"assignment_type":"official_split"},{"split":"validation","count":240,"assignment_type":"derived_from_train"},{"split":"test","count":240,"assignment_type":"derived_from_train"}]},{"dataset_name":"openimages_challenge_2019_det_train","allocations":[{"split":"train","count":480,"assignment_type":"official_split"},{"split":"validation","count":60,"assignment_type":"derived_from_train"},{"split":"test","count":60,"assignment_type":"derived_from_train"}]}]},{"class_name":"desk","sources":[{"dataset_name":"objects365_det_train","allocations":[{"split":"train","count":1920,"assignment_type":"official_split"},{"split":"validation","count":240,"assignment_type":"derived_from_train"},{"split":"test","count":240,"assignment_type":"derived_from_train"}]},{"dataset_name":"openimages_challenge_2019_det_train","allocations":[{"split":"train","count":480,"assignment_type":"official_split"},{"split":"validation","count":60,"assignment_type":"derived_from_train"},{"split":"test","count":60,"assignment_type":"derived_from_train"}]}]}],"performance_requirements":{"primary_metric":"mAP@0.5:0.95","target_value":0.3,"target_is_hard":false,"latency_category":null,"accuracy_category":"MediumHigh","other_constraints":null},"constraint_strengths":{"accuracy":"preference","latency":"unspecified","runtime_memory":"preference","model_size":"unspecified","training_time":"unspecified"},"robustness_requirements":{"lighting":["varied"],"weather":[],"object_scale":[],"scene_density":["dense","cluttered"],"motion_blur":false,"occlusion":true,"viewpoint":["multiple angles","different viewpoints"],"color_semantics":false,"horizontal_flip_safe":null,"text_or_symbols_present":false},"deployment_constraints":null,"available_hardware":{"hardware_category":"ConsumerCPU","cpu_cores":8,"gpu_type":null,"gpu_count":null,"vram_gb":null,"ram_gb":16.0,"storage_gb":null,"details":"CPU-only inference on backend servers"},"model_requirements":null,"augmentation":null,"preprocessing":null,"num_qa_pairs":null,"training_hardware":{"profile_id":"rtx2060_6gb_ryzen5600x_16gb","accelerator":"cuda","hardware_category":"ConsumerGPU","gpu_type":"ASUS Dual NVIDIA GeForce RTX 2060 EVO 6GB","gpu_count":1,"vram_gb":6.0,"ram_gb":16.0,"unified_memory":false,"training_memory_budget_gb":5.0,"max_batch_size":4,"workers":4,"supports_amp":true},"class_expansions":{},"model_selection_graph_context":null,"dataset_selection_graph_context":null,"hyperparameter_graph_context":null,"use_graphrag":false,"selected_model_info":{"model":{"model_architecture":"yolov8","description":"Single-stage detector optimized for balanced accuracy and CPU efficiency. Good multi-scale feature handling, robust to clutter and varying viewpoints, and widely supported for fine-tuning on domain-specific data. Expected to perform well on indoor furniture (nightstand, coffee table, desk) with transfer learning from COCO/OpenImages-like data. Reasonable memory footprint for CPU-only inference on 8-core/16 GB RAM.","architecture_family":"yolo"}},"hpo_config":null,"hpo_decision":null,"model_selection_decision_evidence":{"decision_type":"model_selection","decision":{"model":{"model_architecture":"yolov8","description":"Single-stage detector optimized for balanced accuracy and CPU efficiency. Good multi-scale feature handling, robust to clutter and varying viewpoints, and widely supported for fine-tuning on domain-specific data. Expected to perform well on indoor furniture (nightstand, coffee table, desk) with transfer learning from COCO/OpenImages-like data. Reasonable memory footprint for CPU-only inference on 8-core/16 GB RAM.","architecture_family":"yolo"}},"rationale":"The goal is robust detection of three indoor furniture classes under CPU-only constraints with moderate latency. YOLOv8 offers the strongest overall balance among the candidate families for this scenario: strong baseline mAP on COCO-like data, efficiency on CPU, and good transfer learning potential to indoor furniture with available data sources (Objects365/Open Images/LVIS). It handles small-to-medium objects and clutter through multi-scale features and fast single-shot inference, which helps in cluttered rooms and varied angles. Two-stage detectors (e.g., Faster R-CNN) can offer excellent localization and occlusion handling but tend to incur higher CPU cost and latency on the given 8-core/16 GB setup. SSD300 is lighter but typically trails in accuracy, especially with occlusion and small object instances. Given the data mix and the need to meet a practical mAP target without excessive compute, YOLOv8 is the best practical default. If CPU latency becomes an issue, a fallback to a lighter input resolution or a more lightweight detector can be pursued. A concrete fallback is to switch to SSD300 or downscale input resolution with YOLOv8, or to use a tuned two-stage detector only if latency budgets are generous.","selection_policy":null,"retrieved_facts":[],"evidence_sources":[],"grounded":false,"evidence_backed":false,"match_scope":null,"grounding":{"status":"ungrounded","fact_count":0,"support_counts":{},"evidence_coverage":0},"evaluated_candidates":[{"candidate_id":"yolov8","advantages":["Strong balance of accuracy and CPU efficiency for moderate input sizes","Good multi-scale feature handling, aiding detection of furniture at varying distances and scales","Widely supported with pretrained weights and community tooling; easy to fine-tune on the three indoor classes","Relatively modest memory footprint for CPU-only inference on 8 cores and 16 GB RAM"],"risks":["Performance on very small objects or extreme occlusion can still degrade; domain gap to indoor furniture may require domain-specific fine-tuning","Actual CPU latency depends on input resolution and batch size; may need input resizing or model pruning/quantization for strict latency targets"],"constraint_status":"feasible"},{"candidate_id":"faster-rcnn_r50_fpn_1x_coco","advantages":["Two-stage detector with strong localization and occlusion robustness","Good at precise box delineation in cluttered scenes and varied viewpoints","Mature pipeline with solid existing tooling and training recipes"],"risks":["Typically higher CPU latency and larger memory footprint; may exceed the 8-core/16 GB budget on larger input sizes","Compared to YOLOv8, inference speed can be significantly slower on CPU without optimization"],"constraint_status":"uncertain"}],"uncertainties":["Exact mAP@0.5:0.95 achievable for the indoor three-class setup without domain-specific fine-tuning is uncertain and depends on the quality and distribution of indoor furniture examples in the training data","CPU-only latency at target resolutions is hardware and implementation dependent; real-world latency may vary with input size, batching, and framework optimizations","Small-object performance (nightstand, coffee table at close range or heavily occluded) is uncertain without targeted data augmentation and fine-tuning on indoor scenes"],"comparison_warnings":[],"selection_confidence":"standard"},"dataset_selection_decision_evidence":{"decision_type":"dataset_selection","decision":[{"class_name":"nightstand","sources":[{"dataset_name":"objects365_det_train","allocations":[{"split":"train","count":1920,"assignment_type":"official_split"},{"split":"validation","count":240,"assignment_type":"derived_from_train"},{"split":"test","count":240,"assignment_type":"derived_from_train"}]},{"dataset_name":"openimages_challenge_2019_det_train","allocations":[{"split":"train","count":480,"assignment_type":"official_split"},{"split":"validation","count":60,"assignment_type":"derived_from_train"},{"split":"test","count":60,"assignment_type":"derived_from_train"}]}]},{"class_name":"coffee table","sources":[{"dataset_name":"objects365_det_train","allocations":[{"split":"train","count":1920,"assignment_type":"official_split"},{"split":"validation","count":240,"assignment_type":"derived_from_train"},{"split":"test","count":240,"assignment_type":"derived_from_train"}]},{"dataset_name":"openimages_challenge_2019_det_train","allocations":[{"split":"train","count":480,"assignment_type":"official_split"},{"split":"validation","count":60,"assignment_type":"derived_from_train"},{"split":"test","count":60,"assignment_type":"derived_from_train"}]}]},{"class_name":"desk","sources":[{"dataset_name":"objects365_det_train","allocations":[{"split":"train","count":1920,"assignment_type":"official_split"},{"split":"validation","count":240,"assignment_type":"derived_from_train"},{"split":"test","count":240,"assignment_type":"derived_from_train"}]},{"dataset_name":"openimages_challenge_2019_det_train","allocations":[{"split":"train","count":480,"assignment_type":"official_split"},{"split":"validation","count":60,"assignment_type":"derived_from_train"},{"split":"test","count":60,"assignment_type":"derived_from_train"}]}]}],"rationale":"Chosen primary training pool: objects365_det_train (dataset family objects365). It provides broad, multi-class indoor furniture coverage for nightstand, coffee table, and desk with ample available samples, enabling a coherent backbone. To satisfy robustness and domain-variation needs while keeping the pool simple and within the policy’s max generalization sources, I added a single generalization source: openimages_challenge_2019_det_train, which offers diverse indoor/lighting/clutter variations and supports all three classes. No LVIS was added to avoid increasing the number of generalization sources beyond the limit.\n\nPer class plan: use 2400 images from the primary source (objects365_det_train) and 600 images from the generalization source (openimages_challenge_2019_det_train), totaling 3000 images per class. This yields a primary-domain share of 0.8 (2400/3000) and a mixed-source share of 0.2 (600/3000), meeting the minimum primary-domain share (0.7) and the mixed-source thresholds (min_mixed_source_count = 500; min_mixed_source_share = 0.1).\n\nSource-pool counts per class (as selected):\n- nightstand: 2400 from objects365_det_train (primary), 600 from openimages_challenge_2019_det_train (mixed) — total 3000\n- coffee table: 2400 from objects365_det_train (primary), 600 from openimages_challenge_2019_det_train (mixed) — total 3000\n- desk: 2400 from objects365_det_train (primary), 600 from openimages_challenge_2019_det_train (mixed) — total 3000\n\nApproximate total download/usage budget: about 9000 images across all three classes (not accounting for potential cross-class overlaps). This aligns with the target_images_per_class of 3000 and stays within typical practical training budgets. There was no explicit budget cap triggered by this plan in the provided context.\n\nNotes: All selected sources are training splits (primary pool) except the designated openimages_challenge_2019_det_train supplement, which serves as the single allowed generalization source. This respects the constraint of at most one generalization source and ensures multi-source diversity while maintaining domain coverage and robust variation for indoor furniture under clutter and varied lighting.","retrieved_facts":[],"evidence_sources":[],"grounded":false,"evidence_backed":false,"grounding":{"status":"ungrounded","fact_count":0,"support_counts":{},"evidence_coverage":0},"mode":"llm_validated","correctness_source":"local_registry","graphrag_requested":false,"graphrag_used":false,"guidance_source":"local_registry","validation_findings":[],"dataset_identifier_normalizations":[],"fallback_validation_findings":[],"proposed_selection":[{"class_name":"nightstand","sources":[{"dataset_name":"objects365_det_train","count":2400},{"dataset_name":"openimages_challenge_2019_det_train","count":600}]},{"class_name":"coffee table","sources":[{"dataset_name":"objects365_det_train","count":2400},{"dataset_name":"openimages_challenge_2019_det_train","count":600}]},{"class_name":"desk","sources":[{"dataset_name":"objects365_det_train","count":2400},{"dataset_name":"openimages_challenge_2019_det_train","count":600}]}],"fallback_selection":null,"dropped_inferred_classes":[],"eligible_dataset_ids":["LVIS_det_train","objects365_det_train","objects365_det_val","openimages_challenge_2019_det_train","openimages_challenge_2019_det_val"],"selected_dataset_ids":["objects365_det_train","openimages_challenge_2019_det_train"],"dataset_profile":{"total_selected_images":9000,"minimum_images_per_class":3000,"maximum_images_per_class":3000,"class_balance_ratio":1,"number_of_sources":2,"domains":["general_objects"],"multi_domain":false,"characteristics":[],"characteristic_support":{},"target_unique_images":9000,"verified_unique_images":null,"minimum_images_by_class":{"coffee table":3000,"desk":3000,"nightstand":3000},"verified_images_by_class":{},"small_object_fraction":null,"median_short_side_px_at_640":null,"fraction_below_8px_at_640":null,"planned_counts":{"train":7200,"validation":900,"test":900},"official_counts":{"train":7200,"validation":0,"test":0},"derived_counts":{"train":0,"validation":900,"test":900}},"split_construction_summary":{"strategy":"source_stratified_primary_holdouts","multi_family_policy":"derive_holdouts_from_sufficiently_represented_training_sources","single_family_policy":"prefer_compatible_official_holdouts_and_derive_missing_holdouts","total":9000,"counts":{"train":7200,"validation":900,"test":900},"ratios":{"train":0.8,"validation":0.1,"test":0.1},"classes":[{"class_name":"nightstand","total":3000,"counts":{"train":2400,"validation":300,"test":300},"ratios":{"train":0.8,"validation":0.1,"test":0.1},"families_by_split":{"train":["objects365","openimages_challenge_2019"],"validation":["objects365","openimages_challenge_2019"],"test":["objects365","openimages_challenge_2019"]},"sources":[{"dataset_name":"objects365_det_train","family":"objects365","counts":{"train":1920,"validation":240,"test":240}},{"dataset_name":"openimages_challenge_2019_det_train","family":"openimages_challenge_2019","counts":{"train":480,"validation":60,"test":60}}]},{"class_name":"coffee table","total":3000,"counts":{"train":2400,"validation":300,"test":300},"ratios":{"train":0.8,"validation":0.1,"test":0.1},"families_by_split":{"train":["objects365","openimages_challenge_2019"],"validation":["objects365","openimages_challenge_2019"],"test":["objects365","openimages_challenge_2019"]},"sources":[{"dataset_name":"objects365_det_train","family":"objects365","counts":{"train":1920,"validation":240,"test":240}},{"dataset_name":"openimages_challenge_2019_det_train","family":"openimages_challenge_2019","counts":{"train":480,"validation":60,"test":60}}]},{"class_name":"desk","total":3000,"counts":{"train":2400,"validation":300,"test":300},"ratios":{"train":0.8,"validation":0.1,"test":0.1},"families_by_split":{"train":["objects365","openimages_challenge_2019"],"validation":["objects365","openimages_challenge_2019"],"test":["objects365","openimages_challenge_2019"]},"sources":[{"dataset_name":"objects365_det_train","family":"objects365","counts":{"train":1920,"validation":240,"test":240}},{"dataset_name":"openimages_challenge_2019_det_train","family":"openimages_challenge_2019","counts":{"train":480,"validation":60,"test":60}}]}],"warnings":[{"code":"SOURCE_METRIC_SAMPLE_SMALL","class_name":"nightstand","dataset_name":"openimages_challenge_2019_det_train","split":"validation","selected_count":60,"minimum_reliable_count":100,"reason":"The proportional primary holdout is representative, but source-specific metrics may have high variance."},{"code":"SOURCE_METRIC_SAMPLE_SMALL","class_name":"nightstand","dataset_name":"openimages_challenge_2019_det_train","split":"test","selected_count":60,"minimum_reliable_count":100,"reason":"The proportional primary holdout is representative, but source-specific metrics may have high variance."},{"code":"SOURCE_METRIC_SAMPLE_SMALL","class_name":"coffee table","dataset_name":"openimages_challenge_2019_det_train","split":"validation","selected_count":60,"minimum_reliable_count":100,"reason":"The proportional primary holdout is representative, but source-specific metrics may have high variance."},{"code":"SOURCE_METRIC_SAMPLE_SMALL","class_name":"coffee table","dataset_name":"openimages_challenge_2019_det_train","split":"test","selected_count":60,"minimum_reliable_count":100,"reason":"The proportional primary holdout is representative, but source-specific metrics may have high variance."},{"code":"SOURCE_METRIC_SAMPLE_SMALL","class_name":"desk","dataset_name":"openimages_challenge_2019_det_train","split":"validation","selected_count":60,"minimum_reliable_count":100,"reason":"The proportional primary holdout is representative, but source-specific metrics may have high variance."},{"code":"SOURCE_METRIC_SAMPLE_SMALL","class_name":"desk","dataset_name":"openimages_challenge_2019_det_train","split":"test","selected_count":60,"minimum_reliable_count":100,"reason":"The proportional primary holdout is representative, but source-specific metrics may have high variance."}]},"source_selection_rationale":"Chosen primary training pool: objects365_det_train (dataset family objects365). It provides broad, multi-class indoor furniture coverage for nightstand, coffee table, and desk with ample available samples, enabling a coherent backbone. To satisfy robustness and domain-variation needs while keeping the pool simple and within the policy’s max generalization sources, I added a single generalization source: openimages_challenge_2019_det_train, which offers diverse indoor/lighting/clutter variations and supports all three classes. No LVIS was added to avoid increasing the number of generalization sources beyond the limit.\n\nPer class plan: use 2400 images from the primary source (objects365_det_train) and 600 images from the generalization source (openimages_challenge_2019_det_train), totaling 3000 images per class. This yields a primary-domain share of 0.8 (2400/3000) and a mixed-source share of 0.2 (600/3000), meeting the minimum primary-domain share (0.7) and the mixed-source thresholds (min_mixed_source_count = 500; min_mixed_source_share = 0.1).\n\nSource-pool counts per class (as selected):\n- nightstand: 2400 from objects365_det_train (primary), 600 from openimages_challenge_2019_det_train (mixed) — total 3000\n- coffee table: 2400 from objects365_det_train (primary), 600 from openimages_challenge_2019_det_train (mixed) — total 3000\n- desk: 2400 from objects365_det_train (primary), 600 from openimages_challenge_2019_det_train (mixed) — total 3000\n\nApproximate total download/usage budget: about 9000 images across all three classes (not accounting for potential cross-class overlaps). This aligns with the target_images_per_class of 3000 and stays within typical practical training budgets. There was no explicit budget cap triggered by this plan in the provided context.\n\nNotes: All selected sources are training splits (primary pool) except the designated openimages_challenge_2019_det_train supplement, which serves as the single allowed generalization source. This respects the constraint of at most one generalization source and ensures multi-source diversity while maintaining domain coverage and robust variation for indoor furniture under clutter and varied lighting.","deployment_coverage_warnings":[{"code":"DEPLOYMENT_COVERAGE_UNVERIFIED","severity":"warning","dimensions":["indoor_outdoor","lighting","occlusion"],"reason":"The split is source-stratified, but the available sample metadata does not verify coverage of these requested deployment characteristics."}],"data_selection_policy":{"policy_ids":["data.detection.robust_pool.v1","data.detection.source_sufficiency.v1","data.detection.lineage_safety.v1","data.detection.domain_mix.v1"],"target_images_per_class":3000,"min_mixed_source_count":500,"min_mixed_source_share":0.1,"reject_unpaired_original_derived_mix":true,"requested_robustness_dimensions":["indoor_outdoor","lighting","occlusion","scene_density","viewpoint"],"policy_id":"data.detection.domain_mix.v1","preferred_primary_domain_share":0.8,"minimum_primary_domain_share":0.7,"maximum_generalization_sources":1,"dataset_sizing":{"target_images_per_class":3000,"minimum_images_per_class":2500,"maximum_images_per_class":3000,"confidence":"high","facts":{"pretrained_class_coverage":"none","domain_shift":"moderate","accuracy_demand":"high","robustness_dimensions":["indoor_outdoor","lighting","occlusion","scene_density","viewpoint"],"object_size_risk":"low","object_size_evidence":"unknown","small_object_fraction":null,"median_short_side_px_at_640":null,"previous_run_failed":false},"adjustments":[{"rule":"no_pretrained_class_coverage","value":1000,"reason":"The requested classes are not covered by the pretrained detector."},{"rule":"moderate_domain_shift","value":500,"reason":"The deployment domain is moderately different or could not be verified."},{"rule":"robustness_coverage","value":500,"reason":"Requested robustness dimensions require stratified coverage, with a bounded volume increase."},{"rule":"high_accuracy_demand","value":500,"reason":"The requested accuracy or per-class recall is demanding."}],"config":{"base_images_per_class":1000,"full_pretrained_coverage_adjustment":-250,"partial_pretrained_coverage_adjustment":500,"no_pretrained_coverage_adjustment":1000,"moderate_domain_shift_adjustment":500,"strong_domain_shift_adjustment":1000,"robustness_adjustment_per_dimension":250,"robustness_adjustment_maximum":500,"high_accuracy_adjustment":500,"explicit_small_object_adjustment":750,"observed_small_object_adjustment":1250,"normal_minimum":750,"normal_maximum":3000,"evidence_backed_expansion_maximum":5000},"expansion_requires_evidence":true,"calculated_target_images_per_class":3000,"effective_target_images_per_class":3000,"explicit_user_override":false,"calculation_stage":"select_datasets_prerequisite"}},"assignments_authoritative":true,"split_policy":{"official_splits_preserved":true,"missing_holdouts":"derived_from_train","derived_holdout_sizing":"adaptive_by_selected_training_pool","derived_holdouts_source_stratified":true,"multi_family_primary_holdouts":"derived_from_sufficiently_represented_training_sources","single_family_primary_holdouts":"prefer_compatible_official_splits","official_holdouts_require_selected_training_family":true,"classification_default_pool_per_class":1500,"classification_max_pool_per_class":10000,"classification_max_selected_images":50000,"detection_default_pool_per_class":1000,"detection_medium_high_pool_per_class":1500,"detection_recommended_pool_per_class":3000,"detection_sizing_recommendation":{"target_images_per_class":3000,"minimum_images_per_class":2500,"maximum_images_per_class":3000,"confidence":"high","facts":{"pretrained_class_coverage":"none","domain_shift":"moderate","accuracy_demand":"high","robustness_dimensions":["indoor_outdoor","lighting","occlusion","scene_density","viewpoint"],"object_size_risk":"low","object_size_evidence":"unknown","small_object_fraction":null,"median_short_side_px_at_640":null,"previous_run_failed":false},"adjustments":[{"rule":"no_pretrained_class_coverage","value":1000,"reason":"The requested classes are not covered by the pretrained detector."},{"rule":"moderate_domain_shift","value":500,"reason":"The deployment domain is moderately different or could not be verified."},{"rule":"robustness_coverage","value":500,"reason":"Requested robustness dimensions require stratified coverage, with a bounded volume increase."},{"rule":"high_accuracy_demand","value":500,"reason":"The requested accuracy or per-class recall is demanding."}],"config":{"base_images_per_class":1000,"full_pretrained_coverage_adjustment":-250,"partial_pretrained_coverage_adjustment":500,"no_pretrained_coverage_adjustment":1000,"moderate_domain_shift_adjustment":500,"strong_domain_shift_adjustment":1000,"robustness_adjustment_per_dimension":250,"robustness_adjustment_maximum":500,"high_accuracy_adjustment":500,"explicit_small_object_adjustment":750,"observed_small_object_adjustment":1250,"normal_minimum":750,"normal_maximum":3000,"evidence_backed_expansion_maximum":5000},"expansion_requires_evidence":true,"calculated_target_images_per_class":3000,"effective_target_images_per_class":3000,"explicit_user_override":false,"calculation_stage":"select_datasets_prerequisite"},"selection_target_images_per_class":3000,"detection_max_pool_per_class":10000,"detection_max_selected_image_allocations":50000,"detection_max_instances_per_class":null,"detection_instance_limit_enforced":false,"detection_shared_backbone_required_when_available":true,"detection_shared_backbone_min_available_images":50,"detection_shared_backbone_min_share":0.25,"detection_shared_backbone_target_images":500,"explicit_images_per_class":null,"test_used_for_model_selection":false}},"hyperparameter_decision_evidence":null,"dataset_profile":{"total_selected_images":9000,"minimum_images_per_class":3000,"maximum_images_per_class":3000,"class_balance_ratio":1.0,"number_of_sources":2,"domains":["general_objects"],"multi_domain":false,"characteristics":[],"characteristic_support":{},"target_unique_images":9000,"verified_unique_images":null,"minimum_images_by_class":{"coffee table":3000,"desk":3000,"nightstand":3000},"verified_images_by_class":{},"small_object_fraction":null,"median_short_side_px_at_640":null,"fraction_below_8px_at_640":null,"planned_counts":{"train":7200,"validation":900,"test":900},"official_counts":{"train":7200,"validation":0,"test":0},"derived_counts":{"train":0,"validation":900,"test":900}},"step_history":["Task Interpretation Completed","Data Availability Checked","GraphRAG Model Suggestions: disabled for this run.","Model Selection Rationale: The goal is robust detection of three indoor furniture classes under CPU-only constraints with moderate latency. YOLOv8 offers the strongest overall balance among the candidate families for this scenario: strong baseline mAP on COCO-like data, efficiency on CPU, and good transfer learning potential to indoor furniture with available data sources (Objects365/Open Images/LVIS). It handles small-to-medium objects and clutter through multi-scale features and fast single-shot inference, which helps in cluttered rooms and varied angles. Two-stage detectors (e.g., Faster R-CNN) can offer excellent localization and occlusion handling but tend to incur higher CPU cost and latency on the given 8-core/16 GB setup. SSD300 is lighter but typically trails in accuracy, especially with occlusion and small object instances. Given the data mix and the need to meet a practical mAP target without excessive compute, YOLOv8 is the best practical default. If CPU latency becomes an issue, a fallback to a lighter input resolution or a more lightweight detector can be pursued. A concrete fallback is to switch to SSD300 or downscale input resolution with YOLOv8, or to use a tuned two-stage detector only if latency budgets are generous.","Model Selection Completed","Data Selection Rationale: Chosen primary training pool: objects365_det_train (dataset family objects365). It provides broad, multi-class indoor furniture coverage for nightstand, coffee table, and desk with ample available samples, enabling a coherent backbone. To satisfy robustness and domain-variation needs while keeping the pool simple and within the policy’s max generalization sources, I added a single generalization source: openimages_challenge_2019_det_train, which offers diverse indoor/lighting/clutter variations and supports all three classes. No LVIS was added to avoid increasing the number of generalization sources beyond the limit.\n\nPer class plan: use 2400 images from the primary source (objects365_det_train) and 600 images from the generalization source (openimages_challenge_2019_det_train), totaling 3000 images per class. This yields a primary-domain share of 0.8 (2400/3000) and a mixed-source share of 0.2 (600/3000), meeting the minimum primary-domain share (0.7) and the mixed-source thresholds (min_mixed_source_count = 500; min_mixed_source_share = 0.1).\n\nSource-pool counts per class (as selected):\n- nightstand: 2400 from objects365_det_train (primary), 600 from openimages_challenge_2019_det_train (mixed) — total 3000\n- coffee table: 2400 from objects365_det_train (primary), 600 from openimages_challenge_2019_det_train (mixed) — total 3000\n- desk: 2400 from objects365_det_train (primary), 600 from openimages_challenge_2019_det_train (mixed) — total 3000\n\nApproximate total download/usage budget: about 9000 images across all three classes (not accounting for potential cross-class overlaps). This aligns with the target_images_per_class of 3000 and stays within typical practical training budgets. There was no explicit budget cap triggered by this plan in the provided context.\n\nNotes: All selected sources are training splits (primary pool) except the designated openimages_challenge_2019_det_train supplement, which serves as the single allowed generalization source. This respects the constraint of at most one generalization source and ensures multi-source diversity while maintaining domain coverage and robust variation for indoor furniture under clutter and varied lighting.","Dataset Selection Completed","Hyperparameter GraphRAG: disabled for this run."],"last_updated":"2026-08-16T12:41:58.851801","revision":{"active":null,"history":[]}}
+
+--------------------------------------------------------------------------------
+RATIONALE & REASONING:
+--- Suggester Rationale ---
+Executable initial config tuned for CPU-backed inference constraints and a moderate CPU/GPU training budget. Uses Yolov8-n for efficient multi-scale feature extraction, with a conservative learning rate and weight decay for stable fine-tuning on indoor furniture across two generalization sources. The dataset plan targets ~9k total images with primary-domain emphasis (Objects365) to improve domain alignment while introducing variability via OpenImages for robustness to lighting, clutter, and occlusion.
+
+--- Optimizer Decision ---
+Accepted: True
+Reasoning: Proposed active runtime configuration is coherent with the hardware profile (RTX 2060 6GB, 5GB training budget), the registered executable model (yolov8_n), and the dataset plan. All critical hyperparameters are within reasonable ranges for CPU/GPU mixed training and a linear LR schedule with a nonzero final LR factor (0.01) as required. Changes are optional and framed as preferences to help marginally improve stability or efficiency.
+Suggestions: ['Enable AMP by setting amp=true to leverage mixed precision on the RTX 2060 and potentially reduce memory usage per batch.', 'Continue to monitor memory consumption during early epochs; if memory pressure increases, consider one of the following: (a) reduce input_size (e.g., to 576 or 512) if detection granularity permits, (b) maintain batch_size at 4 but enable gradient accumulation if a higher effective batch size is desired, (c) enable AMP (see above) to lower per-batch memory.', 'Keep final_learning_rate_factor at 0.01 as it is the grounded default for linear scheduling with the given setup; any deviation should be motivated by observed convergence behavior on the validation set.', 'If training time becomes excessive, consider reducing the number of epochs from 50 or tightening early stopping patience; otherwise, 50 epochs is reasonable for ~9k images across two sources with the current data split.']
+--------------------------------------------------------------------------------
+OUTPUT / DECISION:
+{
+  "proposal": {
+    "task_type": "detection",
+    "classes": [
+      "nightstand",
+      "coffee table",
+      "desk"
+    ],
+    "selected_data": [
+      {
+        "class_name": "nightstand",
+        "sources": [
+          {
+            "dataset_name": "objects365_det_train",
+            "allocations": [
+              {
+                "split": "train",
+                "count": 1920,
+                "assignment_type": "official_split"
+              },
+              {
+                "split": "validation",
+                "count": 240,
+                "assignment_type": "derived_from_train"
+              },
+              {
+                "split": "test",
+                "count": 240,
+                "assignment_type": "derived_from_train"
+              }
+            ]
+          },
+          {
+            "dataset_name": "openimages_challenge_2019_det_train",
+            "allocations": [
+              {
+                "split": "train",
+                "count": 480,
+                "assignment_type": "official_split"
+              },
+              {
+                "split": "validation",
+                "count": 60,
+                "assignment_type": "derived_from_train"
+              },
+              {
+                "split": "test",
+                "count": 60,
+                "assignment_type": "derived_from_train"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "class_name": "coffee table",
+        "sources": [
+          {
+            "dataset_name": "objects365_det_train",
+            "allocations": [
+              {
+                "split": "train",
+                "count": 1920,
+                "assignment_type": "official_split"
+              },
+              {
+                "split": "validation",
+                "count": 240,
+                "assignment_type": "derived_from_train"
+              },
+              {
+                "split": "test",
+                "count": 240,
+                "assignment_type": "derived_from_train"
+              }
+            ]
+          },
+          {
+            "dataset_name": "openimages_challenge_2019_det_train",
+            "allocations": [
+              {
+                "split": "train",
+                "count": 480,
+                "assignment_type": "official_split"
+              },
+              {
+                "split": "validation",
+                "count": 60,
+                "assignment_type": "derived_from_train"
+              },
+              {
+                "split": "test",
+                "count": 60,
+                "assignment_type": "derived_from_train"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "class_name": "desk",
+        "sources": [
+          {
+            "dataset_name": "objects365_det_train",
+            "allocations": [
+              {
+                "split": "train",
+                "count": 1920,
+                "assignment_type": "official_split"
+              },
+              {
+                "split": "validation",
+                "count": 240,
+                "assignment_type": "derived_from_train"
+              },
+              {
+                "split": "test",
+                "count": 240,
+                "assignment_type": "derived_from_train"
+              }
+            ]
+          },
+          {
+            "dataset_name": "openimages_challenge_2019_det_train",
+            "allocations": [
+              {
+                "split": "train",
+                "count": 480,
+                "assignment_type": "official_split"
+              },
+              {
+                "split": "validation",
+                "count": 60,
+                "assignment_type": "derived_from_train"
+              },
+              {
+                "split": "test",
+                "count": 60,
+                "assignment_type": "derived_from_train"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "train_data_ratio": 0.8,
+    "val_data_ratio": 0.1,
+    "test_data_ratio": 0.1,
+    "num_epochs": 50,
+    "patience": 8,
+    "batch_size": 4,
+    "input_size": 640,
+    "aspect_ratio_range": null,
+    "track_metric": "val_mAP",
+    "model_name": "yolov8_n",
+    "model_weights": "default",
+    "training_recipe_id": "",
+    "optimizer_name": "adamw",
+    "learning_rate": 0.001,
+    "weight_decay": 0.0005,
+    "beta1": 0.9,
+    "momentum": 0.9,
+    "scheduler_name": "linear",
+    "lr_milestones": [],
+    "scheduler_gamma": 0.1,
+    "final_learning_rate_factor": 0.01,
+    "training_mode": "full_finetune",
+    "lora_rank": 8,
+    "lora_alpha": 16,
+    "lora_dropout": 0.05,
+    "lora_target_profile": "decoder_attention",
+    "train_detection_head": true,
+    "warmup_epochs": 3.0,
+    "warmup_momentum": 0.9,
+    "amp": false,
+    "loss_box": "ciou",
+    "loss_cls": "bce",
+    "lambda_box": 1.0,
+    "lambda_cls": 1.0,
+    "lambda_giou": 0.0,
+    "lambda_dfl": 0.0,
+    "mosaic": 0.0,
+    "mixup": 0.0,
+    "cutmix": 0.0,
+    "copy_paste": 0.0,
+    "degrees": 0.0,
+    "translate": 0.0,
+    "scale": 0.0,
+    "fliplr": 0.5,
+    "hsv_h": 0.015,
+    "hsv_s": 0.7,
+    "hsv_v": 0.4,
+    "close_mosaic": 0,
+    "single_cls": false,
+    "rect": false,
+    "multi_scale": 0.0,
+    "confidence_threshold": 0.25,
+    "nms_iou_threshold": 0.5,
+    "max_detections": 300,
+    "workers": 4,
+    "seed": 42,
+    "max_size": 1333,
+    "trainable_backbone_layers": 0,
+    "horizontal_flip_probability": 0.0,
+    "augmentation_policy": "basic",
+    "topk_candidates": 400,
+    "positive_fraction": 0.25,
+    "matching_iou_threshold": 0.5,
+    "freeze": 0,
+    "rationale": "Executable initial config tuned for CPU-backed inference constraints and a moderate CPU/GPU training budget. Uses Yolov8-n for efficient multi-scale feature extraction, with a conservative learning rate and weight decay for stable fine-tuning on indoor furniture across two generalization sources. The dataset plan targets ~9k total images with primary-domain emphasis (Objects365) to improve domain alignment while introducing variability via OpenImages for robustness to lighting, clutter, and occlusion.",
+    "llm_field_rationales": [
+      {
+        "field": "model_name",
+        "reason": "Model constrained to yolov8_n by the registered runtime constraint; chosen for CPU efficiency and compact footprint."
+      },
+      {
+        "field": "batch_size",
+        "reason": "Set to 4 to respect the given training hardware budget (max_batch_size=4) and prevent memory overflow on CPU/GPU mix."
+      },
+      {
+        "field": "input_size",
+        "reason": "640 chosen as a safe, commonly effective resolution for multi-scale furniture detection while maintaining CPU efficiency."
+      },
+      {
+        "field": "num_epochs",
+        "reason": "50 epochs provide a practical training window given 9k images total across two sources; balances training time and convergence potential."
+      },
+      {
+        "field": "patience",
+        "reason": "Patience=8 allows early stopping to trigger after meaningful plateau without long stalls."
+      },
+      {
+        "field": "optimizer_name",
+        "reason": "AdamW chosen for stable fine-tuning with small learning rate on transfer learning tasks."
+      },
+      {
+        "field": "learning_rate",
+        "reason": "0.001 is a conservative starting point given a small batch size and transfer learning setup."
+      },
+      {
+        "field": "weight_decay",
+        "reason": "0.0005 standard L2 regularization for detection fine-tuning to reduce overfitting."
+      },
+      {
+        "field": "scheduler_name",
+        "reason": "Linear scheduler with a small final factor promotes gradual decay and stable convergence."
+      },
+      {
+        "field": "final_learning_rate_factor",
+        "reason": "0.01 ensures a small end-learning rate to stabilize late training."
+      },
+      {
+        "field": "training_mode",
+        "reason": "full_finetune enables adaptation of all backbone layers to indoor furniture domain."
+      },
+      {
+        "field": "train_detection_head",
+        "reason": "Training the head supports adaptation to the three target classes."
+      },
+      {
+        "field": "warmup_epochs",
+        "reason": "Warmup reduces early instability in optimization."
+      },
+      {
+        "field": "amp",
+        "reason": "AMP disabled since the focus is CPU/GPU mixed training; CPU inference remains constrained."
+      },
+      {
+        "field": "loss_box",
+        "reason": "ciou is a robust box regression loss compatible with YOLO-style detectors."
+      },
+      {
+        "field": "loss_cls",
+        "reason": "cross_entropy is a standard multi-class object detection loss."
+      },
+      {
+        "field": "mosaic",
+        "reason": "No mosaic to preserve label integrity for indoor furniture details in cluttered scenes."
+      },
+      {
+        "field": "mixup",
+        "reason": "No mixup to avoid creating unrealistic object composites in indoor scenes."
+      },
+      {
+        "field": "horizontal_flip_probability",
+        "reason": "Half the samples undergo horizontal flip to improve invariance to viewpoints."
+      },
+      {
+        "field": "hsv_h",
+        "reason": "Small hue jitter aids robustness to varied indoor lighting."
+      },
+      {
+        "field": "hsv_s",
+        "reason": "Saturation jitter enhances color-robustness under mixed lighting."
+      },
+      {
+        "field": "hsv_v",
+        "reason": "Brightness jitter improves resilience to illumination changes."
+      },
+      {
+        "field": "confidence_threshold",
+        "reason": "0.25 controls the trade-off between precision and recall."
+      },
+      {
+        "field": "nms_iou_threshold",
+        "reason": "0.5 is a standard non-maximum suppression threshold for cluttered scenes."
+      },
+      {
+        "field": "max_detections",
+        "reason": "Limit to 300 detections per image to maintain reasonable post-processing."
+      },
+      {
+        "field": "workers",
+        "reason": "4 data-loader workers align with available hardware for efficient loading."
+      },
+      {
+        "field": "seed",
+        "reason": "Fixed seed ensures reproducibility across runs."
+      },
+      {
+        "field": "freeze",
+        "reason": "0 means full fine-tuning to maximize domain adaptation for indoor furniture."
+      },
+      {
+        "field": "trainable_backbone_layers",
+        "reason": "0 indicates all backbone layers are trainable for this initial setup."
+      },
+      {
+        "field": "augmentation_policy",
+        "reason": "basic augmentation policy provides essential variability without excessive distortion."
+      },
+      {
+        "field": "rect",
+        "reason": "false keeps standard bounding-box targets aligned with dataset annotations."
+      },
+      {
+        "field": "single_cls",
+        "reason": "false is necessary for multi-class detection (nightstand, coffee table, desk)."
+      }
+    ]
+  },
+  "decision": {
+    "accept": true,
+    "reason": "Proposed active runtime configuration is coherent with the hardware profile (RTX 2060 6GB, 5GB training budget), the registered executable model (yolov8_n), and the dataset plan. All critical hyperparameters are within reasonable ranges for CPU/GPU mixed training and a linear LR schedule with a nonzero final LR factor (0.01) as required. Changes are optional and framed as preferences to help marginally improve stability or efficiency.",
+    "findings": [
+      {
+        "field": "amp",
+        "severity": "preference",
+        "reason": "Enable automatic mixed precision on CUDA hardware to reduce memory footprint and potentially improve throughput. Current config sets AMP to false; turning it on is within hardware capabilities and is a standard optimization for GPU training.",
+        "recommended_value": "true",
+        "rule_id": "YOLOV8-AMP-01"
+      },
+      {
+        "field": "learning_rate",
+        "severity": "preference",
+        "reason": "0.001 is a conventional starting point for transfer learning with Yolov8_n and a small batch size; monitor validation performance and consider slight adjustments (e.g., 0.0005\u20130.0015) if convergence stalls or if overfitting is observed.",
+        "recommended_value": null,
+        "rule_id": null
+      }
+    ],
+    "suggestions": [
+      "Enable AMP by setting amp=true to leverage mixed precision on the RTX 2060 and potentially reduce memory usage per batch.",
+      "Continue to monitor memory consumption during early epochs; if memory pressure increases, consider one of the following: (a) reduce input_size (e.g., to 576 or 512) if detection granularity permits, (b) maintain batch_size at 4 but enable gradient accumulation if a higher effective batch size is desired, (c) enable AMP (see above) to lower per-batch memory.",
+      "Keep final_learning_rate_factor at 0.01 as it is the grounded default for linear scheduling with the given setup; any deviation should be motivated by observed convergence behavior on the validation set.",
+      "If training time becomes excessive, consider reducing the number of epochs from 50 or tightening early stopping patience; otherwise, 50 epochs is reasonable for ~9k images across two sources with the current data split."
+    ]
+  },
+  "diagnostics": [
+    {
+      "round": 1,
+      "phase": "draft_completion",
+      "reason": "applied_authoritative_detection_fields",
+      "adjustments": [
+        {
+          "field": "lora_rank",
+          "previous": 1,
+          "applied": 8,
+          "reason": "LoRA controls retain schema defaults outside LoRA training."
+        },
+        {
+          "field": "lora_alpha",
+          "previous": 1,
+          "applied": 16,
+          "reason": "LoRA controls retain schema defaults outside LoRA training."
+        },
+        {
+          "field": "lora_dropout",
+          "previous": 0.0,
+          "applied": 0.05,
+          "reason": "LoRA controls retain schema defaults outside LoRA training."
+        },
+        {
+          "field": "loss_cls",
+          "previous": "cross_entropy",
+          "applied": "bce",
+          "reason": "Fixed by the executable Ultralytics YOLO contract."
+        }
+      ]
+    }
+  ]
+}
+================================================================================

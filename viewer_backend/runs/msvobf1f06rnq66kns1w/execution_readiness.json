@@ -1,0 +1,74 @@
+{
+  "ready": true,
+  "errors": [],
+  "warnings": [],
+  "checks": {
+    "saved_config_valid": true,
+    "prepared_dataset_matches_plan": true,
+    "splits_non_empty": true,
+    "content_isolation_valid": true,
+    "annotations_valid": true,
+    "resource_preflight_valid": true,
+    "training_memory_assessment": "fits"
+  },
+  "training_memory_estimate": {
+    "supported": true,
+    "assessment": "fits",
+    "lower_gb": 2.298,
+    "upper_gb": 3.191,
+    "budget_gb": 5.0,
+    "model_name": "yolov8_n",
+    "batch_size": 4,
+    "image_size": 640,
+    "mixed_precision": false,
+    "components_gb": {
+      "parameters_gradients_optimizer": 0.045,
+      "activations": 2.24,
+      "input_batch": 0.018,
+      "family_overhead": 0.25
+    },
+    "reason": null
+  },
+  "materialized_dataset": {
+    "counts": {
+      "train": 7200,
+      "validation": 900,
+      "test": 900
+    },
+    "class_image_counts": {
+      "coffee table": {
+        "train": 2419,
+        "validation": 302,
+        "test": 308
+      },
+      "desk": {
+        "train": 4047,
+        "validation": 486,
+        "test": 482
+      },
+      "nightstand": {
+        "train": 2400,
+        "validation": 300,
+        "test": 300
+      }
+    },
+    "instance_counts": {
+      "coffee table": 3721,
+      "nightstand": 4025,
+      "desk": 7695
+    },
+    "object_size_counts": {
+      "small": 1149,
+      "medium": 5636,
+      "large": 8656
+    },
+    "content_isolation": {
+      "unique_content_hashes": 9000,
+      "duplicate_samples": 0,
+      "cross_split_duplicates": 0
+    },
+    "invalid_box_count": 0,
+    "assignment_fingerprint": "5091c4662dae9267bb113f8d6453350c40adf26f36dbb96cec141df837158524",
+    "manifest_sha256": "7351f56b696e1e9d840dcd6d1b30ff80df23382fe60d50cddba25ff1b27228a2"
+  }
+}

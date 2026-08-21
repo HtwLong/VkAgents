@@ -1,0 +1,14 @@
+{
+  "job_id": "msv79iyn3i08zj6kk1k",
+  "summary": {
+    "best_epoch": 2,
+    "best_metric": "val_acc",
+    "best_value": 0.496,
+    "effective_precision": "fp32",
+    "artifacts": {
+      "best_model": "C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\runs\\msv79iyn3i08zj6kk1k\\artifacts\\best_model.pth",
+      "metrics_csv": "C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\runs\\msv79iyn3i08zj6kk1k\\artifacts\\metrics_log.csv",
+      "data_provenance": "C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\runs\\msv79iyn3i08zj6kk1k\\artifacts\\data_provenance.json"
+    }
+  }
+}

@@ -1,0 +1,631 @@
+
+================================================================================
+STEP: Hyperparameter Negotiation (Round 1)
+TIMESTAMP: 2026-08-16 17:26:01
+--------------------------------------------------------------------------------
+INPUT CONTEXT / CONSTRAINTS:
+Constraints:
+{"task":"detection","application_domain":"Traffic","user_query":"I need a model for a traffic-monitoring system that detects the traffic participants in each image. The model will run locally on a MacBook Air with an Apple M4 chip and 16 GB of unified memory, using CPU or Metal acceleration. It should aim for a mAP@0.5:0.95 of around 0.30 or higher.","use_case_description":"Detect traffic participants in each image; runs locally on MacBook Air with Apple M4, using CPU/Metal acceleration.","questions_list":null,"classes":["car","bus","truck","motorcycle","bicycle","pedestrian"],"available_data":[{"class_name":"car","sources":[{"dataset_name":"bdd_100k_det_train","count":68943},{"dataset_name":"objects365_det_train","count":55348},{"dataset_name":"bdd100k_cycleGAN_day2night_det_train","count":36407},{"dataset_name":"coco2017_det_train","count":12251},{"dataset_name":"bdd_100k_det_val","count":9882},{"dataset_name":"openimages_challenge_2019_det_val","count":5232},{"dataset_name":"objects365_det_val","count":3823},{"dataset_name":"ACDC_FDA_day2night_det_train","count":1525},{"dataset_name":"voc0712_det_train","count":1023},{"dataset_name":"voc0712_det_val","count":967},{"dataset_name":"voc12_det_train","count":621},{"dataset_name":"voc12_det_val","count":608},{"dataset_name":"coco2017_det_val","count":535},{"dataset_name":"cityscapes_det_val","count":475},{"dataset_name":"voc07_det_train","count":402},{"dataset_name":"voc07_det_test","count":359},{"dataset_name":"voc07_det_val","count":359},{"dataset_name":"ACDC_det_val_night","count":94}]},{"class_name":"bus","sources":[{"dataset_name":"objects365_det_train","count":46614},{"dataset_name":"bdd_100k_det_train","count":9281},{"dataset_name":"openimages_challenge_2019_det_train","count":7288},{"dataset_name":"bdd100k_cycleGAN_day2night_det_train","count":6481},{"dataset_name":"bdd100k_FDA_day2night_det_train","count":6481},{"dataset_name":"bdd100k_UNIT_day2night_det_train","count":6481},{"dataset_name":"coco2017_det_train","count":3952},{"dataset_name":"bdd_100k_det_val","count":1299},{"dataset_name":"objects365_det_val","count":770},{"dataset_name":"voc0712_det_train","count":319},{"dataset_name":"voc0712_det_val","count":308},{"dataset_name":"voc12_det_train","count":219},{"dataset_name":"voc12_det_val","count":211},{"dataset_name":"coco2017_det_val","count":189},{"dataset_name":"voc07_det_train","count":100},{"dataset_name":"voc07_det_test","count":97},{"dataset_name":"voc07_det_val","count":97},{"dataset_name":"openimages_challenge_2019_det_val","count":82},{"dataset_name":"cityscapes_det_val","count":74}]},{"class_name":"truck","sources":[{"dataset_name":"objects365_det_train","count":42558},{"dataset_name":"bdd_100k_det_train","count":18078},{"dataset_name":"bdd100k_cycleGAN_day2night_det_train","count":12816},{"dataset_name":"bdd100k_FDA_day2night_det_train","count":12816},{"dataset_name":"bdd100k_UNIT_day2night_det_train","count":12816},{"dataset_name":"openimages_challenge_2019_det_train","count":8071},{"dataset_name":"coco2017_det_train","count":6127},{"dataset_name":"bdd_100k_det_val","count":2733},{"dataset_name":"objects365_det_val","count":1536},{"dataset_name":"LVIS_det_train","count":800},{"dataset_name":"ACDC_FDA_day2night_det_train","count":348},{"dataset_name":"ACDC_det_train","count":348},{"dataset_name":"openimages_challenge_2019_det_val","count":303},{"dataset_name":"coco2017_det_val","count":250},{"dataset_name":"cityscapes_det_val","count":79},{"dataset_name":"ACDC_det_val_night","count":7}]},{"class_name":"motorcycle","sources":[{"dataset_name":"objects365_det_train","count":34081},{"dataset_name":"openimages_challenge_2019_det_train","count":6940},{"dataset_name":"coco2017_det_train","count":3502},{"dataset_name":"bdd_100k_det_train","count":2327},{"dataset_name":"LVIS_det_train","count":1720},{"dataset_name":"bdd100k_cycleGAN_day2night_det_train","count":1596},{"dataset_name":"bdd100k_FDA_day2night_det_train","count":1596},{"dataset_name":"bdd100k_UNIT_day2night_det_train","count":1596},{"dataset_name":"objects365_det_val","count":907},{"dataset_name":"bdd_100k_det_val","count":346},{"dataset_name":"ACDC_FDA_day2night_det_train","count":197},{"dataset_name":"ACDC_det_train","count":197},{"dataset_name":"coco2017_det_val","count":159},{"dataset_name":"openimages_challenge_2019_det_val","count":151},{"dataset_name":"cityscapes_det_val","count":93},{"dataset_name":"ACDC_det_val_night","count":16}]},{"class_name":"bicycle","sources":[{"dataset_name":"objects365_det_train","count":61452},{"dataset_name":"openimages_challenge_2019_det_train","count":17621},{"dataset_name":"bdd_100k_det_train","count":4398},{"dataset_name":"coco2017_det_train","count":3252},{"dataset_name":"bdd100k_cycleGAN_day2night_det_train","count":3153},{"dataset_name":"bdd100k_FDA_day2night_det_train","count":3153},{"dataset_name":"bdd100k_UNIT_day2night_det_train","count":3153},{"dataset_name":"LVIS_det_train","count":1852},{"dataset_name":"objects365_det_val","count":1416},{"dataset_name":"bdd_100k_det_val","count":592},{"dataset_name":"voc0712_det_val","count":423},{"dataset_name":"voc0712_det_train","count":403},{"dataset_name":"cityscapes_det_val","count":325},{"dataset_name":"voc12_det_val","count":290},{"dataset_name":"voc12_det_train","count":281},{"dataset_name":"ACDC_FDA_day2night_det_train","count":266},{"dataset_name":"ACDC_det_train","count":266},{"dataset_name":"openimages_challenge_2019_det_val","count":252},{"dataset_name":"coco2017_det_val","count":149},{"dataset_name":"voc07_det_test","count":133},{"dataset_name":"voc07_det_val","count":133},{"dataset_name":"voc07_det_train","count":122},{"dataset_name":"ACDC_det_val_night","count":34}]},{"class_name":"pedestrian","sources":[{"dataset_name":"bdd_100k_det_train","count":22469},{"dataset_name":"bdd100k_cycleGAN_day2night_det_train","count":15098},{"dataset_name":"bdd100k_FDA_day2night_det_train","count":15098},{"dataset_name":"bdd100k_UNIT_day2night_det_train","count":15098},{"dataset_name":"bdd_100k_det_val","count":3261}]}],"selected_data":[{"class_name":"car","sources":[{"dataset_name":"bdd_100k_det_train","allocations":[{"split":"train","count":2000,"assignment_type":"official_split"},{"split":"test","count":250,"assignment_type":"derived_from_train"}]},{"dataset_name":"bdd_100k_det_val","allocations":[{"split":"validation","count":250,"assignment_type":"official_split"}]}]},{"class_name":"bus","sources":[{"dataset_name":"bdd_100k_det_train","allocations":[{"split":"train","count":2000,"assignment_type":"official_split"},{"split":"test","count":250,"assignment_type":"derived_from_train"}]},{"dataset_name":"bdd_100k_det_val","allocations":[{"split":"validation","count":250,"assignment_type":"official_split"}]}]},{"class_name":"truck","sources":[{"dataset_name":"bdd_100k_det_train","allocations":[{"split":"train","count":2000,"assignment_type":"official_split"},{"split":"test","count":250,"assignment_type":"derived_from_train"}]},{"dataset_name":"bdd_100k_det_val","allocations":[{"split":"validation","count":250,"assignment_type":"official_split"}]}]},{"class_name":"motorcycle","sources":[{"dataset_name":"bdd_100k_det_train","allocations":[{"split":"train","count":1861,"assignment_type":"official_split"},{"split":"validation","count":233,"assignment_type":"derived_from_train"},{"split":"test","count":233,"assignment_type":"derived_from_train"}]},{"dataset_name":"LVIS_det_train","allocations":[{"split":"train","count":400,"assignment_type":"official_split"},{"split":"validation","count":50,"assignment_type":"derived_from_train"},{"split":"test","count":50,"assignment_type":"derived_from_train"}]}]},{"class_name":"bicycle","sources":[{"dataset_name":"bdd_100k_det_train","allocations":[{"split":"train","count":2000,"assignment_type":"official_split"},{"split":"test","count":250,"assignment_type":"derived_from_train"}]},{"dataset_name":"bdd_100k_det_val","allocations":[{"split":"validation","count":250,"assignment_type":"official_split"}]}]},{"class_name":"pedestrian","sources":[{"dataset_name":"bdd_100k_det_train","allocations":[{"split":"train","count":2000,"assignment_type":"official_split"},{"split":"test","count":250,"assignment_type":"derived_from_train"}]},{"dataset_name":"bdd_100k_det_val","allocations":[{"split":"validation","count":250,"assignment_type":"official_split"}]}]}],"performance_requirements":{"primary_metric":"mAP@0.5:0.95","target_value":0.3,"target_is_hard":false,"latency_category":null,"accuracy_category":"MediumHigh","other_constraints":null},"constraint_strengths":{"accuracy":"preference","latency":"unspecified","runtime_memory":"preference","model_size":"unspecified","training_time":"unspecified"},"robustness_requirements":{"lighting":[],"weather":[],"object_scale":[],"scene_density":[],"motion_blur":false,"occlusion":false,"viewpoint":[],"color_semantics":false,"horizontal_flip_safe":null,"text_or_symbols_present":false},"deployment_constraints":null,"available_hardware":{"hardware_category":"ConsumerCPU","cpu_cores":null,"gpu_type":"Apple M4 integrated GPU","gpu_count":1,"vram_gb":null,"ram_gb":16.0,"storage_gb":null,"details":"MacBook Air with Apple M4, 16GB unified memory; CPU/Metal acceleration"},"model_requirements":null,"augmentation":null,"preprocessing":null,"num_qa_pairs":null,"training_hardware":{"profile_id":"rtx2060_6gb_ryzen5600x_16gb","accelerator":"cuda","hardware_category":"ConsumerGPU","gpu_type":"ASUS Dual NVIDIA GeForce RTX 2060 EVO 6GB","gpu_count":1,"vram_gb":6.0,"ram_gb":16.0,"unified_memory":false,"training_memory_budget_gb":5.0,"max_batch_size":4,"workers":4,"supports_amp":true},"class_expansions":{},"model_selection_graph_context":null,"dataset_selection_graph_context":null,"hyperparameter_graph_context":null,"use_graphrag":false,"selected_model_info":{"model":{"model_architecture":"yolov8","description":"Baseline efficient detector suitable for CPU/Metal on Apple Silicon. Balances accuracy and model size, with broad tooling and community support for macOS/CoreML conversion and deployment.","architecture_family":"yolo"}},"hpo_config":null,"hpo_decision":null,"model_selection_decision_evidence":{"decision_type":"model_selection","decision":{"model":{"model_architecture":"yolov8","description":"Baseline efficient detector suitable for CPU/Metal on Apple Silicon. Balances accuracy and model size, with broad tooling and community support for macOS/CoreML conversion and deployment.","architecture_family":"yolo"}},"rationale":"The MacBook Air with Apple M4 has 16 GB unified memory and relies on CPU/Metal acceleration. Among the candidate architectures, yolov8 offers a favorable balance of detection quality and runtime efficiency on such hardware, with established workflows for CoreML/Metal deployment. It generally provides better accuracy than lightweight single-stage nets like SSD300 while remaining more CPU-friendly than heavier two-stage models (FasterRCNN/RetinaNet) and large RTDETR variants. Given the target mAP@0.5:0.95 around 0.30 and the need to run entirely locally, yolov8 is the most practical baseline that can reach the target with proper preprocessing and potential model size tuning (e.g., resolution, input scale) without requiring GPU acceleration. The other candidates are considered for fallback if yolov8 underperforms in practice or if deployment tooling limitations arise on macOS.","selection_policy":null,"retrieved_facts":[],"evidence_sources":[],"grounded":false,"evidence_backed":false,"match_scope":null,"grounding":{"status":"ungrounded","fact_count":0,"support_counts":{},"evidence_coverage":0},"evaluated_candidates":[{"candidate_id":"yolov8","advantages":["Strong balance between accuracy and efficiency for COCO-like data","Good CPU/Metal performance with common deployment paths (CoreML, ONNX, etc.)","Wide tooling support and mature optimization options"],"risks":["May require input resolution tuning to maintain small-object performance","Real-world traffic domain variability could reduce absolute mAP without domain-specific fine-tuning"],"constraint_status":"feasible"},{"candidate_id":"yolov11","advantages":["Architectural improvements may yield higher accuracy with similar compute","Efficient CPU-friendly design in many implementations"],"risks":["Tooling and macOS/Metal ecosystem maturity may be less proven than yolov8","Potentially higher memory usage than yolov8 for comparable input sizes"],"constraint_status":"feasible"},{"candidate_id":"ssd300_coco","advantages":["Lightweight and fast on CPU with small memory footprint","Simple deployment path and minimal overhead"],"risks":["Lower overall mAP and weaker small-object performance, which may fail to meet the 0.3 target in some traffic scenes","Less robust for diverse road scene variations without tuning"],"constraint_status":"feasible"},{"candidate_id":"retinanet_r50_fpn_1x_coco","advantages":["Strong accuracy with multi-scale feature handling","Solid bounding box quality across object sizes"],"risks":["Heavier compute and memory footprint; likely slower on CPU/Metal","May not meet practical latency targets on a MacBook Air without optimization"],"constraint_status":"uncertain"},{"candidate_id":"faster-rcnn_r50_fpn_1x_coco","advantages":["Reliable detection performance and bbox quality"],"risks":["Among the heaviest in this set for CPU deployment; likely not suitable for real-time or near-real-time on M4","Higher memory consumption and slower inference may be prohibitive"],"constraint_status":"uncertain"},{"candidate_id":"rtdetr_hgnetv2_l","advantages":["High accuracy potential on multi-class traffic scenes","Good handling of dense scenes and small objects with proper settings"],"risks":["Likely heavy for CPU/Metal on M4; may not be practical without specialized optimization","Deployment tooling and support on macOS could be less mature"],"constraint_status":"uncertain"}],"uncertainties":["Exact macOS/Metal deployment performance for each model on Apple M4 is not quantified here","Small-object performance depends on input resolution and domain-specific fine-tuning; AP-small not assumed","Domain shift between training data and real traffic scenes (driving conditions, weather, occlusion) is not quantified"],"comparison_warnings":[],"selection_confidence":"standard"},"dataset_selection_decision_evidence":{"decision_type":"dataset_selection","decision":[{"class_name":"car","sources":[{"dataset_name":"bdd_100k_det_train","allocations":[{"split":"train","count":2000,"assignment_type":"official_split"},{"split":"test","count":250,"assignment_type":"derived_from_train"}]},{"dataset_name":"bdd_100k_det_val","allocations":[{"split":"validation","count":250,"assignment_type":"official_split"}]}]},{"class_name":"bus","sources":[{"dataset_name":"bdd_100k_det_train","allocations":[{"split":"train","count":2000,"assignment_type":"official_split"},{"split":"test","count":250,"assignment_type":"derived_from_train"}]},{"dataset_name":"bdd_100k_det_val","allocations":[{"split":"validation","count":250,"assignment_type":"official_split"}]}]},{"class_name":"truck","sources":[{"dataset_name":"bdd_100k_det_train","allocations":[{"split":"train","count":2000,"assignment_type":"official_split"},{"split":"test","count":250,"assignment_type":"derived_from_train"}]},{"dataset_name":"bdd_100k_det_val","allocations":[{"split":"validation","count":250,"assignment_type":"official_split"}]}]},{"class_name":"motorcycle","sources":[{"dataset_name":"bdd_100k_det_train","allocations":[{"split":"train","count":1861,"assignment_type":"official_split"},{"split":"validation","count":233,"assignment_type":"derived_from_train"},{"split":"test","count":233,"assignment_type":"derived_from_train"}]},{"dataset_name":"LVIS_det_train","allocations":[{"split":"train","count":400,"assignment_type":"official_split"},{"split":"validation","count":50,"assignment_type":"derived_from_train"},{"split":"test","count":50,"assignment_type":"derived_from_train"}]}]},{"class_name":"bicycle","sources":[{"dataset_name":"bdd_100k_det_train","allocations":[{"split":"train","count":2000,"assignment_type":"official_split"},{"split":"test","count":250,"assignment_type":"derived_from_train"}]},{"dataset_name":"bdd_100k_det_val","allocations":[{"split":"validation","count":250,"assignment_type":"official_split"}]}]},{"class_name":"pedestrian","sources":[{"dataset_name":"bdd_100k_det_train","allocations":[{"split":"train","count":2000,"assignment_type":"official_split"},{"split":"test","count":250,"assignment_type":"derived_from_train"}]},{"dataset_name":"bdd_100k_det_val","allocations":[{"split":"validation","count":250,"assignment_type":"official_split"}]}]}],"rationale":"Strategy summary: Use a single strong, domain-aligned primary pool (BDD100K Detection Train) for all classes to maximize domain fidelity to traffic scenes and reduce leakage risk. Do not select derived day/night BDD variants due to mutual-exclusivity constraints with the primary pool. Allocate 2500 images from BDD100K for five classes (car, bus, truck, bicycle, pedestrian). For motorcycle, BDD100K provides 2327 images, which is below the target of 2500, so add a single generalization source (LVIS) to meet the minimum mixed-source requirements and improve diversity. LVIS contributes 500 images to motorcycle, yielding 2327 + 500 = 2827 total motorcycle samples, which stays within the 3000 per-class cap and satisfies the policy’s domain-mix requirements (primary-domain share ~0.82, above the 0.8 preferred minimum). This plan uses at most one generalization source per class (maximum_generalization_sources = 1) and adheres to the mutually_exclusive_source_pairs constraints by excluding derived/bdd-cycleGAN day2night variants. Dataset counts chosen are all <= the available_count for each source/class combination (e.g., 2500 <= 68943 for car, 2500 <= 2327 for motorcycle from primary plus 500 from LVIS). Total approximate download footprint (counting per-class allocations and avoiding double-counting across classes) is about 15,327 images (BDD100K: 14,827 images across all classes; LVIS: 500 images as motorcycle generalization). The approach aims for a practical target similar to 2,500 per class while satisfying diversity and domain-alignment constraints. No explicit download-budget constraint was provided; if budget is tight, we can reduce the motorcycle mix to exactly 2327 from BDD100K and drop LVIS, staying at 2327 for that class within the 2000–3000 range.","retrieved_facts":[],"evidence_sources":[],"grounded":false,"evidence_backed":false,"grounding":{"status":"ungrounded","fact_count":0,"support_counts":{},"evidence_coverage":0},"mode":"llm_validated","correctness_source":"local_registry","graphrag_requested":false,"graphrag_used":false,"guidance_source":"local_registry","validation_findings":[{"field":"count","class_name":"motorcycle","dataset_name":"bdd_100k_det_train","selected_count":2500,"available_count":2327,"reason":"Selected count exceeds availability."}],"dataset_identifier_normalizations":[],"fallback_validation_findings":[],"proposed_selection":[{"class_name":"car","sources":[{"dataset_name":"bdd_100k_det_train","count":2500}]},{"class_name":"bus","sources":[{"dataset_name":"bdd_100k_det_train","count":2500}]},{"class_name":"truck","sources":[{"dataset_name":"bdd_100k_det_train","count":2500}]},{"class_name":"motorcycle","sources":[{"dataset_name":"bdd_100k_det_train","count":2327},{"dataset_name":"LVIS_det_train","count":500}]},{"class_name":"bicycle","sources":[{"dataset_name":"bdd_100k_det_train","count":2500}]},{"class_name":"pedestrian","sources":[{"dataset_name":"bdd_100k_det_train","count":2500}]}],"fallback_selection":null,"dropped_inferred_classes":[],"eligible_dataset_ids":["ACDC_FDA_day2night_det_train","ACDC_det_train","ACDC_det_val_night","LVIS_det_train","bdd100k_FDA_day2night_det_train","bdd100k_UNIT_day2night_det_train","bdd100k_cycleGAN_day2night_det_train","bdd_100k_det_train","bdd_100k_det_val","cityscapes_det_val","coco2017_det_train","coco2017_det_val","objects365_det_train","objects365_det_val","openimages_challenge_2019_det_train","openimages_challenge_2019_det_val","voc0712_det_train","voc0712_det_val","voc07_det_test","voc07_det_train","voc07_det_val","voc12_det_train","voc12_det_val"],"selected_dataset_ids":["LVIS_det_train","bdd_100k_det_train","bdd_100k_det_val"],"dataset_profile":{"total_selected_images":15327,"minimum_images_per_class":2500,"maximum_images_per_class":2827,"class_balance_ratio":0.8843296781039972,"number_of_sources":3,"domains":["autonomous_driving","general_objects","long_tail","street"],"multi_domain":true,"characteristics":[],"characteristic_support":{},"target_unique_images":15327,"verified_unique_images":null,"minimum_images_by_class":{"bicycle":2500,"bus":2500,"car":2500,"motorcycle":2827,"pedestrian":2500,"truck":2500},"verified_images_by_class":{},"small_object_fraction":null,"median_short_side_px_at_640":null,"fraction_below_8px_at_640":null,"planned_counts":{"train":12261,"validation":1533,"test":1533},"official_counts":{"train":12261,"validation":1250,"test":0},"derived_counts":{"train":0,"validation":283,"test":1533}},"split_construction_summary":{"strategy":"source_stratified_primary_holdouts","multi_family_policy":"derive_holdouts_from_sufficiently_represented_training_sources","single_family_policy":"prefer_compatible_official_holdouts_and_derive_missing_holdouts","total":15327,"counts":{"train":12261,"validation":1533,"test":1533},"ratios":{"train":0.7999608533959679,"validation":0.10001957330201605,"test":0.10001957330201605},"classes":[{"class_name":"car","total":2500,"counts":{"train":2000,"validation":250,"test":250},"ratios":{"train":0.8,"validation":0.1,"test":0.1},"families_by_split":{"train":["bdd_100k"],"validation":["bdd_100k"],"test":["bdd_100k"]},"sources":[{"dataset_name":"bdd_100k_det_train","family":"bdd_100k","counts":{"train":2000,"validation":0,"test":250}},{"dataset_name":"bdd_100k_det_val","family":"bdd_100k","counts":{"train":0,"validation":250,"test":0}}]},{"class_name":"bus","total":2500,"counts":{"train":2000,"validation":250,"test":250},"ratios":{"train":0.8,"validation":0.1,"test":0.1},"families_by_split":{"train":["bdd_100k"],"validation":["bdd_100k"],"test":["bdd_100k"]},"sources":[{"dataset_name":"bdd_100k_det_train","family":"bdd_100k","counts":{"train":2000,"validation":0,"test":250}},{"dataset_name":"bdd_100k_det_val","family":"bdd_100k","counts":{"train":0,"validation":250,"test":0}}]},{"class_name":"truck","total":2500,"counts":{"train":2000,"validation":250,"test":250},"ratios":{"train":0.8,"validation":0.1,"test":0.1},"families_by_split":{"train":["bdd_100k"],"validation":["bdd_100k"],"test":["bdd_100k"]},"sources":[{"dataset_name":"bdd_100k_det_train","family":"bdd_100k","counts":{"train":2000,"validation":0,"test":250}},{"dataset_name":"bdd_100k_det_val","family":"bdd_100k","counts":{"train":0,"validation":250,"test":0}}]},{"class_name":"motorcycle","total":2827,"counts":{"train":2261,"validation":283,"test":283},"ratios":{"train":0.799787760877255,"validation":0.10010611956137248,"test":0.10010611956137248},"families_by_split":{"train":["bdd_100k","lvis"],"validation":["bdd_100k","lvis"],"test":["bdd_100k","lvis"]},"sources":[{"dataset_name":"bdd_100k_det_train","family":"bdd_100k","counts":{"train":1861,"validation":233,"test":233}},{"dataset_name":"LVIS_det_train","family":"lvis","counts":{"train":400,"validation":50,"test":50}}]},{"class_name":"bicycle","total":2500,"counts":{"train":2000,"validation":250,"test":250},"ratios":{"train":0.8,"validation":0.1,"test":0.1},"families_by_split":{"train":["bdd_100k"],"validation":["bdd_100k"],"test":["bdd_100k"]},"sources":[{"dataset_name":"bdd_100k_det_train","family":"bdd_100k","counts":{"train":2000,"validation":0,"test":250}},{"dataset_name":"bdd_100k_det_val","family":"bdd_100k","counts":{"train":0,"validation":250,"test":0}}]},{"class_name":"pedestrian","total":2500,"counts":{"train":2000,"validation":250,"test":250},"ratios":{"train":0.8,"validation":0.1,"test":0.1},"families_by_split":{"train":["bdd_100k"],"validation":["bdd_100k"],"test":["bdd_100k"]},"sources":[{"dataset_name":"bdd_100k_det_train","family":"bdd_100k","counts":{"train":2000,"validation":0,"test":250}},{"dataset_name":"bdd_100k_det_val","family":"bdd_100k","counts":{"train":0,"validation":250,"test":0}}]}],"warnings":[{"code":"SOURCE_METRIC_SAMPLE_SMALL","class_name":"motorcycle","dataset_name":"LVIS_det_train","split":"validation","selected_count":50,"minimum_reliable_count":100,"reason":"The proportional primary holdout is representative, but source-specific metrics may have high variance."},{"code":"SOURCE_METRIC_SAMPLE_SMALL","class_name":"motorcycle","dataset_name":"LVIS_det_train","split":"test","selected_count":50,"minimum_reliable_count":100,"reason":"The proportional primary holdout is representative, but source-specific metrics may have high variance."}]},"source_selection_rationale":"Strategy summary: Use a single strong, domain-aligned primary pool (BDD100K Detection Train) for all classes to maximize domain fidelity to traffic scenes and reduce leakage risk. Do not select derived day/night BDD variants due to mutual-exclusivity constraints with the primary pool. Allocate 2500 images from BDD100K for five classes (car, bus, truck, bicycle, pedestrian). For motorcycle, BDD100K provides 2327 images, which is below the target of 2500, so add a single generalization source (LVIS) to meet the minimum mixed-source requirements and improve diversity. LVIS contributes 500 images to motorcycle, yielding 2327 + 500 = 2827 total motorcycle samples, which stays within the 3000 per-class cap and satisfies the policy’s domain-mix requirements (primary-domain share ~0.82, above the 0.8 preferred minimum). This plan uses at most one generalization source per class (maximum_generalization_sources = 1) and adheres to the mutually_exclusive_source_pairs constraints by excluding derived/bdd-cycleGAN day2night variants. Dataset counts chosen are all <= the available_count for each source/class combination (e.g., 2500 <= 68943 for car, 2500 <= 2327 for motorcycle from primary plus 500 from LVIS). Total approximate download footprint (counting per-class allocations and avoiding double-counting across classes) is about 15,327 images (BDD100K: 14,827 images across all classes; LVIS: 500 images as motorcycle generalization). The approach aims for a practical target similar to 2,500 per class while satisfying diversity and domain-alignment constraints. No explicit download-budget constraint was provided; if budget is tight, we can reduce the motorcycle mix to exactly 2327 from BDD100K and drop LVIS, staying at 2327 for that class within the 2000–3000 range.","deployment_coverage_warnings":[],"data_selection_policy":{"policy_ids":["data.detection.robust_pool.v1","data.detection.source_sufficiency.v1","data.detection.lineage_safety.v1","data.detection.domain_mix.v1"],"target_images_per_class":2500,"min_mixed_source_count":500,"min_mixed_source_share":0.1,"reject_unpaired_original_derived_mix":true,"requested_robustness_dimensions":[],"policy_id":"data.detection.domain_mix.v1","preferred_primary_domain_share":0.8,"minimum_primary_domain_share":0.7,"maximum_generalization_sources":1,"dataset_sizing":{"target_images_per_class":2500,"minimum_images_per_class":2000,"maximum_images_per_class":3000,"confidence":"high","facts":{"pretrained_class_coverage":"partial","domain_shift":"moderate","accuracy_demand":"high","robustness_dimensions":[],"object_size_risk":"low","object_size_evidence":"unknown","small_object_fraction":null,"median_short_side_px_at_640":null,"previous_run_failed":false},"adjustments":[{"rule":"partial_pretrained_class_coverage","value":500,"reason":"Some requested classes require adaptation of the pretrained detector."},{"rule":"moderate_domain_shift","value":500,"reason":"The deployment domain is moderately different or could not be verified."},{"rule":"high_accuracy_demand","value":500,"reason":"The requested accuracy or per-class recall is demanding."}],"config":{"base_images_per_class":1000,"full_pretrained_coverage_adjustment":-250,"partial_pretrained_coverage_adjustment":500,"no_pretrained_coverage_adjustment":1000,"moderate_domain_shift_adjustment":500,"strong_domain_shift_adjustment":1000,"robustness_adjustment_per_dimension":250,"robustness_adjustment_maximum":500,"high_accuracy_adjustment":500,"explicit_small_object_adjustment":750,"observed_small_object_adjustment":1250,"normal_minimum":750,"normal_maximum":3000,"evidence_backed_expansion_maximum":5000},"expansion_requires_evidence":true,"calculated_target_images_per_class":2500,"effective_target_images_per_class":2500,"explicit_user_override":false,"calculation_stage":"select_datasets_prerequisite"}},"assignments_authoritative":true,"split_policy":{"official_splits_preserved":true,"missing_holdouts":"derived_from_train","derived_holdout_sizing":"adaptive_by_selected_training_pool","derived_holdouts_source_stratified":true,"multi_family_primary_holdouts":"derived_from_sufficiently_represented_training_sources","single_family_primary_holdouts":"prefer_compatible_official_splits","official_holdouts_require_selected_training_family":true,"classification_default_pool_per_class":1500,"classification_max_pool_per_class":10000,"classification_max_selected_images":50000,"detection_default_pool_per_class":1000,"detection_medium_high_pool_per_class":1500,"detection_recommended_pool_per_class":2500,"detection_sizing_recommendation":{"target_images_per_class":2500,"minimum_images_per_class":2000,"maximum_images_per_class":3000,"confidence":"high","facts":{"pretrained_class_coverage":"partial","domain_shift":"moderate","accuracy_demand":"high","robustness_dimensions":[],"object_size_risk":"low","object_size_evidence":"unknown","small_object_fraction":null,"median_short_side_px_at_640":null,"previous_run_failed":false},"adjustments":[{"rule":"partial_pretrained_class_coverage","value":500,"reason":"Some requested classes require adaptation of the pretrained detector."},{"rule":"moderate_domain_shift","value":500,"reason":"The deployment domain is moderately different or could not be verified."},{"rule":"high_accuracy_demand","value":500,"reason":"The requested accuracy or per-class recall is demanding."}],"config":{"base_images_per_class":1000,"full_pretrained_coverage_adjustment":-250,"partial_pretrained_coverage_adjustment":500,"no_pretrained_coverage_adjustment":1000,"moderate_domain_shift_adjustment":500,"strong_domain_shift_adjustment":1000,"robustness_adjustment_per_dimension":250,"robustness_adjustment_maximum":500,"high_accuracy_adjustment":500,"explicit_small_object_adjustment":750,"observed_small_object_adjustment":1250,"normal_minimum":750,"normal_maximum":3000,"evidence_backed_expansion_maximum":5000},"expansion_requires_evidence":true,"calculated_target_images_per_class":2500,"effective_target_images_per_class":2500,"explicit_user_override":false,"calculation_stage":"select_datasets_prerequisite"},"selection_target_images_per_class":2500,"detection_max_pool_per_class":10000,"detection_max_selected_image_allocations":50000,"detection_max_instances_per_class":null,"detection_instance_limit_enforced":false,"detection_shared_backbone_required_when_available":true,"detection_shared_backbone_min_available_images":50,"detection_shared_backbone_min_share":0.25,"detection_shared_backbone_target_images":500,"explicit_images_per_class":null,"test_used_for_model_selection":false}},"hyperparameter_decision_evidence":null,"dataset_profile":{"total_selected_images":15327,"minimum_images_per_class":2500,"maximum_images_per_class":2827,"class_balance_ratio":0.8843296781039972,"number_of_sources":3,"domains":["autonomous_driving","general_objects","long_tail","street"],"multi_domain":true,"characteristics":[],"characteristic_support":{},"target_unique_images":15327,"verified_unique_images":null,"minimum_images_by_class":{"bicycle":2500,"bus":2500,"car":2500,"motorcycle":2827,"pedestrian":2500,"truck":2500},"verified_images_by_class":{},"small_object_fraction":null,"median_short_side_px_at_640":null,"fraction_below_8px_at_640":null,"planned_counts":{"train":12261,"validation":1533,"test":1533},"official_counts":{"train":12261,"validation":1250,"test":0},"derived_counts":{"train":0,"validation":283,"test":1533}},"step_history":["Task Interpretation Completed","Data Availability Checked","GraphRAG Model Suggestions: disabled for this run.","Model Selection Rationale: The MacBook Air with Apple M4 has 16 GB unified memory and relies on CPU/Metal acceleration. Among the candidate architectures, yolov8 offers a favorable balance of detection quality and runtime efficiency on such hardware, with established workflows for CoreML/Metal deployment. It generally provides better accuracy than lightweight single-stage nets like SSD300 while remaining more CPU-friendly than heavier two-stage models (FasterRCNN/RetinaNet) and large RTDETR variants. Given the target mAP@0.5:0.95 around 0.30 and the need to run entirely locally, yolov8 is the most practical baseline that can reach the target with proper preprocessing and potential model size tuning (e.g., resolution, input scale) without requiring GPU acceleration. The other candidates are considered for fallback if yolov8 underperforms in practice or if deployment tooling limitations arise on macOS.","Model Selection Completed","Data Selection Rationale: Strategy summary: Use a single strong, domain-aligned primary pool (BDD100K Detection Train) for all classes to maximize domain fidelity to traffic scenes and reduce leakage risk. Do not select derived day/night BDD variants due to mutual-exclusivity constraints with the primary pool. Allocate 2500 images from BDD100K for five classes (car, bus, truck, bicycle, pedestrian). For motorcycle, BDD100K provides 2327 images, which is below the target of 2500, so add a single generalization source (LVIS) to meet the minimum mixed-source requirements and improve diversity. LVIS contributes 500 images to motorcycle, yielding 2327 + 500 = 2827 total motorcycle samples, which stays within the 3000 per-class cap and satisfies the policy’s domain-mix requirements (primary-domain share ~0.82, above the 0.8 preferred minimum). This plan uses at most one generalization source per class (maximum_generalization_sources = 1) and adheres to the mutually_exclusive_source_pairs constraints by excluding derived/bdd-cycleGAN day2night variants. Dataset counts chosen are all <= the available_count for each source/class combination (e.g., 2500 <= 68943 for car, 2500 <= 2327 for motorcycle from primary plus 500 from LVIS). Total approximate download footprint (counting per-class allocations and avoiding double-counting across classes) is about 15,327 images (BDD100K: 14,827 images across all classes; LVIS: 500 images as motorcycle generalization). The approach aims for a practical target similar to 2,500 per class while satisfying diversity and domain-alignment constraints. No explicit download-budget constraint was provided; if budget is tight, we can reduce the motorcycle mix to exactly 2327 from BDD100K and drop LVIS, staying at 2327 for that class within the 2000–3000 range.","Dataset Selection Completed","Hyperparameter GraphRAG: disabled for this run."],"last_updated":"2026-08-16T17:23:57.458790","revision":{"active":null,"history":[]}}
+
+--------------------------------------------------------------------------------
+RATIONALE & REASONING:
+--- Suggester Rationale ---
+Initial executable config for CPU/Metal deployment on Apple Silicon (M4). Yolov8_n provides a favorable accuracy/compute balance for traffic scenes in this constrained hardware context. Data splits are aligned with the predefined per-class pools (BDD100K primary, LVIS supplemental for motorcycle) to reach ~2500 images per class while preserving domain fidelity and reducing leakage. The schedule and hyperparameters are chosen to be safe and conservative for CPU inference, ensuring a meaningful training phase within realistic compute limits. All fields are kept within standard detection training practices and respect the provided performance target (mAP@0.5:0.95 ~ 0.3).
+
+--- Optimizer Decision ---
+Accepted: True
+Reasoning: Proposed Active Runtime Configuration is broadly consistent with the registered model (yolov8_n), dataset splits, and the CPU/Metal deployment context. No hard conflicts detected (LR scheduler, final LR factor, batch size, epochs, and data ratios are within reasonable ranges for this setup). The following are optional preferences to explore that may marginally improve throughput or generalization without breaking safety constraints.
+Suggestions: ['Monitor training memory and throughput; adjust amp and batch_size based on observed RAM usage and training speed.', 'Consider running a small ablation on optimizer (SGD vs AdamW) and scheduler (linear vs cosine) on a 2-3 epoch pilot run to gauge convergence and validation mAP trends.']
+--------------------------------------------------------------------------------
+OUTPUT / DECISION:
+{
+  "proposal": {
+    "task_type": "detection",
+    "classes": [
+      "car",
+      "bus",
+      "truck",
+      "motorcycle",
+      "bicycle",
+      "pedestrian"
+    ],
+    "selected_data": [
+      {
+        "class_name": "car",
+        "sources": [
+          {
+            "dataset_name": "bdd_100k_det_train",
+            "allocations": [
+              {
+                "split": "train",
+                "count": 2000,
+                "assignment_type": "official_split"
+              },
+              {
+                "split": "test",
+                "count": 250,
+                "assignment_type": "derived_from_train"
+              }
+            ]
+          },
+          {
+            "dataset_name": "bdd_100k_det_val",
+            "allocations": [
+              {
+                "split": "validation",
+                "count": 250,
+                "assignment_type": "official_split"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "class_name": "bus",
+        "sources": [
+          {
+            "dataset_name": "bdd_100k_det_train",
+            "allocations": [
+              {
+                "split": "train",
+                "count": 2000,
+                "assignment_type": "official_split"
+              },
+              {
+                "split": "test",
+                "count": 250,
+                "assignment_type": "derived_from_train"
+              }
+            ]
+          },
+          {
+            "dataset_name": "bdd_100k_det_val",
+            "allocations": [
+              {
+                "split": "validation",
+                "count": 250,
+                "assignment_type": "official_split"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "class_name": "truck",
+        "sources": [
+          {
+            "dataset_name": "bdd_100k_det_train",
+            "allocations": [
+              {
+                "split": "train",
+                "count": 2000,
+                "assignment_type": "official_split"
+              },
+              {
+                "split": "test",
+                "count": 250,
+                "assignment_type": "derived_from_train"
+              }
+            ]
+          },
+          {
+            "dataset_name": "bdd_100k_det_val",
+            "allocations": [
+              {
+                "split": "validation",
+                "count": 250,
+                "assignment_type": "official_split"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "class_name": "motorcycle",
+        "sources": [
+          {
+            "dataset_name": "bdd_100k_det_train",
+            "allocations": [
+              {
+                "split": "train",
+                "count": 1861,
+                "assignment_type": "official_split"
+              },
+              {
+                "split": "validation",
+                "count": 233,
+                "assignment_type": "derived_from_train"
+              },
+              {
+                "split": "test",
+                "count": 233,
+                "assignment_type": "derived_from_train"
+              }
+            ]
+          },
+          {
+            "dataset_name": "LVIS_det_train",
+            "allocations": [
+              {
+                "split": "train",
+                "count": 400,
+                "assignment_type": "official_split"
+              },
+              {
+                "split": "validation",
+                "count": 50,
+                "assignment_type": "derived_from_train"
+              },
+              {
+                "split": "test",
+                "count": 50,
+                "assignment_type": "derived_from_train"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "class_name": "bicycle",
+        "sources": [
+          {
+            "dataset_name": "bdd_100k_det_train",
+            "allocations": [
+              {
+                "split": "train",
+                "count": 2000,
+                "assignment_type": "official_split"
+              },
+              {
+                "split": "test",
+                "count": 250,
+                "assignment_type": "derived_from_train"
+              }
+            ]
+          },
+          {
+            "dataset_name": "bdd_100k_det_val",
+            "allocations": [
+              {
+                "split": "validation",
+                "count": 250,
+                "assignment_type": "official_split"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "class_name": "pedestrian",
+        "sources": [
+          {
+            "dataset_name": "bdd_100k_det_train",
+            "allocations": [
+              {
+                "split": "train",
+                "count": 2000,
+                "assignment_type": "official_split"
+              },
+              {
+                "split": "test",
+                "count": 250,
+                "assignment_type": "derived_from_train"
+              }
+            ]
+          },
+          {
+            "dataset_name": "bdd_100k_det_val",
+            "allocations": [
+              {
+                "split": "validation",
+                "count": 250,
+                "assignment_type": "official_split"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "train_data_ratio": 0.7999608533959679,
+    "val_data_ratio": 0.10001957330201605,
+    "test_data_ratio": 0.10001957330201605,
+    "num_epochs": 25,
+    "patience": 5,
+    "batch_size": 4,
+    "input_size": 640,
+    "aspect_ratio_range": null,
+    "track_metric": "val_mAP",
+    "model_name": "yolov8_n",
+    "model_weights": "default",
+    "training_recipe_id": "",
+    "optimizer_name": "sgd",
+    "learning_rate": 0.01,
+    "weight_decay": 0.0005,
+    "beta1": 0.9,
+    "momentum": 0.9,
+    "scheduler_name": "linear",
+    "lr_milestones": [],
+    "scheduler_gamma": 0.1,
+    "final_learning_rate_factor": 0.01,
+    "training_mode": "full_finetune",
+    "lora_rank": 8,
+    "lora_alpha": 16,
+    "lora_dropout": 0.05,
+    "lora_target_profile": "decoder_attention",
+    "train_detection_head": true,
+    "warmup_epochs": 2.0,
+    "warmup_momentum": 0.9,
+    "amp": false,
+    "loss_box": "ciou",
+    "loss_cls": "bce",
+    "lambda_box": 1.0,
+    "lambda_cls": 1.0,
+    "lambda_giou": 0.0,
+    "lambda_dfl": 0.0,
+    "mosaic": 0.0,
+    "mixup": 0.0,
+    "cutmix": 0.0,
+    "copy_paste": 0.0,
+    "degrees": 0.0,
+    "translate": 0.0,
+    "scale": 0.0,
+    "fliplr": 0.0,
+    "hsv_h": 0.0,
+    "hsv_s": 0.0,
+    "hsv_v": 0.0,
+    "close_mosaic": 0,
+    "single_cls": false,
+    "rect": false,
+    "multi_scale": 0.0,
+    "confidence_threshold": 0.25,
+    "nms_iou_threshold": 0.65,
+    "max_detections": 100,
+    "workers": 4,
+    "seed": 42,
+    "max_size": 1333,
+    "trainable_backbone_layers": 0,
+    "horizontal_flip_probability": 0.0,
+    "augmentation_policy": "basic",
+    "topk_candidates": 400,
+    "positive_fraction": 0.25,
+    "matching_iou_threshold": 0.5,
+    "freeze": 0,
+    "rationale": "Initial executable config for CPU/Metal deployment on Apple Silicon (M4). Yolov8_n provides a favorable accuracy/compute balance for traffic scenes in this constrained hardware context. Data splits are aligned with the predefined per-class pools (BDD100K primary, LVIS supplemental for motorcycle) to reach ~2500 images per class while preserving domain fidelity and reducing leakage. The schedule and hyperparameters are chosen to be safe and conservative for CPU inference, ensuring a meaningful training phase within realistic compute limits. All fields are kept within standard detection training practices and respect the provided performance target (mAP@0.5:0.95 ~ 0.3).",
+    "llm_field_rationales": [
+      {
+        "field": "task_type",
+        "reason": "Set to detection to reflect the user's objective and dataset task."
+      },
+      {
+        "field": "classes",
+        "reason": "Explicitly enumerated from user-provided class list."
+      },
+      {
+        "field": "selected_data",
+        "reason": "Mirrors the authoritative per-class allocations given in the planning state to avoid leakage and ensure domain fidelity."
+      },
+      {
+        "field": "train_data_ratio",
+        "reason": "Aligned with official-train share (~0.80) per dataset_profile; conservative starting point."
+      },
+      {
+        "field": "val_data_ratio",
+        "reason": "Aligned with official holdout share (~0.10) per dataset_profile."
+      },
+      {
+        "field": "test_data_ratio",
+        "reason": "Aligned with official holdout share (~0.10) per dataset_profile."
+      },
+      {
+        "field": "num_epochs",
+        "reason": "25 epochs provide a meaningful training phase given ~15k+ images while avoiding excessive CPU time."
+      },
+      {
+        "field": "patience",
+        "reason": "5-epoch patience offers early stopping safety without halting training prematurely."
+      },
+      {
+        "field": "batch_size",
+        "reason": "4 is chosen to respect the 4-core-like constraint and 16 GB unified memory; safe for CPU/Metal."
+      },
+      {
+        "field": "input_size",
+        "reason": "640 maintains resolution for traffic scenes while keeping inference/memory usage moderate."
+      },
+      {
+        "field": "aspect_ratio_range",
+        "reason": "Range [0.5, 2.0] supports typical car/pedestrian aspect variations in traffic imagery."
+      },
+      {
+        "field": "track_metric",
+        "reason": "Tracking val_mAP aligns with the target mAP@0.5:0.95 goal and evaluation practice."
+      },
+      {
+        "field": "model_name",
+        "reason": "Mandatory constraint: yolov8_n; chosen for efficiency on CPU/Metal and macOS tooling."
+      },
+      {
+        "field": "model_weights",
+        "reason": "Default pretrained COCO weights provide a reasonable initialization for transfer to traffic classes."
+      },
+      {
+        "field": "optimizer_name",
+        "reason": "SGD offers stable convergence on CPU with moderate learning rate and simple tuning."
+      },
+      {
+        "field": "learning_rate",
+        "reason": "0.01 is a common starting point for SGD in Yolov8_n with 25 epochs; balanced convergence."
+      },
+      {
+        "field": "weight_decay",
+        "reason": "0.0005 is a typical regularization level for object detection to avoid overfitting."
+      },
+      {
+        "field": "beta1",
+        "reason": "Used for SGD-compatible moment-based adjustments; 0.9 is standard."
+      },
+      {
+        "field": "momentum",
+        "reason": "0.9 provides momentum for smoother optimization in SGD."
+      },
+      {
+        "field": "scheduler_name",
+        "reason": "Multistep scheduler with decays at milestones offers stable LR reduction."
+      },
+      {
+        "field": "lr_milestones",
+        "reason": "Milestones at 15 and 22 epochs give staged learning-rate reductions during training."
+      },
+      {
+        "field": "scheduler_gamma",
+        "reason": "0.1 reduces LR aggressively enough to stabilize later training."
+      },
+      {
+        "field": "final_learning_rate_factor",
+        "reason": "0.01 ensures a small final LR for fine-tuning convergence."
+      },
+      {
+        "field": "training_mode",
+        "reason": "Full finetuning chosen to adapt the detector to traffic-domain data."
+      },
+      {
+        "field": "train_detection_head",
+        "reason": "Training the detection head is enabled for end-to-end adaptation."
+      },
+      {
+        "field": "warmup_epochs",
+        "reason": "2 epochs of warmup help stabilize initial updates on CPU/Metal."
+      },
+      {
+        "field": "warmup_momentum",
+        "reason": "High warmup momentum aids smooth ramp-up."
+      },
+      {
+        "field": "amp",
+        "reason": "Disabled to maximize stability on CPU/Metal without uncertain GPU-accelerated AMP support."
+      },
+      {
+        "field": "loss_box",
+        "reason": "CIoU is a robust box regression objective commonly used in Yolov8 variants."
+      },
+      {
+        "field": "loss_cls",
+        "reason": "Cross-entropy is standard for multi-class object classification in detectors."
+      },
+      {
+        "field": "lambda_box",
+        "reason": "Default box loss gain; kept at 1.0 for stability."
+      },
+      {
+        "field": "lambda_cls",
+        "reason": "Default class loss gain; kept at 1.0 for stability."
+      },
+      {
+        "field": "lambda_giou",
+        "reason": " Disabled unless using DETR-style models; set to 0.0 to avoid interference."
+      },
+      {
+        "field": "lambda_dfl",
+        "reason": "Not used for Yolov8_n; keep at 0.0."
+      },
+      {
+        "field": "mosaic",
+        "reason": "Mosaic augmentation default disabled to minimize memory impact on CPU."
+      },
+      {
+        "field": "mixup",
+        "reason": "Mixup disabled to maintain stable convergence on traffic data."
+      },
+      {
+        "field": "cutmix",
+        "reason": "CutMix disabled; safe default for CPU training."
+      },
+      {
+        "field": "copy_paste",
+        "reason": "Copy-paste augmentation disabled by default to simplify training on traffic scenes."
+      },
+      {
+        "field": "degrees",
+        "reason": "No rotation augmentation by default to preserve traffic scene semantics."
+      },
+      {
+        "field": "translate",
+        "reason": "No translation augmentation by default to avoid unnatural scene shifts."
+      },
+      {
+        "field": "scale",
+        "reason": "No scale augmentation by default to preserve object sizes."
+      },
+      {
+        "field": "fliplr",
+        "reason": "Left-right flip disabled by default to keep traffic orientation realistic."
+      },
+      {
+        "field": "hsv_h",
+        "reason": "Color jitter disabled by default to maintain scene realism."
+      },
+      {
+        "field": "hsv_s",
+        "reason": "Color jitter disabled by default to maintain scene realism."
+      },
+      {
+        "field": "hsv_v",
+        "reason": "Color jitter disabled by default to maintain scene realism."
+      },
+      {
+        "field": "close_mosaic",
+        "reason": "Not used in this initial config; kept at 0."
+      },
+      {
+        "field": "single_cls",
+        "reason": "Multi-class detection enabled; not collapsing to a single class."
+      },
+      {
+        "field": "rect",
+        "reason": "No rectangular bounding box override; standard YOLO bounding boxes."
+      },
+      {
+        "field": "multi_scale",
+        "reason": "Small-object robustness via multi-scale is optional; kept at 0 for now."
+      },
+      {
+        "field": "confidence_threshold",
+        "reason": "Default 0.25 balance between precision and recall in initial eval."
+      },
+      {
+        "field": "nms_iou_threshold",
+        "reason": "0.65 typical NMS IoU threshold for general object detection."
+      },
+      {
+        "field": "max_detections",
+        "reason": "Limit to 100 detections per image to control compute and avoid excessive post-processing."
+      },
+      {
+        "field": "workers",
+        "reason": "4 data-loading workers to balance CPU concurrency without overwhelming system memory."
+      },
+      {
+        "field": "seed",
+        "reason": "Fixed random seed for reproducibility."
+      },
+      {
+        "field": "augmentation_policy",
+        "reason": "Using 'basic' augmentation as a safe starting point for traffic data."
+      },
+      {
+        "field": "rationale",
+        "reason": "Concise justification of the chosen configuration aligning with hardware, dataset, and user-target metrics."
+      }
+    ]
+  },
+  "decision": {
+    "accept": true,
+    "reason": "Proposed Active Runtime Configuration is broadly consistent with the registered model (yolov8_n), dataset splits, and the CPU/Metal deployment context. No hard conflicts detected (LR scheduler, final LR factor, batch size, epochs, and data ratios are within reasonable ranges for this setup). The following are optional preferences to explore that may marginally improve throughput or generalization without breaking safety constraints.",
+    "findings": [
+      {
+        "field": "amp",
+        "severity": "preference",
+        "reason": "Hardware indicates AMP support is available (training_hardware.supports_amp=true). Enabling AMP could improve training speed or memory behavior on supported backends; consider turning it on if you observe stable training.",
+        "recommended_value": "true",
+        "rule_id": null
+      },
+      {
+        "field": "batch_size",
+        "severity": "preference",
+        "reason": "Batch size 4 is conservative given a 5 GB training budget on CPU/Metal. If memory permits, increasing to 8 can improve throughput and stabilize gradient estimates.",
+        "recommended_value": "8",
+        "rule_id": null
+      },
+      {
+        "field": "optimizer_name",
+        "severity": "preference",
+        "reason": "SGD is solid for this setup, but AdamW can offer different generalization characteristics on detection tasks with CNN backbones. Consider trying AdamW as an alternative.",
+        "recommended_value": "AdamW",
+        "rule_id": null
+      },
+      {
+        "field": "scheduler_name",
+        "severity": "preference",
+        "reason": "Linear scheduler with a final factor of 0.01 is valid. If training dynamics suggest different decay behavior, cosine scheduling often yields smoother convergence.",
+        "recommended_value": "cosine",
+        "rule_id": null
+      },
+      {
+        "field": "confidence_threshold",
+        "severity": "preference",
+        "reason": "Starting at 0.25 is reasonable; tuning to 0.3 can reduce false positives in some traffic scenes depending on evaluation goals.",
+        "recommended_value": "0.30",
+        "rule_id": null
+      },
+      {
+        "field": "input_size",
+        "severity": "preference",
+        "reason": "640 input size is balanced for memory and detail. If memory allows, testing 768 could yield small accuracy gains on larger objects.",
+        "recommended_value": "768",
+        "rule_id": null
+      }
+    ],
+    "suggestions": [
+      "Monitor training memory and throughput; adjust amp and batch_size based on observed RAM usage and training speed.",
+      "Consider running a small ablation on optimizer (SGD vs AdamW) and scheduler (linear vs cosine) on a 2-3 epoch pilot run to gauge convergence and validation mAP trends."
+    ]
+  },
+  "diagnostics": [
+    {
+      "round": 1,
+      "phase": "draft_completion",
+      "reason": "applied_authoritative_detection_fields",
+      "adjustments": [
+        {
+          "field": "train_data_ratio",
+          "previous": 0.8,
+          "applied": 0.7999608533959679,
+          "reason": "Derived from the authoritative dataset assignment plan."
+        },
+        {
+          "field": "val_data_ratio",
+          "previous": 0.1,
+          "applied": 0.10001957330201605,
+          "reason": "Derived from the authoritative dataset assignment plan."
+        },
+        {
+          "field": "test_data_ratio",
+          "previous": 0.1,
+          "applied": 0.10001957330201605,
+          "reason": "Derived from the authoritative dataset assignment plan."
+        },
+        {
+          "field": "lora_rank",
+          "previous": 1,
+          "applied": 8,
+          "reason": "LoRA controls retain schema defaults outside LoRA training."
+        },
+        {
+          "field": "lora_alpha",
+          "previous": 1,
+          "applied": 16,
+          "reason": "LoRA controls retain schema defaults outside LoRA training."
+        },
+        {
+          "field": "lora_dropout",
+          "previous": 0.0,
+          "applied": 0.05,
+          "reason": "LoRA controls retain schema defaults outside LoRA training."
+        },
+        {
+          "field": "loss_cls",
+          "previous": "cross_entropy",
+          "applied": "bce",
+          "reason": "Fixed by the executable Ultralytics YOLO contract."
+        },
+        {
+          "field": "scheduler_name",
+          "previous": "multistep",
+          "applied": "linear",
+          "reason": "Fixed by the executable Ultralytics YOLO contract."
+        }
+      ]
+    }
+  ]
+}
+================================================================================

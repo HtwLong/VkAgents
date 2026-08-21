@@ -1,0 +1,65 @@
+PREFIX cv: <http://vision.semkg.org/onto/v0.1/>
+        PREFIX schema: <http://schema.org/>
+
+        SELECT ?datasetName (COUNT(DISTINCT ?image) AS ?count)
+        WHERE {
+            ?image cv:hasAnnotation/cv:hasLabel/cv:label "car" .
+            ?image schema:isPartOf / schema:name ?datasetName .
+        }
+        GROUP BY ?datasetName
+        ORDER BY DESC(?count)
+
+PREFIX cv: <http://vision.semkg.org/onto/v0.1/>
+        PREFIX schema: <http://schema.org/>
+
+        SELECT ?datasetName (COUNT(DISTINCT ?image) AS ?count)
+        WHERE {
+            ?image cv:hasAnnotation/cv:hasLabel/cv:label "bus" .
+            ?image schema:isPartOf / schema:name ?datasetName .
+        }
+        GROUP BY ?datasetName
+        ORDER BY DESC(?count)
+
+PREFIX cv: <http://vision.semkg.org/onto/v0.1/>
+        PREFIX schema: <http://schema.org/>
+
+        SELECT ?datasetName (COUNT(DISTINCT ?image) AS ?count)
+        WHERE {
+            ?image cv:hasAnnotation/cv:hasLabel/cv:label "truck" .
+            ?image schema:isPartOf / schema:name ?datasetName .
+        }
+        GROUP BY ?datasetName
+        ORDER BY DESC(?count)
+
+PREFIX cv: <http://vision.semkg.org/onto/v0.1/>
+        PREFIX schema: <http://schema.org/>
+
+        SELECT ?datasetName (COUNT(DISTINCT ?image) AS ?count)
+        WHERE {
+            ?image cv:hasAnnotation/cv:hasLabel/cv:label "bicycle" .
+            ?image schema:isPartOf / schema:name ?datasetName .
+        }
+        GROUP BY ?datasetName
+        ORDER BY DESC(?count)
+
+PREFIX cv: <http://vision.semkg.org/onto/v0.1/>
+        PREFIX schema: <http://schema.org/>
+
+        SELECT ?datasetName (COUNT(DISTINCT ?image) AS ?count)
+        WHERE {
+            ?image cv:hasAnnotation/cv:hasLabel/cv:label "motorcycle" .
+            ?image schema:isPartOf / schema:name ?datasetName .
+        }
+        GROUP BY ?datasetName
+        ORDER BY DESC(?count)
+
+PREFIX cv: <http://vision.semkg.org/onto/v0.1/>
+        PREFIX schema: <http://schema.org/>
+
+        SELECT ?datasetName (COUNT(DISTINCT ?image) AS ?count)
+        WHERE {
+            ?image cv:hasAnnotation/cv:hasLabel/cv:label "pedestrian" .
+            ?image schema:isPartOf / schema:name ?datasetName .
+        }
+        GROUP BY ?datasetName
+        ORDER BY DESC(?count)

@@ -1,0 +1,65 @@
+{
+  "assessment_id": "pta_001",
+  "job_id": "msr0azgi8u5pr87dcjm",
+  "created_at": "2026-08-13T00:00:00Z",
+  "verdict": "not_satisfied",
+  "summary": "The run detected traffic lights and traffic signs (satisfying the detection task and class coverage), but the primary mAP@0.5:0.95 target of 0.30 was not met; latency and memory usage were not measured in the supplied evidence.",
+  "requirements": [
+    {
+      "requirement": "Task: detection of traffic lights and traffic signs in dense urban scenes",
+      "status": "satisfied",
+      "evidence": [
+        "planning.hpo_config.classes includes 'traffic light' and 'traffic sign'",
+        "evaluation_report.classes include 'traffic light' and 'traffic sign'"
+      ],
+      "explanation": "The run was configured for detection and evaluated on the two requested classes; both classes are present in the evaluation outputs."
+    },
+    {
+      "requirement": "Primary performance: mAP@0.5:0.95 >= 0.30",
+      "status": "not_satisfied",
+      "evidence": [
+        "evaluation_report.metrics.map = 0.2054239117100709",
+        "per_class: traffic light AP = 0.15555436166793413",
+        "per_class: traffic sign AP = 0.25529346175220763"
+      ],
+      "explanation": "The reported MAP (0.205) is below the 0.30 target; per-class APs are also below the desired aggregate target."
+    },
+    {
+      "requirement": "Latency: inference time <= 500 ms per frame",
+      "status": "unknown",
+      "evidence": [
+        "No latency or frame-time measurement is reported in the evaluation_report"
+      ],
+      "explanation": "There is no evidence of latency measurements to confirm whether the latency constraint is met."
+    },
+    {
+      "requirement": "Memory usage during inference <= 6 GB",
+      "status": "unknown",
+      "evidence": [
+        "No memory usage data is reported in the evaluation_report; planning includes a memory cap (max_runtime_memory_mb = 6144) but no measured usage"
+      ],
+      "explanation": "Memory usage during inference is not measured in the supplied evidence."
+    }
+  ],
+  "recommended_plan": {
+    "required_text": "Set hpo_config.lambda_box = 8.5 (increase box loss weight).",
+    "preferred_text": "A small increase to the box regression loss weight (lambda_box) to place slightly more emphasis on localization accuracy during training, which can help improve detection of small/dense objects in urban scenes while keeping model capacity, data, and epochs unchanged.",
+    "summary": "Apply a minimal, evidence-consistent hyperparameter adjustment by increasing the box regression loss weight to potentially raise MAP for small object detection without altering data, model size, or training duration.",
+    "restart_from": "choose-hyperparameters",
+    "changes": [
+      {
+        "id": "chg-lambda-box-02",
+        "target_step": "choose-hyperparameters",
+        "field": "hpo_config.lambda_box",
+        "operation": "set",
+        "value": 8.5,
+        "strength": "required",
+        "summary": "Increase box regression weight to improve bounding box localization for small objects."
+      }
+    ]
+  },
+  "limitations": [
+    "Evidence does not include measured inference latency or memory usage; MAP target not reached; results are restricted to the yolov12_s configuration with coco weights and the specific dataset plan described in planning.",
+    "The evidence does not establish how close to the target the latency or memory usage might be if measured under different conditions."
+  ]
+}

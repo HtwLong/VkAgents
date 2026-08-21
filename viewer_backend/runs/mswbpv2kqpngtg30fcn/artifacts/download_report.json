@@ -1,0 +1,275 @@
+{
+  "job_id": "mswbpv2kqpngtg30fcn",
+  "task": "detection",
+  "sources": [
+    {
+      "class_name": "person",
+      "dataset_name": "coco2017_det_train",
+      "source_role": "train",
+      "assigned_split": "train",
+      "assignment_type": "official_split",
+      "requested": 1800,
+      "candidates": 1800,
+      "downloaded": 1800,
+      "direct_allocation_downloaded": 1800,
+      "global_top_up_downloaded": 0,
+      "shortfall": 0,
+      "cross_split_conflicts": 0,
+      "content_duplicate_conflicts": 0,
+      "content_duplicates": [],
+      "failures": []
+    },
+    {
+      "class_name": "person",
+      "dataset_name": "coco2017_det_train",
+      "source_role": "train",
+      "assigned_split": "test",
+      "assignment_type": "derived_from_train",
+      "requested": 225,
+      "candidates": 2025,
+      "downloaded": 225,
+      "direct_allocation_downloaded": 225,
+      "global_top_up_downloaded": 0,
+      "shortfall": 0,
+      "cross_split_conflicts": 1800,
+      "content_duplicate_conflicts": 0,
+      "content_duplicates": [],
+      "failures": []
+    },
+    {
+      "class_name": "person",
+      "dataset_name": "coco2017_det_val",
+      "source_role": "validation",
+      "assigned_split": "validation",
+      "assignment_type": "official_split",
+      "requested": 225,
+      "candidates": 225,
+      "downloaded": 225,
+      "direct_allocation_downloaded": 225,
+      "global_top_up_downloaded": 0,
+      "shortfall": 0,
+      "cross_split_conflicts": 0,
+      "content_duplicate_conflicts": 0,
+      "content_duplicates": [],
+      "failures": []
+    },
+    {
+      "class_name": "dog",
+      "dataset_name": "coco2017_det_train",
+      "source_role": "train",
+      "assigned_split": "train",
+      "assignment_type": "official_split",
+      "requested": 1848,
+      "candidates": 1857,
+      "downloaded": 1848,
+      "direct_allocation_downloaded": 1848,
+      "global_top_up_downloaded": 0,
+      "shortfall": 0,
+      "cross_split_conflicts": 9,
+      "content_duplicate_conflicts": 0,
+      "content_duplicates": [],
+      "failures": []
+    },
+    {
+      "class_name": "dog",
+      "dataset_name": "coco2017_det_train",
+      "source_role": "train",
+      "assigned_split": "test",
+      "assignment_type": "derived_from_train",
+      "requested": 225,
+      "candidates": 2073,
+      "downloaded": 225,
+      "direct_allocation_downloaded": 225,
+      "global_top_up_downloaded": 0,
+      "shortfall": 0,
+      "cross_split_conflicts": 1848,
+      "content_duplicate_conflicts": 0,
+      "content_duplicates": [],
+      "failures": []
+    },
+    {
+      "class_name": "dog",
+      "dataset_name": "coco2017_det_val",
+      "source_role": "validation",
+      "assigned_split": "validation",
+      "assignment_type": "official_split",
+      "requested": 177,
+      "candidates": 177,
+      "downloaded": 177,
+      "direct_allocation_downloaded": 177,
+      "global_top_up_downloaded": 0,
+      "shortfall": 0,
+      "cross_split_conflicts": 0,
+      "content_duplicate_conflicts": 0,
+      "content_duplicates": [],
+      "failures": []
+    },
+    {
+      "class_name": "cat",
+      "dataset_name": "coco2017_det_train",
+      "source_role": "train",
+      "assigned_split": "train",
+      "assignment_type": "official_split",
+      "requested": 1841,
+      "candidates": 4272,
+      "downloaded": 3894,
+      "direct_allocation_downloaded": 1894,
+      "global_top_up_downloaded": 2000,
+      "shortfall": 0,
+      "cross_split_conflicts": 229,
+      "content_duplicate_conflicts": 0,
+      "content_duplicates": [],
+      "failures": []
+    },
+    {
+      "class_name": "cat",
+      "dataset_name": "coco2017_det_train",
+      "source_role": "train",
+      "assigned_split": "test",
+      "assignment_type": "derived_from_train",
+      "requested": 225,
+      "candidates": 2137,
+      "downloaded": 243,
+      "direct_allocation_downloaded": 243,
+      "global_top_up_downloaded": 0,
+      "shortfall": 0,
+      "cross_split_conflicts": 1894,
+      "content_duplicate_conflicts": 0,
+      "content_duplicates": [],
+      "failures": []
+    },
+    {
+      "class_name": "cat",
+      "dataset_name": "coco2017_det_val",
+      "source_role": "validation",
+      "assigned_split": "validation",
+      "assignment_type": "official_split",
+      "requested": 184,
+      "candidates": 532,
+      "downloaded": 293,
+      "direct_allocation_downloaded": 184,
+      "global_top_up_downloaded": 109,
+      "shortfall": 0,
+      "cross_split_conflicts": 0,
+      "content_duplicate_conflicts": 0,
+      "content_duplicates": [],
+      "failures": []
+    }
+  ],
+  "complete": true,
+  "coverage": {
+    "requirements": {
+      "target_unique_images": 6750,
+      "target_unique_images_by_split": {
+        "train": 5489,
+        "validation": 586,
+        "test": 675
+      },
+      "minimum_images_per_class": {
+        "person": 2250,
+        "dog": 2250,
+        "cat": 2250
+      },
+      "minimum_images_per_class_by_split": {
+        "person": {
+          "train": 1800,
+          "validation": 225,
+          "test": 225
+        },
+        "dog": {
+          "train": 1848,
+          "validation": 177,
+          "test": 225
+        },
+        "cat": {
+          "train": 1841,
+          "validation": 184,
+          "test": 225
+        }
+      }
+    },
+    "verified_unique_images": 6750,
+    "verified_unique_images_by_split": {
+      "train": 5489,
+      "validation": 586,
+      "test": 675
+    },
+    "verified_images_per_class": {
+      "person": 3697,
+      "dog": 2259,
+      "cat": 2321
+    },
+    "verified_images_per_class_by_split": {
+      "person": {
+        "train": 2991,
+        "validation": 334,
+        "test": 372
+      },
+      "dog": {
+        "train": 1848,
+        "validation": 177,
+        "test": 234
+      },
+      "cat": {
+        "train": 1894,
+        "validation": 184,
+        "test": 243
+      }
+    },
+    "unique_image_shortfall": 0,
+    "unique_coverage_ratio": 1.0,
+    "class_image_shortfalls": {
+      "person": 0,
+      "dog": 0,
+      "cat": 0
+    },
+    "class_split_image_shortfalls": {
+      "person": {
+        "train": 0,
+        "validation": 0,
+        "test": 0
+      },
+      "dog": {
+        "train": 0,
+        "validation": 0,
+        "test": 0
+      },
+      "cat": {
+        "train": 0,
+        "validation": 0,
+        "test": 0
+      }
+    },
+    "class_split_coverage_satisfied": true,
+    "satisfied": true
+  },
+  "allocation_shortfalls": [],
+  "acceptance": {
+    "minimum_unique_coverage_ratio": 0.85,
+    "unique_coverage_ratio": 1.0,
+    "unique_target_satisfied": true,
+    "strict_target_satisfied": true,
+    "aspirational_unique_target_accepted": false,
+    "class_split_coverage_satisfied": true,
+    "unresolved_transfer_failures": [],
+    "cross_split_duplicates": [],
+    "accepted": true
+  },
+  "warnings": [],
+  "requested": 6750,
+  "downloaded": 8930,
+  "unique_downloaded": 6750,
+  "performance": {
+    "elapsed_seconds": 328.8984113000006,
+    "sparql_queries": 165,
+    "sparql_seconds": 133.52161810001235,
+    "download_batches": 80,
+    "cache_hits": 6578,
+    "cached_failures": 0,
+    "bytes_downloaded": 24835216,
+    "retries": 12,
+    "transfer_and_validation_seconds": 1245.1569760999937
+  },
+  "manifest_path": "C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\runs\\mswbpv2kqpngtg30fcn\\data\\dataset_manifest.json",
+  "report_path": "C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\runs\\mswbpv2kqpngtg30fcn\\artifacts\\download_report.json"
+}

@@ -1,0 +1,238 @@
+{
+  "task": "detection",
+  "application_domain": "indoor",
+  "user_query": "I need an object detection model to locate nightstands, coffee tables and desks in indoor photographs. It should handle cluttered rooms, partial occlusion, varied lighting, and objects viewed from different angles. Inference will run on CPU-only backend servers with approximately 8 CPU cores and 16 GB of RAM. The model should aim for a mAP@0.5:0.95 of approximately 0.30 or higher.",
+  "use_case_description": "Detect furniture items (nightstand, coffee table, desk) in indoor photos, robust to clutter, partial occlusion, varied lighting, and varied viewing angles.",
+  "questions_list": null,
+  "classes": [
+    "nightstand",
+    "coffee table",
+    "desk"
+  ],
+  "available_data": [
+    {
+      "class_name": "nightstand",
+      "sources": [
+        {
+          "dataset_name": "objects365_det_train",
+          "count": 14101
+        },
+        {
+          "dataset_name": "openimages_challenge_2019_det_train",
+          "count": 773
+        },
+        {
+          "dataset_name": "objects365_det_val",
+          "count": 759
+        },
+        {
+          "dataset_name": "openimages_challenge_2019_det_val",
+          "count": 45
+        }
+      ]
+    },
+    {
+      "class_name": "coffee table",
+      "sources": [
+        {
+          "dataset_name": "objects365_det_train",
+          "count": 6959
+        },
+        {
+          "dataset_name": "openimages_challenge_2019_det_train",
+          "count": 2840
+        },
+        {
+          "dataset_name": "LVIS_det_train",
+          "count": 592
+        },
+        {
+          "dataset_name": "objects365_det_val",
+          "count": 307
+        },
+        {
+          "dataset_name": "openimages_challenge_2019_det_val",
+          "count": 45
+        }
+      ]
+    },
+    {
+      "class_name": "desk",
+      "sources": [
+        {
+          "dataset_name": "objects365_det_train",
+          "count": 324466
+        },
+        {
+          "dataset_name": "objects365_det_val",
+          "count": 14423
+        },
+        {
+          "dataset_name": "openimages_challenge_2019_det_train",
+          "count": 9464
+        },
+        {
+          "dataset_name": "LVIS_det_train",
+          "count": 1100
+        },
+        {
+          "dataset_name": "openimages_challenge_2019_det_val",
+          "count": 133
+        }
+      ]
+    }
+  ],
+  "selected_data": null,
+  "performance_requirements": {
+    "primary_metric": "mAP@0.5:0.95",
+    "target_value": 0.3,
+    "target_is_hard": false,
+    "latency_category": null,
+    "accuracy_category": "MediumHigh",
+    "other_constraints": null
+  },
+  "constraint_strengths": {
+    "accuracy": "preference",
+    "latency": "unspecified",
+    "runtime_memory": "preference",
+    "model_size": "unspecified",
+    "training_time": "unspecified"
+  },
+  "robustness_requirements": {
+    "lighting": [
+      "varied"
+    ],
+    "weather": [],
+    "object_scale": [],
+    "scene_density": [
+      "dense",
+      "cluttered"
+    ],
+    "motion_blur": false,
+    "occlusion": true,
+    "viewpoint": [
+      "multiple angles",
+      "different viewpoints"
+    ],
+    "color_semantics": false,
+    "horizontal_flip_safe": null,
+    "text_or_symbols_present": false
+  },
+  "deployment_constraints": null,
+  "available_hardware": {
+    "hardware_category": "ConsumerCPU",
+    "cpu_cores": 8,
+    "gpu_type": null,
+    "gpu_count": null,
+    "vram_gb": null,
+    "ram_gb": 16.0,
+    "storage_gb": null,
+    "details": "CPU-only inference on backend servers"
+  },
+  "model_requirements": null,
+  "augmentation": null,
+  "preprocessing": null,
+  "num_qa_pairs": null,
+  "training_hardware": {
+    "profile_id": "rtx2060_6gb_ryzen5600x_16gb",
+    "accelerator": "cuda",
+    "hardware_category": "ConsumerGPU",
+    "gpu_type": "ASUS Dual NVIDIA GeForce RTX 2060 EVO 6GB",
+    "gpu_count": 1,
+    "vram_gb": 6.0,
+    "ram_gb": 16.0,
+    "unified_memory": false,
+    "training_memory_budget_gb": 5.0,
+    "max_batch_size": 4,
+    "workers": 4,
+    "supports_amp": true
+  },
+  "class_expansions": {},
+  "model_selection_graph_context": null,
+  "dataset_selection_graph_context": null,
+  "hyperparameter_graph_context": null,
+  "use_graphrag": false,
+  "selected_model_info": {
+    "model": {
+      "model_architecture": "yolov8",
+      "description": "Single-stage detector optimized for balanced accuracy and CPU efficiency. Good multi-scale feature handling, robust to clutter and varying viewpoints, and widely supported for fine-tuning on domain-specific data. Expected to perform well on indoor furniture (nightstand, coffee table, desk) with transfer learning from COCO/OpenImages-like data. Reasonable memory footprint for CPU-only inference on 8-core/16 GB RAM.",
+      "architecture_family": "yolo"
+    }
+  },
+  "hpo_config": null,
+  "hpo_decision": null,
+  "model_selection_decision_evidence": {
+    "decision_type": "model_selection",
+    "decision": {
+      "model": {
+        "model_architecture": "yolov8",
+        "description": "Single-stage detector optimized for balanced accuracy and CPU efficiency. Good multi-scale feature handling, robust to clutter and varying viewpoints, and widely supported for fine-tuning on domain-specific data. Expected to perform well on indoor furniture (nightstand, coffee table, desk) with transfer learning from COCO/OpenImages-like data. Reasonable memory footprint for CPU-only inference on 8-core/16 GB RAM.",
+        "architecture_family": "yolo"
+      }
+    },
+    "rationale": "The goal is robust detection of three indoor furniture classes under CPU-only constraints with moderate latency. YOLOv8 offers the strongest overall balance among the candidate families for this scenario: strong baseline mAP on COCO-like data, efficiency on CPU, and good transfer learning potential to indoor furniture with available data sources (Objects365/Open Images/LVIS). It handles small-to-medium objects and clutter through multi-scale features and fast single-shot inference, which helps in cluttered rooms and varied angles. Two-stage detectors (e.g., Faster R-CNN) can offer excellent localization and occlusion handling but tend to incur higher CPU cost and latency on the given 8-core/16 GB setup. SSD300 is lighter but typically trails in accuracy, especially with occlusion and small object instances. Given the data mix and the need to meet a practical mAP target without excessive compute, YOLOv8 is the best practical default. If CPU latency becomes an issue, a fallback to a lighter input resolution or a more lightweight detector can be pursued. A concrete fallback is to switch to SSD300 or downscale input resolution with YOLOv8, or to use a tuned two-stage detector only if latency budgets are generous.",
+    "selection_policy": null,
+    "retrieved_facts": [],
+    "evidence_sources": [],
+    "grounded": false,
+    "evidence_backed": false,
+    "match_scope": null,
+    "grounding": {
+      "status": "ungrounded",
+      "fact_count": 0,
+      "support_counts": {},
+      "evidence_coverage": 0.0
+    },
+    "evaluated_candidates": [
+      {
+        "candidate_id": "yolov8",
+        "advantages": [
+          "Strong balance of accuracy and CPU efficiency for moderate input sizes",
+          "Good multi-scale feature handling, aiding detection of furniture at varying distances and scales",
+          "Widely supported with pretrained weights and community tooling; easy to fine-tune on the three indoor classes",
+          "Relatively modest memory footprint for CPU-only inference on 8 cores and 16 GB RAM"
+        ],
+        "risks": [
+          "Performance on very small objects or extreme occlusion can still degrade; domain gap to indoor furniture may require domain-specific fine-tuning",
+          "Actual CPU latency depends on input resolution and batch size; may need input resizing or model pruning/quantization for strict latency targets"
+        ],
+        "constraint_status": "feasible"
+      },
+      {
+        "candidate_id": "faster-rcnn_r50_fpn_1x_coco",
+        "advantages": [
+          "Two-stage detector with strong localization and occlusion robustness",
+          "Good at precise box delineation in cluttered scenes and varied viewpoints",
+          "Mature pipeline with solid existing tooling and training recipes"
+        ],
+        "risks": [
+          "Typically higher CPU latency and larger memory footprint; may exceed the 8-core/16 GB budget on larger input sizes",
+          "Compared to YOLOv8, inference speed can be significantly slower on CPU without optimization"
+        ],
+        "constraint_status": "uncertain"
+      }
+    ],
+    "uncertainties": [
+      "Exact mAP@0.5:0.95 achievable for the indoor three-class setup without domain-specific fine-tuning is uncertain and depends on the quality and distribution of indoor furniture examples in the training data",
+      "CPU-only latency at target resolutions is hardware and implementation dependent; real-world latency may vary with input size, batching, and framework optimizations",
+      "Small-object performance (nightstand, coffee table at close range or heavily occluded) is uncertain without targeted data augmentation and fine-tuning on indoor scenes"
+    ],
+    "comparison_warnings": [],
+    "selection_confidence": "standard"
+  },
+  "dataset_selection_decision_evidence": null,
+  "hyperparameter_decision_evidence": null,
+  "dataset_profile": null,
+  "step_history": [
+    "Task Interpretation Completed",
+    "Data Availability Checked",
+    "GraphRAG Model Suggestions: disabled for this run.",
+    "Model Selection Rationale: The goal is robust detection of three indoor furniture classes under CPU-only constraints with moderate latency. YOLOv8 offers the strongest overall balance among the candidate families for this scenario: strong baseline mAP on COCO-like data, efficiency on CPU, and good transfer learning potential to indoor furniture with available data sources (Objects365/Open Images/LVIS). It handles small-to-medium objects and clutter through multi-scale features and fast single-shot inference, which helps in cluttered rooms and varied angles. Two-stage detectors (e.g., Faster R-CNN) can offer excellent localization and occlusion handling but tend to incur higher CPU cost and latency on the given 8-core/16 GB setup. SSD300 is lighter but typically trails in accuracy, especially with occlusion and small object instances. Given the data mix and the need to meet a practical mAP target without excessive compute, YOLOv8 is the best practical default. If CPU latency becomes an issue, a fallback to a lighter input resolution or a more lightweight detector can be pursued. A concrete fallback is to switch to SSD300 or downscale input resolution with YOLOv8, or to use a tuned two-stage detector only if latency budgets are generous.",
+    "Model Selection Completed"
+  ],
+  "last_updated": "2026-08-16T12:41:22.825536",
+  "revision": {
+    "active": null,
+    "history": []
+  }
+}

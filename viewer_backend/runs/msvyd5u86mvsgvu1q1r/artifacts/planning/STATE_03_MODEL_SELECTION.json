@@ -1,0 +1,625 @@
+{
+  "task": "detection",
+  "application_domain": "Traffic",
+  "user_query": "I need a model for a traffic-monitoring system that detects the traffic participants in each image. The model will run locally on a MacBook Air with an Apple M4 chip and 16 GB of unified memory, using CPU or Metal acceleration. It should aim for a mAP@0.5:0.95 of around 0.30 or higher.",
+  "use_case_description": "Detect traffic participants in each image; runs locally on MacBook Air with Apple M4, using CPU/Metal acceleration.",
+  "questions_list": null,
+  "classes": [
+    "car",
+    "bus",
+    "truck",
+    "motorcycle",
+    "bicycle",
+    "pedestrian"
+  ],
+  "available_data": [
+    {
+      "class_name": "car",
+      "sources": [
+        {
+          "dataset_name": "bdd_100k_det_train",
+          "count": 68943
+        },
+        {
+          "dataset_name": "objects365_det_train",
+          "count": 55348
+        },
+        {
+          "dataset_name": "bdd100k_cycleGAN_day2night_det_train",
+          "count": 36407
+        },
+        {
+          "dataset_name": "coco2017_det_train",
+          "count": 12251
+        },
+        {
+          "dataset_name": "bdd_100k_det_val",
+          "count": 9882
+        },
+        {
+          "dataset_name": "openimages_challenge_2019_det_val",
+          "count": 5232
+        },
+        {
+          "dataset_name": "objects365_det_val",
+          "count": 3823
+        },
+        {
+          "dataset_name": "ACDC_FDA_day2night_det_train",
+          "count": 1525
+        },
+        {
+          "dataset_name": "voc0712_det_train",
+          "count": 1023
+        },
+        {
+          "dataset_name": "voc0712_det_val",
+          "count": 967
+        },
+        {
+          "dataset_name": "voc12_det_train",
+          "count": 621
+        },
+        {
+          "dataset_name": "voc12_det_val",
+          "count": 608
+        },
+        {
+          "dataset_name": "coco2017_det_val",
+          "count": 535
+        },
+        {
+          "dataset_name": "cityscapes_det_val",
+          "count": 475
+        },
+        {
+          "dataset_name": "voc07_det_train",
+          "count": 402
+        },
+        {
+          "dataset_name": "voc07_det_test",
+          "count": 359
+        },
+        {
+          "dataset_name": "voc07_det_val",
+          "count": 359
+        },
+        {
+          "dataset_name": "ACDC_det_val_night",
+          "count": 94
+        }
+      ]
+    },
+    {
+      "class_name": "bus",
+      "sources": [
+        {
+          "dataset_name": "objects365_det_train",
+          "count": 46614
+        },
+        {
+          "dataset_name": "bdd_100k_det_train",
+          "count": 9281
+        },
+        {
+          "dataset_name": "openimages_challenge_2019_det_train",
+          "count": 7288
+        },
+        {
+          "dataset_name": "bdd100k_cycleGAN_day2night_det_train",
+          "count": 6481
+        },
+        {
+          "dataset_name": "bdd100k_FDA_day2night_det_train",
+          "count": 6481
+        },
+        {
+          "dataset_name": "bdd100k_UNIT_day2night_det_train",
+          "count": 6481
+        },
+        {
+          "dataset_name": "coco2017_det_train",
+          "count": 3952
+        },
+        {
+          "dataset_name": "bdd_100k_det_val",
+          "count": 1299
+        },
+        {
+          "dataset_name": "objects365_det_val",
+          "count": 770
+        },
+        {
+          "dataset_name": "voc0712_det_train",
+          "count": 319
+        },
+        {
+          "dataset_name": "voc0712_det_val",
+          "count": 308
+        },
+        {
+          "dataset_name": "voc12_det_train",
+          "count": 219
+        },
+        {
+          "dataset_name": "voc12_det_val",
+          "count": 211
+        },
+        {
+          "dataset_name": "coco2017_det_val",
+          "count": 189
+        },
+        {
+          "dataset_name": "voc07_det_train",
+          "count": 100
+        },
+        {
+          "dataset_name": "voc07_det_test",
+          "count": 97
+        },
+        {
+          "dataset_name": "voc07_det_val",
+          "count": 97
+        },
+        {
+          "dataset_name": "openimages_challenge_2019_det_val",
+          "count": 82
+        },
+        {
+          "dataset_name": "cityscapes_det_val",
+          "count": 74
+        }
+      ]
+    },
+    {
+      "class_name": "truck",
+      "sources": [
+        {
+          "dataset_name": "objects365_det_train",
+          "count": 42558
+        },
+        {
+          "dataset_name": "bdd_100k_det_train",
+          "count": 18078
+        },
+        {
+          "dataset_name": "bdd100k_cycleGAN_day2night_det_train",
+          "count": 12816
+        },
+        {
+          "dataset_name": "bdd100k_FDA_day2night_det_train",
+          "count": 12816
+        },
+        {
+          "dataset_name": "bdd100k_UNIT_day2night_det_train",
+          "count": 12816
+        },
+        {
+          "dataset_name": "openimages_challenge_2019_det_train",
+          "count": 8071
+        },
+        {
+          "dataset_name": "coco2017_det_train",
+          "count": 6127
+        },
+        {
+          "dataset_name": "bdd_100k_det_val",
+          "count": 2733
+        },
+        {
+          "dataset_name": "objects365_det_val",
+          "count": 1536
+        },
+        {
+          "dataset_name": "LVIS_det_train",
+          "count": 800
+        },
+        {
+          "dataset_name": "ACDC_FDA_day2night_det_train",
+          "count": 348
+        },
+        {
+          "dataset_name": "ACDC_det_train",
+          "count": 348
+        },
+        {
+          "dataset_name": "openimages_challenge_2019_det_val",
+          "count": 303
+        },
+        {
+          "dataset_name": "coco2017_det_val",
+          "count": 250
+        },
+        {
+          "dataset_name": "cityscapes_det_val",
+          "count": 79
+        },
+        {
+          "dataset_name": "ACDC_det_val_night",
+          "count": 7
+        }
+      ]
+    },
+    {
+      "class_name": "motorcycle",
+      "sources": [
+        {
+          "dataset_name": "objects365_det_train",
+          "count": 34081
+        },
+        {
+          "dataset_name": "openimages_challenge_2019_det_train",
+          "count": 6940
+        },
+        {
+          "dataset_name": "coco2017_det_train",
+          "count": 3502
+        },
+        {
+          "dataset_name": "bdd_100k_det_train",
+          "count": 2327
+        },
+        {
+          "dataset_name": "LVIS_det_train",
+          "count": 1720
+        },
+        {
+          "dataset_name": "bdd100k_cycleGAN_day2night_det_train",
+          "count": 1596
+        },
+        {
+          "dataset_name": "bdd100k_FDA_day2night_det_train",
+          "count": 1596
+        },
+        {
+          "dataset_name": "bdd100k_UNIT_day2night_det_train",
+          "count": 1596
+        },
+        {
+          "dataset_name": "objects365_det_val",
+          "count": 907
+        },
+        {
+          "dataset_name": "bdd_100k_det_val",
+          "count": 346
+        },
+        {
+          "dataset_name": "ACDC_FDA_day2night_det_train",
+          "count": 197
+        },
+        {
+          "dataset_name": "ACDC_det_train",
+          "count": 197
+        },
+        {
+          "dataset_name": "coco2017_det_val",
+          "count": 159
+        },
+        {
+          "dataset_name": "openimages_challenge_2019_det_val",
+          "count": 151
+        },
+        {
+          "dataset_name": "cityscapes_det_val",
+          "count": 93
+        },
+        {
+          "dataset_name": "ACDC_det_val_night",
+          "count": 16
+        }
+      ]
+    },
+    {
+      "class_name": "bicycle",
+      "sources": [
+        {
+          "dataset_name": "objects365_det_train",
+          "count": 61452
+        },
+        {
+          "dataset_name": "openimages_challenge_2019_det_train",
+          "count": 17621
+        },
+        {
+          "dataset_name": "bdd_100k_det_train",
+          "count": 4398
+        },
+        {
+          "dataset_name": "coco2017_det_train",
+          "count": 3252
+        },
+        {
+          "dataset_name": "bdd100k_cycleGAN_day2night_det_train",
+          "count": 3153
+        },
+        {
+          "dataset_name": "bdd100k_FDA_day2night_det_train",
+          "count": 3153
+        },
+        {
+          "dataset_name": "bdd100k_UNIT_day2night_det_train",
+          "count": 3153
+        },
+        {
+          "dataset_name": "LVIS_det_train",
+          "count": 1852
+        },
+        {
+          "dataset_name": "objects365_det_val",
+          "count": 1416
+        },
+        {
+          "dataset_name": "bdd_100k_det_val",
+          "count": 592
+        },
+        {
+          "dataset_name": "voc0712_det_val",
+          "count": 423
+        },
+        {
+          "dataset_name": "voc0712_det_train",
+          "count": 403
+        },
+        {
+          "dataset_name": "cityscapes_det_val",
+          "count": 325
+        },
+        {
+          "dataset_name": "voc12_det_val",
+          "count": 290
+        },
+        {
+          "dataset_name": "voc12_det_train",
+          "count": 281
+        },
+        {
+          "dataset_name": "ACDC_FDA_day2night_det_train",
+          "count": 266
+        },
+        {
+          "dataset_name": "ACDC_det_train",
+          "count": 266
+        },
+        {
+          "dataset_name": "openimages_challenge_2019_det_val",
+          "count": 252
+        },
+        {
+          "dataset_name": "coco2017_det_val",
+          "count": 149
+        },
+        {
+          "dataset_name": "voc07_det_test",
+          "count": 133
+        },
+        {
+          "dataset_name": "voc07_det_val",
+          "count": 133
+        },
+        {
+          "dataset_name": "voc07_det_train",
+          "count": 122
+        },
+        {
+          "dataset_name": "ACDC_det_val_night",
+          "count": 34
+        }
+      ]
+    },
+    {
+      "class_name": "pedestrian",
+      "sources": [
+        {
+          "dataset_name": "bdd_100k_det_train",
+          "count": 22469
+        },
+        {
+          "dataset_name": "bdd100k_cycleGAN_day2night_det_train",
+          "count": 15098
+        },
+        {
+          "dataset_name": "bdd100k_FDA_day2night_det_train",
+          "count": 15098
+        },
+        {
+          "dataset_name": "bdd100k_UNIT_day2night_det_train",
+          "count": 15098
+        },
+        {
+          "dataset_name": "bdd_100k_det_val",
+          "count": 3261
+        }
+      ]
+    }
+  ],
+  "selected_data": null,
+  "performance_requirements": {
+    "primary_metric": "mAP@0.5:0.95",
+    "target_value": 0.3,
+    "target_is_hard": false,
+    "latency_category": null,
+    "accuracy_category": "MediumHigh",
+    "other_constraints": null
+  },
+  "constraint_strengths": {
+    "accuracy": "preference",
+    "latency": "unspecified",
+    "runtime_memory": "preference",
+    "model_size": "unspecified",
+    "training_time": "unspecified"
+  },
+  "robustness_requirements": {
+    "lighting": [],
+    "weather": [],
+    "object_scale": [],
+    "scene_density": [],
+    "motion_blur": false,
+    "occlusion": false,
+    "viewpoint": [],
+    "color_semantics": false,
+    "horizontal_flip_safe": null,
+    "text_or_symbols_present": false
+  },
+  "deployment_constraints": null,
+  "available_hardware": {
+    "hardware_category": "ConsumerCPU",
+    "cpu_cores": null,
+    "gpu_type": "Apple M4 integrated GPU",
+    "gpu_count": 1,
+    "vram_gb": null,
+    "ram_gb": 16.0,
+    "storage_gb": null,
+    "details": "MacBook Air with Apple M4, 16GB unified memory; CPU/Metal acceleration"
+  },
+  "model_requirements": null,
+  "augmentation": null,
+  "preprocessing": null,
+  "num_qa_pairs": null,
+  "training_hardware": {
+    "profile_id": "rtx2060_6gb_ryzen5600x_16gb",
+    "accelerator": "cuda",
+    "hardware_category": "ConsumerGPU",
+    "gpu_type": "ASUS Dual NVIDIA GeForce RTX 2060 EVO 6GB",
+    "gpu_count": 1,
+    "vram_gb": 6.0,
+    "ram_gb": 16.0,
+    "unified_memory": false,
+    "training_memory_budget_gb": 5.0,
+    "max_batch_size": 4,
+    "workers": 4,
+    "supports_amp": true
+  },
+  "class_expansions": {},
+  "model_selection_graph_context": null,
+  "dataset_selection_graph_context": null,
+  "hyperparameter_graph_context": null,
+  "use_graphrag": false,
+  "selected_model_info": {
+    "model": {
+      "model_architecture": "yolov8",
+      "description": "Baseline efficient detector suitable for CPU/Metal on Apple Silicon. Balances accuracy and model size, with broad tooling and community support for macOS/CoreML conversion and deployment.",
+      "architecture_family": "yolo"
+    }
+  },
+  "hpo_config": null,
+  "hpo_decision": null,
+  "model_selection_decision_evidence": {
+    "decision_type": "model_selection",
+    "decision": {
+      "model": {
+        "model_architecture": "yolov8",
+        "description": "Baseline efficient detector suitable for CPU/Metal on Apple Silicon. Balances accuracy and model size, with broad tooling and community support for macOS/CoreML conversion and deployment.",
+        "architecture_family": "yolo"
+      }
+    },
+    "rationale": "The MacBook Air with Apple M4 has 16 GB unified memory and relies on CPU/Metal acceleration. Among the candidate architectures, yolov8 offers a favorable balance of detection quality and runtime efficiency on such hardware, with established workflows for CoreML/Metal deployment. It generally provides better accuracy than lightweight single-stage nets like SSD300 while remaining more CPU-friendly than heavier two-stage models (FasterRCNN/RetinaNet) and large RTDETR variants. Given the target mAP@0.5:0.95 around 0.30 and the need to run entirely locally, yolov8 is the most practical baseline that can reach the target with proper preprocessing and potential model size tuning (e.g., resolution, input scale) without requiring GPU acceleration. The other candidates are considered for fallback if yolov8 underperforms in practice or if deployment tooling limitations arise on macOS.",
+    "selection_policy": null,
+    "retrieved_facts": [],
+    "evidence_sources": [],
+    "grounded": false,
+    "evidence_backed": false,
+    "match_scope": null,
+    "grounding": {
+      "status": "ungrounded",
+      "fact_count": 0,
+      "support_counts": {},
+      "evidence_coverage": 0.0
+    },
+    "evaluated_candidates": [
+      {
+        "candidate_id": "yolov8",
+        "advantages": [
+          "Strong balance between accuracy and efficiency for COCO-like data",
+          "Good CPU/Metal performance with common deployment paths (CoreML, ONNX, etc.)",
+          "Wide tooling support and mature optimization options"
+        ],
+        "risks": [
+          "May require input resolution tuning to maintain small-object performance",
+          "Real-world traffic domain variability could reduce absolute mAP without domain-specific fine-tuning"
+        ],
+        "constraint_status": "feasible"
+      },
+      {
+        "candidate_id": "yolov11",
+        "advantages": [
+          "Architectural improvements may yield higher accuracy with similar compute",
+          "Efficient CPU-friendly design in many implementations"
+        ],
+        "risks": [
+          "Tooling and macOS/Metal ecosystem maturity may be less proven than yolov8",
+          "Potentially higher memory usage than yolov8 for comparable input sizes"
+        ],
+        "constraint_status": "feasible"
+      },
+      {
+        "candidate_id": "ssd300_coco",
+        "advantages": [
+          "Lightweight and fast on CPU with small memory footprint",
+          "Simple deployment path and minimal overhead"
+        ],
+        "risks": [
+          "Lower overall mAP and weaker small-object performance, which may fail to meet the 0.3 target in some traffic scenes",
+          "Less robust for diverse road scene variations without tuning"
+        ],
+        "constraint_status": "feasible"
+      },
+      {
+        "candidate_id": "retinanet_r50_fpn_1x_coco",
+        "advantages": [
+          "Strong accuracy with multi-scale feature handling",
+          "Solid bounding box quality across object sizes"
+        ],
+        "risks": [
+          "Heavier compute and memory footprint; likely slower on CPU/Metal",
+          "May not meet practical latency targets on a MacBook Air without optimization"
+        ],
+        "constraint_status": "uncertain"
+      },
+      {
+        "candidate_id": "faster-rcnn_r50_fpn_1x_coco",
+        "advantages": [
+          "Reliable detection performance and bbox quality"
+        ],
+        "risks": [
+          "Among the heaviest in this set for CPU deployment; likely not suitable for real-time or near-real-time on M4",
+          "Higher memory consumption and slower inference may be prohibitive"
+        ],
+        "constraint_status": "uncertain"
+      },
+      {
+        "candidate_id": "rtdetr_hgnetv2_l",
+        "advantages": [
+          "High accuracy potential on multi-class traffic scenes",
+          "Good handling of dense scenes and small objects with proper settings"
+        ],
+        "risks": [
+          "Likely heavy for CPU/Metal on M4; may not be practical without specialized optimization",
+          "Deployment tooling and support on macOS could be less mature"
+        ],
+        "constraint_status": "uncertain"
+      }
+    ],
+    "uncertainties": [
+      "Exact macOS/Metal deployment performance for each model on Apple M4 is not quantified here",
+      "Small-object performance depends on input resolution and domain-specific fine-tuning; AP-small not assumed",
+      "Domain shift between training data and real traffic scenes (driving conditions, weather, occlusion) is not quantified"
+    ],
+    "comparison_warnings": [],
+    "selection_confidence": "standard"
+  },
+  "dataset_selection_decision_evidence": null,
+  "hyperparameter_decision_evidence": null,
+  "dataset_profile": null,
+  "step_history": [
+    "Task Interpretation Completed",
+    "Data Availability Checked",
+    "GraphRAG Model Suggestions: disabled for this run.",
+    "Model Selection Rationale: The MacBook Air with Apple M4 has 16 GB unified memory and relies on CPU/Metal acceleration. Among the candidate architectures, yolov8 offers a favorable balance of detection quality and runtime efficiency on such hardware, with established workflows for CoreML/Metal deployment. It generally provides better accuracy than lightweight single-stage nets like SSD300 while remaining more CPU-friendly than heavier two-stage models (FasterRCNN/RetinaNet) and large RTDETR variants. Given the target mAP@0.5:0.95 around 0.30 and the need to run entirely locally, yolov8 is the most practical baseline that can reach the target with proper preprocessing and potential model size tuning (e.g., resolution, input scale) without requiring GPU acceleration. The other candidates are considered for fallback if yolov8 underperforms in practice or if deployment tooling limitations arise on macOS.",
+    "Model Selection Completed"
+  ],
+  "last_updated": "2026-08-16T17:22:22.130098",
+  "revision": {
+    "active": null,
+    "history": []
+  }
+}

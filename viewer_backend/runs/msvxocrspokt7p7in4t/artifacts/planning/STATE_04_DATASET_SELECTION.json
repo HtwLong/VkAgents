@@ -1,0 +1,985 @@
+{
+  "task": "classification",
+  "application_domain": "furniture",
+  "user_query": "I need an image classification model for a furniture marketplace that categorizes the primary product in an uploaded photo as a chair, sofa, table, cabinet and or lamp. Please use the dinov2 vits14 and LoRA. The model will run on a CPU-only system with 8 GB of RAM.",
+  "use_case_description": null,
+  "questions_list": null,
+  "classes": [
+    "chair",
+    "sofa",
+    "table",
+    "cabinet",
+    "lamp"
+  ],
+  "available_data": [
+    {
+      "class_name": "chair",
+      "sources": [
+        {
+          "dataset_name": "SOP_cls_test",
+          "count": 6226
+        },
+        {
+          "dataset_name": "SOP_cls_train",
+          "count": 5845
+        },
+        {
+          "dataset_name": "cifar100_cls_train",
+          "count": 500
+        },
+        {
+          "dataset_name": "cifar100_cls_test",
+          "count": 100
+        }
+      ]
+    },
+    {
+      "class_name": "sofa",
+      "sources": [
+        {
+          "dataset_name": "SOP_cls_test",
+          "count": 3959
+        },
+        {
+          "dataset_name": "SOP_cls_train",
+          "count": 3472
+        }
+      ]
+    },
+    {
+      "class_name": "table",
+      "sources": [
+        {
+          "dataset_name": "SOP_cls_test",
+          "count": 5638
+        },
+        {
+          "dataset_name": "SOP_cls_train",
+          "count": 5470
+        },
+        {
+          "dataset_name": "cifar100_cls_train",
+          "count": 500
+        },
+        {
+          "dataset_name": "cifar100_cls_test",
+          "count": 100
+        }
+      ]
+    },
+    {
+      "class_name": "cabinet",
+      "sources": [
+        {
+          "dataset_name": "SOP_cls_test",
+          "count": 6220
+        },
+        {
+          "dataset_name": "SOP_cls_train",
+          "count": 5848
+        }
+      ]
+    },
+    {
+      "class_name": "lamp",
+      "sources": [
+        {
+          "dataset_name": "SOP_cls_train",
+          "count": 6304
+        },
+        {
+          "dataset_name": "SOP_cls_test",
+          "count": 6226
+        },
+        {
+          "dataset_name": "cifar100_cls_train",
+          "count": 500
+        },
+        {
+          "dataset_name": "cifar100_cls_test",
+          "count": 100
+        }
+      ]
+    }
+  ],
+  "selected_data": [
+    {
+      "class_name": "chair",
+      "sources": [
+        {
+          "dataset_name": "SOP_cls_train",
+          "allocations": [
+            {
+              "split": "train",
+              "count": 1200,
+              "assignment_type": "official_split"
+            },
+            {
+              "split": "validation",
+              "count": 150,
+              "assignment_type": "derived_from_train"
+            }
+          ]
+        },
+        {
+          "dataset_name": "SOP_cls_test",
+          "allocations": [
+            {
+              "split": "test",
+              "count": 150,
+              "assignment_type": "official_split"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "class_name": "sofa",
+      "sources": [
+        {
+          "dataset_name": "SOP_cls_train",
+          "allocations": [
+            {
+              "split": "train",
+              "count": 1200,
+              "assignment_type": "official_split"
+            },
+            {
+              "split": "validation",
+              "count": 150,
+              "assignment_type": "derived_from_train"
+            }
+          ]
+        },
+        {
+          "dataset_name": "SOP_cls_test",
+          "allocations": [
+            {
+              "split": "test",
+              "count": 150,
+              "assignment_type": "official_split"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "class_name": "table",
+      "sources": [
+        {
+          "dataset_name": "SOP_cls_train",
+          "allocations": [
+            {
+              "split": "train",
+              "count": 1200,
+              "assignment_type": "official_split"
+            },
+            {
+              "split": "validation",
+              "count": 150,
+              "assignment_type": "derived_from_train"
+            }
+          ]
+        },
+        {
+          "dataset_name": "SOP_cls_test",
+          "allocations": [
+            {
+              "split": "test",
+              "count": 150,
+              "assignment_type": "official_split"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "class_name": "cabinet",
+      "sources": [
+        {
+          "dataset_name": "SOP_cls_train",
+          "allocations": [
+            {
+              "split": "train",
+              "count": 1200,
+              "assignment_type": "official_split"
+            },
+            {
+              "split": "validation",
+              "count": 150,
+              "assignment_type": "derived_from_train"
+            }
+          ]
+        },
+        {
+          "dataset_name": "SOP_cls_test",
+          "allocations": [
+            {
+              "split": "test",
+              "count": 150,
+              "assignment_type": "official_split"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "class_name": "lamp",
+      "sources": [
+        {
+          "dataset_name": "SOP_cls_train",
+          "allocations": [
+            {
+              "split": "train",
+              "count": 1200,
+              "assignment_type": "official_split"
+            },
+            {
+              "split": "validation",
+              "count": 150,
+              "assignment_type": "derived_from_train"
+            }
+          ]
+        },
+        {
+          "dataset_name": "SOP_cls_test",
+          "allocations": [
+            {
+              "split": "test",
+              "count": 150,
+              "assignment_type": "official_split"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "performance_requirements": {
+    "primary_metric": "latency",
+    "target_value": null,
+    "target_is_hard": false,
+    "latency_category": "Low",
+    "accuracy_category": "Medium",
+    "other_constraints": null
+  },
+  "constraint_strengths": {
+    "accuracy": "unspecified",
+    "latency": "unspecified",
+    "runtime_memory": "soft",
+    "model_size": "unspecified",
+    "training_time": "unspecified"
+  },
+  "robustness_requirements": {
+    "lighting": [],
+    "weather": [],
+    "object_scale": [],
+    "scene_density": [],
+    "motion_blur": false,
+    "occlusion": false,
+    "viewpoint": [],
+    "color_semantics": false,
+    "horizontal_flip_safe": null,
+    "text_or_symbols_present": false
+  },
+  "deployment_constraints": null,
+  "available_hardware": {
+    "hardware_category": "ConsumerCPU",
+    "cpu_cores": null,
+    "gpu_type": null,
+    "gpu_count": null,
+    "vram_gb": null,
+    "ram_gb": 8.0,
+    "storage_gb": null,
+    "details": null
+  },
+  "model_requirements": [
+    {
+      "name": "dino_v2",
+      "framework": null,
+      "backbone": "vit_s14",
+      "hyperparameters": null,
+      "description": "DinoV2 with ViT-S14 backbone for image classification on CPU, LoRA training enabled.",
+      "requirement_strength": "required",
+      "training_mode": "lora",
+      "lora_rank": null,
+      "lora_alpha": null,
+      "lora_dropout": null
+    }
+  ],
+  "augmentation": null,
+  "preprocessing": null,
+  "num_qa_pairs": null,
+  "training_hardware": {
+    "profile_id": "rtx2060_6gb_ryzen5600x_16gb",
+    "accelerator": "cuda",
+    "hardware_category": "ConsumerGPU",
+    "gpu_type": "ASUS Dual NVIDIA GeForce RTX 2060 EVO 6GB",
+    "gpu_count": 1,
+    "vram_gb": 6.0,
+    "ram_gb": 16.0,
+    "unified_memory": false,
+    "training_memory_budget_gb": 5.0,
+    "max_batch_size": 4,
+    "workers": 4,
+    "supports_amp": true
+  },
+  "class_expansions": {},
+  "model_selection_graph_context": null,
+  "dataset_selection_graph_context": null,
+  "hyperparameter_graph_context": null,
+  "use_graphrag": false,
+  "selected_model_info": {
+    "model": {
+      "model_architecture": "dinov2_vits14",
+      "description": "Model explicitly required by the user.",
+      "architecture_family": "dinov2"
+    }
+  },
+  "hpo_config": null,
+  "hpo_decision": null,
+  "model_selection_decision_evidence": {
+    "decision_type": "model_selection",
+    "decision": {
+      "model": {
+        "model_architecture": "dinov2_vits14",
+        "description": "Model explicitly required by the user.",
+        "architecture_family": "dinov2"
+      }
+    },
+    "rationale": "User-required model override selected 'dinov2_vits14'. The user requires using DinoV2 with ViT-S14 backbone and LoRA for a CPU-only setup with 8 GB RAM. The dinov2_vits14 candidate directly satisfies this architectural and training constraint. LoRA enables training with a reduced parameter footprint, which is advantageous for CPU-only environments. The dataset provides five target classes (chair, sofa, table, cabinet, lamp) with substantial SOP-based training samples per class (roughly 3.4k\u20136.4k per class) and additional CIFAR100 samples that can offer diversity, though not domain-aligned with furniture. The requested low-latency, medium-accuracy trade-off on CPU is challenging for a large ViT, so plan to mitigate with lightweight configurations (e.g., small input resolution, restrained LoRA rank, backbone freezing, careful batch sizing). If latency or memory become prohibitive, consider alternative lighter backbones or reduced-resolution inputs as fallbacks.",
+    "selection_policy": null,
+    "retrieved_facts": [],
+    "evidence_sources": [],
+    "grounded": false,
+    "evidence_backed": false,
+    "match_scope": null,
+    "grounding": {
+      "status": "ungrounded",
+      "fact_count": 0,
+      "support_counts": {},
+      "evidence_coverage": 0
+    },
+    "evaluated_candidates": [],
+    "uncertainties": [
+      "CPU latency and memory footprint for DinoV2 ViT-S14 with LoRA on 8 GB RAM are not pre-measured here and require runtime profiling.",
+      "Exact LoRA configuration (rank, alpha) is not specified; final memory usage depends on these settings.",
+      "Domain shift between SOP-like product images and marketplace furniture images may affect real-world accuracy; additional domain-adaptive fine-tuning may be beneficial."
+    ],
+    "comparison_warnings": [],
+    "selection_confidence": "standard"
+  },
+  "dataset_selection_decision_evidence": {
+    "decision_type": "dataset_selection",
+    "decision": [
+      {
+        "class_name": "chair",
+        "sources": [
+          {
+            "dataset_name": "SOP_cls_train",
+            "allocations": [
+              {
+                "split": "train",
+                "count": 1200,
+                "assignment_type": "official_split"
+              },
+              {
+                "split": "validation",
+                "count": 150,
+                "assignment_type": "derived_from_train"
+              }
+            ]
+          },
+          {
+            "dataset_name": "SOP_cls_test",
+            "allocations": [
+              {
+                "split": "test",
+                "count": 150,
+                "assignment_type": "official_split"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "class_name": "sofa",
+        "sources": [
+          {
+            "dataset_name": "SOP_cls_train",
+            "allocations": [
+              {
+                "split": "train",
+                "count": 1200,
+                "assignment_type": "official_split"
+              },
+              {
+                "split": "validation",
+                "count": 150,
+                "assignment_type": "derived_from_train"
+              }
+            ]
+          },
+          {
+            "dataset_name": "SOP_cls_test",
+            "allocations": [
+              {
+                "split": "test",
+                "count": 150,
+                "assignment_type": "official_split"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "class_name": "table",
+        "sources": [
+          {
+            "dataset_name": "SOP_cls_train",
+            "allocations": [
+              {
+                "split": "train",
+                "count": 1200,
+                "assignment_type": "official_split"
+              },
+              {
+                "split": "validation",
+                "count": 150,
+                "assignment_type": "derived_from_train"
+              }
+            ]
+          },
+          {
+            "dataset_name": "SOP_cls_test",
+            "allocations": [
+              {
+                "split": "test",
+                "count": 150,
+                "assignment_type": "official_split"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "class_name": "cabinet",
+        "sources": [
+          {
+            "dataset_name": "SOP_cls_train",
+            "allocations": [
+              {
+                "split": "train",
+                "count": 1200,
+                "assignment_type": "official_split"
+              },
+              {
+                "split": "validation",
+                "count": 150,
+                "assignment_type": "derived_from_train"
+              }
+            ]
+          },
+          {
+            "dataset_name": "SOP_cls_test",
+            "allocations": [
+              {
+                "split": "test",
+                "count": 150,
+                "assignment_type": "official_split"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "class_name": "lamp",
+        "sources": [
+          {
+            "dataset_name": "SOP_cls_train",
+            "allocations": [
+              {
+                "split": "train",
+                "count": 1200,
+                "assignment_type": "official_split"
+              },
+              {
+                "split": "validation",
+                "count": 150,
+                "assignment_type": "derived_from_train"
+              }
+            ]
+          },
+          {
+            "dataset_name": "SOP_cls_test",
+            "allocations": [
+              {
+                "split": "test",
+                "count": 150,
+                "assignment_type": "official_split"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "rationale": "We selected 1500 images per class from the Stanford Online Products training split (SOP_cls_train) to build a balanced primary training pool for chair, sofa, table, cabinet, and lamp. SOP_train is the most coherent multi-class source available among the allowed datasets for these classes, and it provides substantial per-class coverage (chair 5845, sofa 3472, table 5470, cabinet 5848, lamp 6304). The domain metadata shows domain 'products, fine_grained' with domain_alignment not marked as aligned, so we treat SOP as the best practical option for a unified, cross-class product-classification task given the constraints. Selecting only training data for the primary pool adheres to official-splits guidelines and avoids leakage from test splits. The target is 1500 images per class, totaling 7500 images for the primary pool. There was no explicit download budget constraint reported, so this configuration remains modest and suitable for CPU-based experimentation. If needed later, generalization data could be considered, but SOP provides a coherent, high-coverage starting pool for all five classes.",
+    "retrieved_facts": [],
+    "evidence_sources": [],
+    "grounded": false,
+    "evidence_backed": false,
+    "grounding": {
+      "status": "ungrounded",
+      "fact_count": 0,
+      "support_counts": {},
+      "evidence_coverage": 0.0
+    },
+    "mode": "llm_validated",
+    "correctness_source": "local_registry",
+    "graphrag_requested": false,
+    "graphrag_used": false,
+    "guidance_source": "local_registry",
+    "validation_findings": [],
+    "dataset_identifier_normalizations": [],
+    "fallback_validation_findings": [],
+    "proposed_selection": [
+      {
+        "class_name": "chair",
+        "sources": [
+          {
+            "dataset_name": "SOP_cls_train",
+            "count": 1500
+          }
+        ]
+      },
+      {
+        "class_name": "sofa",
+        "sources": [
+          {
+            "dataset_name": "SOP_cls_train",
+            "count": 1500
+          }
+        ]
+      },
+      {
+        "class_name": "table",
+        "sources": [
+          {
+            "dataset_name": "SOP_cls_train",
+            "count": 1500
+          }
+        ]
+      },
+      {
+        "class_name": "cabinet",
+        "sources": [
+          {
+            "dataset_name": "SOP_cls_train",
+            "count": 1500
+          }
+        ]
+      },
+      {
+        "class_name": "lamp",
+        "sources": [
+          {
+            "dataset_name": "SOP_cls_train",
+            "count": 1500
+          }
+        ]
+      }
+    ],
+    "fallback_selection": null,
+    "dropped_inferred_classes": [],
+    "eligible_dataset_ids": [
+      "SOP_cls_test",
+      "SOP_cls_train",
+      "cifar100_cls_test",
+      "cifar100_cls_train"
+    ],
+    "selected_dataset_ids": [
+      "SOP_cls_test",
+      "SOP_cls_train"
+    ],
+    "dataset_profile": {
+      "total_selected_images": 7500,
+      "minimum_images_per_class": 1500,
+      "maximum_images_per_class": 1500,
+      "class_balance_ratio": 1.0,
+      "number_of_sources": 2,
+      "domains": [
+        "fine_grained",
+        "products"
+      ],
+      "multi_domain": false,
+      "characteristics": [],
+      "characteristic_support": {},
+      "target_unique_images": 7500,
+      "verified_unique_images": null,
+      "minimum_images_by_class": {
+        "cabinet": 1500,
+        "chair": 1500,
+        "lamp": 1500,
+        "sofa": 1500,
+        "table": 1500
+      },
+      "verified_images_by_class": {},
+      "small_object_fraction": null,
+      "median_short_side_px_at_640": null,
+      "fraction_below_8px_at_640": null,
+      "planned_counts": {
+        "train": 6000,
+        "validation": 750,
+        "test": 750
+      },
+      "official_counts": {
+        "train": 6000,
+        "validation": 0,
+        "test": 750
+      },
+      "derived_counts": {
+        "train": 0,
+        "validation": 750,
+        "test": 0
+      }
+    },
+    "split_construction_summary": {
+      "strategy": "source_stratified_primary_holdouts",
+      "multi_family_policy": "derive_holdouts_from_sufficiently_represented_training_sources",
+      "single_family_policy": "prefer_compatible_official_holdouts_and_derive_missing_holdouts",
+      "total": 7500,
+      "counts": {
+        "train": 6000,
+        "validation": 750,
+        "test": 750
+      },
+      "ratios": {
+        "train": 0.8,
+        "validation": 0.1,
+        "test": 0.1
+      },
+      "classes": [
+        {
+          "class_name": "chair",
+          "total": 1500,
+          "counts": {
+            "train": 1200,
+            "validation": 150,
+            "test": 150
+          },
+          "ratios": {
+            "train": 0.8,
+            "validation": 0.1,
+            "test": 0.1
+          },
+          "families_by_split": {
+            "train": [
+              "sop"
+            ],
+            "validation": [
+              "sop"
+            ],
+            "test": [
+              "sop"
+            ]
+          },
+          "sources": [
+            {
+              "dataset_name": "SOP_cls_train",
+              "family": "sop",
+              "counts": {
+                "train": 1200,
+                "validation": 150,
+                "test": 0
+              }
+            },
+            {
+              "dataset_name": "SOP_cls_test",
+              "family": "sop",
+              "counts": {
+                "train": 0,
+                "validation": 0,
+                "test": 150
+              }
+            }
+          ]
+        },
+        {
+          "class_name": "sofa",
+          "total": 1500,
+          "counts": {
+            "train": 1200,
+            "validation": 150,
+            "test": 150
+          },
+          "ratios": {
+            "train": 0.8,
+            "validation": 0.1,
+            "test": 0.1
+          },
+          "families_by_split": {
+            "train": [
+              "sop"
+            ],
+            "validation": [
+              "sop"
+            ],
+            "test": [
+              "sop"
+            ]
+          },
+          "sources": [
+            {
+              "dataset_name": "SOP_cls_train",
+              "family": "sop",
+              "counts": {
+                "train": 1200,
+                "validation": 150,
+                "test": 0
+              }
+            },
+            {
+              "dataset_name": "SOP_cls_test",
+              "family": "sop",
+              "counts": {
+                "train": 0,
+                "validation": 0,
+                "test": 150
+              }
+            }
+          ]
+        },
+        {
+          "class_name": "table",
+          "total": 1500,
+          "counts": {
+            "train": 1200,
+            "validation": 150,
+            "test": 150
+          },
+          "ratios": {
+            "train": 0.8,
+            "validation": 0.1,
+            "test": 0.1
+          },
+          "families_by_split": {
+            "train": [
+              "sop"
+            ],
+            "validation": [
+              "sop"
+            ],
+            "test": [
+              "sop"
+            ]
+          },
+          "sources": [
+            {
+              "dataset_name": "SOP_cls_train",
+              "family": "sop",
+              "counts": {
+                "train": 1200,
+                "validation": 150,
+                "test": 0
+              }
+            },
+            {
+              "dataset_name": "SOP_cls_test",
+              "family": "sop",
+              "counts": {
+                "train": 0,
+                "validation": 0,
+                "test": 150
+              }
+            }
+          ]
+        },
+        {
+          "class_name": "cabinet",
+          "total": 1500,
+          "counts": {
+            "train": 1200,
+            "validation": 150,
+            "test": 150
+          },
+          "ratios": {
+            "train": 0.8,
+            "validation": 0.1,
+            "test": 0.1
+          },
+          "families_by_split": {
+            "train": [
+              "sop"
+            ],
+            "validation": [
+              "sop"
+            ],
+            "test": [
+              "sop"
+            ]
+          },
+          "sources": [
+            {
+              "dataset_name": "SOP_cls_train",
+              "family": "sop",
+              "counts": {
+                "train": 1200,
+                "validation": 150,
+                "test": 0
+              }
+            },
+            {
+              "dataset_name": "SOP_cls_test",
+              "family": "sop",
+              "counts": {
+                "train": 0,
+                "validation": 0,
+                "test": 150
+              }
+            }
+          ]
+        },
+        {
+          "class_name": "lamp",
+          "total": 1500,
+          "counts": {
+            "train": 1200,
+            "validation": 150,
+            "test": 150
+          },
+          "ratios": {
+            "train": 0.8,
+            "validation": 0.1,
+            "test": 0.1
+          },
+          "families_by_split": {
+            "train": [
+              "sop"
+            ],
+            "validation": [
+              "sop"
+            ],
+            "test": [
+              "sop"
+            ]
+          },
+          "sources": [
+            {
+              "dataset_name": "SOP_cls_train",
+              "family": "sop",
+              "counts": {
+                "train": 1200,
+                "validation": 150,
+                "test": 0
+              }
+            },
+            {
+              "dataset_name": "SOP_cls_test",
+              "family": "sop",
+              "counts": {
+                "train": 0,
+                "validation": 0,
+                "test": 150
+              }
+            }
+          ]
+        }
+      ],
+      "warnings": []
+    },
+    "source_selection_rationale": "We selected 1500 images per class from the Stanford Online Products training split (SOP_cls_train) to build a balanced primary training pool for chair, sofa, table, cabinet, and lamp. SOP_train is the most coherent multi-class source available among the allowed datasets for these classes, and it provides substantial per-class coverage (chair 5845, sofa 3472, table 5470, cabinet 5848, lamp 6304). The domain metadata shows domain 'products, fine_grained' with domain_alignment not marked as aligned, so we treat SOP as the best practical option for a unified, cross-class product-classification task given the constraints. Selecting only training data for the primary pool adheres to official-splits guidelines and avoids leakage from test splits. The target is 1500 images per class, totaling 7500 images for the primary pool. There was no explicit download budget constraint reported, so this configuration remains modest and suitable for CPU-based experimentation. If needed later, generalization data could be considered, but SOP provides a coherent, high-coverage starting pool for all five classes.",
+    "deployment_coverage_warnings": [],
+    "data_selection_policy": {
+      "policy_ids": [],
+      "target_images_per_class": 1500,
+      "min_mixed_source_count": null,
+      "min_mixed_source_share": null,
+      "reject_unpaired_original_derived_mix": false,
+      "requested_robustness_dimensions": []
+    },
+    "assignments_authoritative": true,
+    "split_policy": {
+      "official_splits_preserved": true,
+      "missing_holdouts": "derived_from_train",
+      "derived_holdout_sizing": "adaptive_by_selected_training_pool",
+      "derived_holdouts_source_stratified": true,
+      "multi_family_primary_holdouts": "derived_from_sufficiently_represented_training_sources",
+      "single_family_primary_holdouts": "prefer_compatible_official_splits",
+      "official_holdouts_require_selected_training_family": true,
+      "classification_default_pool_per_class": 1500,
+      "classification_max_pool_per_class": 10000,
+      "classification_max_selected_images": 50000,
+      "detection_default_pool_per_class": 1000,
+      "detection_medium_high_pool_per_class": 1500,
+      "detection_recommended_pool_per_class": null,
+      "detection_sizing_recommendation": null,
+      "selection_target_images_per_class": 1500,
+      "detection_max_pool_per_class": 10000,
+      "detection_max_selected_image_allocations": 50000,
+      "detection_max_instances_per_class": null,
+      "detection_instance_limit_enforced": false,
+      "detection_shared_backbone_required_when_available": true,
+      "detection_shared_backbone_min_available_images": 50,
+      "detection_shared_backbone_min_share": 0.25,
+      "detection_shared_backbone_target_images": 500,
+      "explicit_images_per_class": null,
+      "test_used_for_model_selection": false
+    }
+  },
+  "hyperparameter_decision_evidence": null,
+  "dataset_profile": {
+    "total_selected_images": 7500,
+    "minimum_images_per_class": 1500,
+    "maximum_images_per_class": 1500,
+    "class_balance_ratio": 1.0,
+    "number_of_sources": 2,
+    "domains": [
+      "fine_grained",
+      "products"
+    ],
+    "multi_domain": false,
+    "characteristics": [],
+    "characteristic_support": {},
+    "target_unique_images": 7500,
+    "verified_unique_images": null,
+    "minimum_images_by_class": {
+      "cabinet": 1500,
+      "chair": 1500,
+      "lamp": 1500,
+      "sofa": 1500,
+      "table": 1500
+    },
+    "verified_images_by_class": {},
+    "small_object_fraction": null,
+    "median_short_side_px_at_640": null,
+    "fraction_below_8px_at_640": null,
+    "planned_counts": {
+      "train": 6000,
+      "validation": 750,
+      "test": 750
+    },
+    "official_counts": {
+      "train": 6000,
+      "validation": 0,
+      "test": 750
+    },
+    "derived_counts": {
+      "train": 0,
+      "validation": 750,
+      "test": 0
+    }
+  },
+  "step_history": [
+    "Task Interpretation Completed",
+    "Data Availability Checked",
+    "GraphRAG Model Suggestions: disabled for this run.",
+    "Model Selection Rationale: User-required model override selected 'dinov2_vits14'. The user requires using DinoV2 with ViT-S14 backbone and LoRA for a CPU-only setup with 8 GB RAM. The dinov2_vits14 candidate directly satisfies this architectural and training constraint. LoRA enables training with a reduced parameter footprint, which is advantageous for CPU-only environments. The dataset provides five target classes (chair, sofa, table, cabinet, lamp) with substantial SOP-based training samples per class (roughly 3.4k\u20136.4k per class) and additional CIFAR100 samples that can offer diversity, though not domain-aligned with furniture. The requested low-latency, medium-accuracy trade-off on CPU is challenging for a large ViT, so plan to mitigate with lightweight configurations (e.g., small input resolution, restrained LoRA rank, backbone freezing, careful batch sizing). If latency or memory become prohibitive, consider alternative lighter backbones or reduced-resolution inputs as fallbacks.",
+    "Model Selection Completed",
+    "Data Selection Rationale: We selected 1500 images per class from the Stanford Online Products training split (SOP_cls_train) to build a balanced primary training pool for chair, sofa, table, cabinet, and lamp. SOP_train is the most coherent multi-class source available among the allowed datasets for these classes, and it provides substantial per-class coverage (chair 5845, sofa 3472, table 5470, cabinet 5848, lamp 6304). The domain metadata shows domain 'products, fine_grained' with domain_alignment not marked as aligned, so we treat SOP as the best practical option for a unified, cross-class product-classification task given the constraints. Selecting only training data for the primary pool adheres to official-splits guidelines and avoids leakage from test splits. The target is 1500 images per class, totaling 7500 images for the primary pool. There was no explicit download budget constraint reported, so this configuration remains modest and suitable for CPU-based experimentation. If needed later, generalization data could be considered, but SOP provides a coherent, high-coverage starting pool for all five classes.",
+    "Dataset Selection Completed"
+  ],
+  "last_updated": "2026-08-16T17:04:08.413743",
+  "revision": {
+    "active": null,
+    "history": []
+  }
+}

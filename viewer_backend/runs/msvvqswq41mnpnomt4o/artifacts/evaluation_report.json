@@ -1,0 +1,153 @@
+{
+  "job_id": "msvvqswq41mnpnomt4o",
+  "task": "classification",
+  "model": {
+    "name": "dinov2_vits14",
+    "weights": "default",
+    "training_mode": "lora"
+  },
+  "classes": [
+    "chair",
+    "sofa",
+    "table",
+    "cabinet",
+    "lamp"
+  ],
+  "dataset": {
+    "splits": {
+      "train": 6000,
+      "validation": 750,
+      "test": 750
+    },
+    "assignment_fingerprint": "49dee03adcffd37a163ffa561345676ee964a631316eda504a2cadc197d7bf25"
+  },
+  "configuration": {
+    "model_weights": "default",
+    "training_mode": "lora",
+    "image_size": 224,
+    "batch_size": 2,
+    "num_epochs": 3,
+    "optimizer_name": "adamw",
+    "learning_rate": 5e-05,
+    "weight_decay": 0.0,
+    "track_metric": "val_acc",
+    "precision": "fp32"
+  },
+  "training_history": [
+    {
+      "epoch": 1,
+      "train_loss": 0.649055,
+      "train_acc": 0.751,
+      "val_loss": 0.455259,
+      "val_acc": 0.832,
+      "macro_f1": 0.829138,
+      "micro_f1": 0.832,
+      "tracked": 0.832
+    },
+    {
+      "epoch": 2,
+      "train_loss": 0.37995,
+      "train_acc": 0.863667,
+      "val_loss": 0.447467,
+      "val_acc": 0.845333,
+      "macro_f1": 0.842383,
+      "micro_f1": 0.845333,
+      "tracked": 0.845333
+    },
+    {
+      "epoch": 3,
+      "train_loss": 0.31572,
+      "train_acc": 0.888333,
+      "val_loss": 0.423743,
+      "val_acc": 0.854667,
+      "macro_f1": 0.853616,
+      "micro_f1": 0.854667,
+      "tracked": 0.854667
+    }
+  ],
+  "metrics": {
+    "accuracy": 0.8346666666666667,
+    "loss": 0.4495683526831369,
+    "macro_precision": 0.834106244799016,
+    "macro_recall": 0.8346666666666666,
+    "macro_f1": 0.8337793736133481,
+    "micro_precision": 0.8346666666666667,
+    "micro_recall": 0.8346666666666667,
+    "micro_f1": 0.8346666666666667,
+    "top5_acc": 1.0
+  },
+  "per_class": [
+    {
+      "class_name": "chair",
+      "precision": 0.7702702702702703,
+      "recall": 0.76,
+      "f1": 0.7651006711409396,
+      "support": 150
+    },
+    {
+      "class_name": "sofa",
+      "precision": 0.8680555555555556,
+      "recall": 0.8333333333333334,
+      "f1": 0.8503401360544217,
+      "support": 150
+    },
+    {
+      "class_name": "table",
+      "precision": 0.7638888888888888,
+      "recall": 0.7333333333333333,
+      "f1": 0.7482993197278912,
+      "support": 150
+    },
+    {
+      "class_name": "cabinet",
+      "precision": 0.8493975903614458,
+      "recall": 0.94,
+      "f1": 0.8924050632911392,
+      "support": 150
+    },
+    {
+      "class_name": "lamp",
+      "precision": 0.918918918918919,
+      "recall": 0.9066666666666666,
+      "f1": 0.912751677852349,
+      "support": 150
+    }
+  ],
+  "confusion_matrix": [
+    [
+      114,
+      15,
+      17,
+      2,
+      2
+    ],
+    [
+      19,
+      125,
+      2,
+      4,
+      0
+    ],
+    [
+      13,
+      4,
+      110,
+      15,
+      8
+    ],
+    [
+      1,
+      0,
+      6,
+      141,
+      2
+    ],
+    [
+      1,
+      0,
+      9,
+      4,
+      136
+    ]
+  ]
+}

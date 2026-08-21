@@ -1,0 +1,267 @@
+{
+  "job_id": "msrwyja5s33562dchpf",
+  "task": "detection",
+  "sources": [
+    {
+      "class_name": "person",
+      "dataset_name": "openimages_challenge_2019_det_train",
+      "source_role": "train",
+      "assigned_split": "train",
+      "assignment_type": "official_split",
+      "requested": 1400,
+      "candidates": 0,
+      "downloaded": 0,
+      "direct_allocation_downloaded": 0,
+      "global_top_up_downloaded": 0,
+      "shortfall": 1400,
+      "cross_split_conflicts": 0,
+      "failures": []
+    },
+    {
+      "class_name": "person",
+      "dataset_name": "openimages_challenge_2019_det_train",
+      "source_role": "train",
+      "assigned_split": "test",
+      "assignment_type": "derived_from_train",
+      "requested": 175,
+      "candidates": 0,
+      "downloaded": 0,
+      "direct_allocation_downloaded": 0,
+      "global_top_up_downloaded": 0,
+      "shortfall": 175,
+      "cross_split_conflicts": 0,
+      "failures": []
+    },
+    {
+      "class_name": "person",
+      "dataset_name": "openimages_challenge_2019_det_val",
+      "source_role": "validation",
+      "assigned_split": "validation",
+      "assignment_type": "official_split",
+      "requested": 175,
+      "candidates": 175,
+      "downloaded": 175,
+      "direct_allocation_downloaded": 175,
+      "global_top_up_downloaded": 0,
+      "shortfall": 0,
+      "cross_split_conflicts": 0,
+      "failures": []
+    },
+    {
+      "class_name": "dog",
+      "dataset_name": "openimages_challenge_2019_det_train",
+      "source_role": "train",
+      "assigned_split": "train",
+      "assignment_type": "official_split",
+      "requested": 1400,
+      "candidates": 1400,
+      "downloaded": 1400,
+      "direct_allocation_downloaded": 1400,
+      "global_top_up_downloaded": 0,
+      "shortfall": 0,
+      "cross_split_conflicts": 0,
+      "failures": []
+    },
+    {
+      "class_name": "dog",
+      "dataset_name": "openimages_challenge_2019_det_train",
+      "source_role": "train",
+      "assigned_split": "test",
+      "assignment_type": "derived_from_train",
+      "requested": 175,
+      "candidates": 1575,
+      "downloaded": 175,
+      "direct_allocation_downloaded": 175,
+      "global_top_up_downloaded": 0,
+      "shortfall": 0,
+      "cross_split_conflicts": 1400,
+      "failures": []
+    },
+    {
+      "class_name": "dog",
+      "dataset_name": "openimages_challenge_2019_det_val",
+      "source_role": "validation",
+      "assigned_split": "validation",
+      "assignment_type": "official_split",
+      "requested": 175,
+      "candidates": 175,
+      "downloaded": 175,
+      "direct_allocation_downloaded": 175,
+      "global_top_up_downloaded": 0,
+      "shortfall": 0,
+      "cross_split_conflicts": 0,
+      "failures": []
+    },
+    {
+      "class_name": "cat",
+      "dataset_name": "openimages_challenge_2019_det_train",
+      "source_role": "train",
+      "assigned_split": "train",
+      "assignment_type": "official_split",
+      "requested": 1400,
+      "candidates": 2915,
+      "downloaded": 2878,
+      "direct_allocation_downloaded": 1497,
+      "global_top_up_downloaded": 1381,
+      "shortfall": 0,
+      "cross_split_conflicts": 11,
+      "failures": []
+    },
+    {
+      "class_name": "cat",
+      "dataset_name": "openimages_challenge_2019_det_train",
+      "source_role": "train",
+      "assigned_split": "test",
+      "assignment_type": "derived_from_train",
+      "requested": 175,
+      "candidates": 3298,
+      "downloaded": 361,
+      "direct_allocation_downloaded": 198,
+      "global_top_up_downloaded": 163,
+      "shortfall": 0,
+      "cross_split_conflicts": 2878,
+      "failures": []
+    },
+    {
+      "class_name": "cat",
+      "dataset_name": "openimages_challenge_2019_det_val",
+      "source_role": "validation",
+      "assigned_split": "validation",
+      "assignment_type": "official_split",
+      "requested": 175,
+      "candidates": 183,
+      "downloaded": 183,
+      "direct_allocation_downloaded": 183,
+      "global_top_up_downloaded": 0,
+      "shortfall": 0,
+      "cross_split_conflicts": 0,
+      "failures": []
+    }
+  ],
+  "complete": true,
+  "coverage": {
+    "requirements": {
+      "target_unique_images": 5250,
+      "target_unique_images_by_split": {
+        "train": 4200,
+        "validation": 525,
+        "test": 525
+      },
+      "minimum_images_per_class": {
+        "person": 1750,
+        "dog": 1750,
+        "cat": 1750
+      },
+      "minimum_images_per_class_by_split": {
+        "person": {
+          "train": 1400,
+          "validation": 175,
+          "test": 175
+        },
+        "dog": {
+          "train": 1400,
+          "validation": 175,
+          "test": 175
+        },
+        "cat": {
+          "train": 1400,
+          "validation": 175,
+          "test": 175
+        }
+      }
+    },
+    "verified_unique_images": 5250,
+    "verified_unique_images_by_split": {
+      "train": 4200,
+      "validation": 525,
+      "test": 525
+    },
+    "verified_images_per_class": {
+      "person": 1849,
+      "dog": 1801,
+      "cat": 1884
+    },
+    "verified_images_per_class_by_split": {
+      "person": {
+        "train": 1462,
+        "validation": 203,
+        "test": 184
+      },
+      "dog": {
+        "train": 1434,
+        "validation": 175,
+        "test": 192
+      },
+      "cat": {
+        "train": 1502,
+        "validation": 183,
+        "test": 199
+      }
+    },
+    "unique_image_shortfall": 0,
+    "class_image_shortfalls": {
+      "person": 0,
+      "dog": 0,
+      "cat": 0
+    },
+    "satisfied": true
+  },
+  "allocation_shortfalls": [
+    {
+      "class_name": "person",
+      "dataset_name": "openimages_challenge_2019_det_train",
+      "assigned_split": "train",
+      "requested": 1400,
+      "direct_allocation_downloaded": 0,
+      "shortfall": 1400
+    },
+    {
+      "class_name": "person",
+      "dataset_name": "openimages_challenge_2019_det_train",
+      "assigned_split": "test",
+      "requested": 175,
+      "direct_allocation_downloaded": 0,
+      "shortfall": 175
+    }
+  ],
+  "warnings": [
+    {
+      "type": "allocation_substitution",
+      "message": "One or more direct class/source searches were short, but the final multi-label manifest satisfied all unique-image and class-coverage requirements.",
+      "allocation_shortfalls": [
+        {
+          "class_name": "person",
+          "dataset_name": "openimages_challenge_2019_det_train",
+          "assigned_split": "train",
+          "requested": 1400,
+          "direct_allocation_downloaded": 0,
+          "shortfall": 1400
+        },
+        {
+          "class_name": "person",
+          "dataset_name": "openimages_challenge_2019_det_train",
+          "assigned_split": "test",
+          "requested": 175,
+          "direct_allocation_downloaded": 0,
+          "shortfall": 175
+        }
+      ]
+    }
+  ],
+  "requested": 5250,
+  "downloaded": 5347,
+  "unique_downloaded": 5250,
+  "performance": {
+    "elapsed_seconds": 68.09045089999563,
+    "sparql_queries": 102,
+    "sparql_seconds": 51.7352006000292,
+    "download_batches": 57,
+    "cache_hits": 5250,
+    "cached_failures": 0,
+    "bytes_downloaded": 0,
+    "retries": 0,
+    "transfer_and_validation_seconds": 0.0
+  },
+  "manifest_path": "C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\runs\\msrwyja5s33562dchpf\\data\\dataset_manifest.json",
+  "report_path": "C:\\Users\\Viet Long\\Studium\\Masterthesis\\VkAgents\\backend\\runs\\msrwyja5s33562dchpf\\artifacts\\download_report.json"
+}

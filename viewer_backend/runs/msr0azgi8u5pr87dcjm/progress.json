@@ -1,0 +1,7 @@
+{
+    "status": "running",
+    "current_epoch": 60,
+    "total_epochs": 60,
+    "train_loss": 0.5757840275764465,
+    "val_mAP50": 0.46107
+}

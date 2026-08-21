@@ -1,0 +1,249 @@
+{
+  "task": "detection",
+  "application_domain": "traffic",
+  "user_query": "I need a model for a traffic-monitoring system that detects cars in each image. The model will run locally on a MacBook Air with an Apple M4 chip and 16 GB of unified memory, using CPU or Metal acceleration. It should aim for a mAP@0.5:0.95 of around 0.30 or higher. Processing an image within roughly 500 milliseconds would be desirable, but reliable classification under different viewpoints, lighting conditions, weather conditions, and partial occlusion is more important than inference speed.",
+  "use_case_description": "Detect cars in each image for traffic monitoring; robust to viewpoints, lighting, weather, and partial occlusion.",
+  "questions_list": null,
+  "classes": [
+    "car"
+  ],
+  "available_data": [
+    {
+      "class_name": "car",
+      "sources": [
+        {
+          "dataset_name": "bdd_100k_det_train",
+          "count": 68943
+        },
+        {
+          "dataset_name": "objects365_det_train",
+          "count": 55348
+        },
+        {
+          "dataset_name": "bdd100k_cycleGAN_day2night_det_train",
+          "count": 36407
+        },
+        {
+          "dataset_name": "coco2017_det_train",
+          "count": 12251
+        },
+        {
+          "dataset_name": "bdd_100k_det_val",
+          "count": 9882
+        },
+        {
+          "dataset_name": "openimages_challenge_2019_det_val",
+          "count": 5232
+        },
+        {
+          "dataset_name": "objects365_det_val",
+          "count": 3823
+        },
+        {
+          "dataset_name": "ACDC_FDA_day2night_det_train",
+          "count": 1525
+        },
+        {
+          "dataset_name": "voc0712_det_train",
+          "count": 1023
+        },
+        {
+          "dataset_name": "voc0712_det_val",
+          "count": 967
+        },
+        {
+          "dataset_name": "voc12_det_train",
+          "count": 621
+        },
+        {
+          "dataset_name": "voc12_det_val",
+          "count": 608
+        },
+        {
+          "dataset_name": "coco2017_det_val",
+          "count": 535
+        },
+        {
+          "dataset_name": "cityscapes_det_val",
+          "count": 475
+        },
+        {
+          "dataset_name": "voc07_det_train",
+          "count": 402
+        },
+        {
+          "dataset_name": "voc07_det_test",
+          "count": 359
+        },
+        {
+          "dataset_name": "voc07_det_val",
+          "count": 359
+        },
+        {
+          "dataset_name": "ACDC_det_val_night",
+          "count": 94
+        }
+      ]
+    }
+  ],
+  "selected_data": null,
+  "performance_requirements": {
+    "primary_metric": "mAP@0.5:0.95",
+    "target_value": 0.3,
+    "target_is_hard": false,
+    "latency_category": "Medium",
+    "accuracy_category": "MediumHigh",
+    "other_constraints": null
+  },
+  "constraint_strengths": {
+    "accuracy": "preference",
+    "latency": "preference",
+    "runtime_memory": "preference",
+    "model_size": "unspecified",
+    "training_time": "unspecified"
+  },
+  "robustness_requirements": {
+    "lighting": [
+      "varied"
+    ],
+    "weather": [
+      "varied"
+    ],
+    "object_scale": [
+      "varied"
+    ],
+    "scene_density": [
+      "varied"
+    ],
+    "motion_blur": false,
+    "occlusion": true,
+    "viewpoint": [
+      "varied"
+    ],
+    "color_semantics": false,
+    "horizontal_flip_safe": null,
+    "text_or_symbols_present": false
+  },
+  "deployment_constraints": {
+    "memory_category": "Medium",
+    "max_runtime_memory_mb": null,
+    "max_model_size_mb": null,
+    "max_parameters_m": null,
+    "max_cpu_latency_ms": 500.0,
+    "hard_limits": []
+  },
+  "available_hardware": {
+    "hardware_category": "ConsumerCPU",
+    "cpu_cores": null,
+    "gpu_type": null,
+    "gpu_count": null,
+    "vram_gb": null,
+    "ram_gb": 16.0,
+    "storage_gb": null,
+    "details": "Apple M4 SoC, unified memory"
+  },
+  "model_requirements": null,
+  "augmentation": null,
+  "preprocessing": null,
+  "num_qa_pairs": null,
+  "training_hardware": {
+    "profile_id": "rtx2060_6gb_ryzen5600x_16gb",
+    "accelerator": "cuda",
+    "hardware_category": "ConsumerGPU",
+    "gpu_type": "ASUS Dual NVIDIA GeForce RTX 2060 EVO 6GB",
+    "gpu_count": 1,
+    "vram_gb": 6.0,
+    "ram_gb": 16.0,
+    "unified_memory": false,
+    "training_memory_budget_gb": 5.0,
+    "max_batch_size": 4,
+    "workers": 4,
+    "supports_amp": true
+  },
+  "class_expansions": {},
+  "model_selection_graph_context": null,
+  "dataset_selection_graph_context": null,
+  "hyperparameter_graph_context": null,
+  "use_graphrag": false,
+  "selected_model_info": {
+    "model": {
+      "model_architecture": "yolov8",
+      "description": "One-stage detector optimized for CPU/Metal on Apple Silicon; balanced accuracy and efficiency suitable for 16 GB unified memory and 500 ms latency on a MacBook Air M4; good ecosystem for CoreML/Metal deployment; robust to diverse driving scenarios.",
+      "architecture_family": "yolo"
+    }
+  },
+  "hpo_config": null,
+  "hpo_decision": null,
+  "model_selection_decision_evidence": {
+    "decision_type": "model_selection",
+    "decision": {
+      "model": {
+        "model_architecture": "yolov8",
+        "description": "One-stage detector optimized for CPU/Metal on Apple Silicon; balanced accuracy and efficiency suitable for 16 GB unified memory and 500 ms latency on a MacBook Air M4; good ecosystem for CoreML/Metal deployment; robust to diverse driving scenarios.",
+        "architecture_family": "yolo"
+      }
+    },
+    "rationale": "Given the deployment on a MacBook Air with Apple M4 (CPU/Metal) and 16 GB unified memory, the primary goal is a detector with solid accuracy for cars under varied conditions while keeping latency within about 500 ms per image. Among the candidate architectures, Yolov8 generally offers a favorable balance of accuracy and efficiency on CPU/Metal and has broad tooling support for deployment on Apple devices. Two-stage detectors (e.g., Faster R-CNN R50 FPN) often deliver strong accuracy and occlusion robustness but tend to be slower on CPU and heavier in memory, which may threaten the 500 ms constraint on this device. SSD300 is lighter but typically underperforms on the requested accuracy target for traffic scenarios. Therefore, Yolov8 is recommended as the primary model to validate against the target mAP@0.5:0.95 of ~0.30+ under diverse lighting, weather, and occlusion. As a fallback, Faster R-CNN R50 FPN can be tested if latency budgets allow and if occlusion robustness proves insufficient with Yolov8. The dataset variety in available_data (BDD100K, COCO, Open Images, OpenBAC/ACDC day/night variants) supports training/adaptation for robust car detection across conditions, though exact performance must be verified with on-device benchmarks.",
+    "selection_policy": null,
+    "retrieved_facts": [],
+    "evidence_sources": [],
+    "grounded": false,
+    "evidence_backed": false,
+    "match_scope": null,
+    "grounding": {
+      "status": "ungrounded",
+      "fact_count": 0,
+      "support_counts": {},
+      "evidence_coverage": 0.0
+    },
+    "evaluated_candidates": [
+      {
+        "candidate_id": "yolov8",
+        "advantages": [
+          "Strong balance of accuracy and CPU/Metal efficiency",
+          "Good support for CoreML/ONNX with on-device deployment",
+          "Widely used for vehicle detection and robust to varied viewpoints and lighting"
+        ],
+        "risks": [
+          "On some CPU/Metal configurations, performance can vary and may require quantization or precision tuning",
+          "Inference memory footprint is moderate; may need careful batching or tiling to stay within 500 ms at high resolutions"
+        ],
+        "constraint_status": "feasible"
+      },
+      {
+        "candidate_id": "faster-rcnn_r50_fpn_1x_coco",
+        "advantages": [
+          "Strong accuracy and occlusion robustness due to two-stage proposal mechanism",
+          "Mature detection framework with stable results across datasets"
+        ],
+        "risks": [
+          "Generally slower on CPU/Metal, risking latency > 500 ms on MacBook Air M4",
+          "Higher memory footprint and potentially more complex deployment to CoreML/Metal"
+        ],
+        "constraint_status": "uncertain"
+      }
+    ],
+    "uncertainties": [
+      "Actual on-device mAP@0.5:0.95 for cars on Apple M4 CPU/Metal with Yolov8 is unverified without on-device benchmarking.",
+      "Small-object performance and robustness under extreme occlusion depend on training data and domain adaptation; exact gains are not quantified here."
+    ],
+    "comparison_warnings": [],
+    "selection_confidence": "standard"
+  },
+  "dataset_selection_decision_evidence": null,
+  "hyperparameter_decision_evidence": null,
+  "dataset_profile": null,
+  "data_plan_constraints": null,
+  "step_history": [
+    "Task Interpretation Completed",
+    "Data Availability Checked",
+    "GraphRAG Model Suggestions: disabled for this run.",
+    "Model Selection Rationale: Given the deployment on a MacBook Air with Apple M4 (CPU/Metal) and 16 GB unified memory, the primary goal is a detector with solid accuracy for cars under varied conditions while keeping latency within about 500 ms per image. Among the candidate architectures, Yolov8 generally offers a favorable balance of accuracy and efficiency on CPU/Metal and has broad tooling support for deployment on Apple devices. Two-stage detectors (e.g., Faster R-CNN R50 FPN) often deliver strong accuracy and occlusion robustness but tend to be slower on CPU and heavier in memory, which may threaten the 500 ms constraint on this device. SSD300 is lighter but typically underperforms on the requested accuracy target for traffic scenarios. Therefore, Yolov8 is recommended as the primary model to validate against the target mAP@0.5:0.95 of ~0.30+ under diverse lighting, weather, and occlusion. As a fallback, Faster R-CNN R50 FPN can be tested if latency budgets allow and if occlusion robustness proves insufficient with Yolov8. The dataset variety in available_data (BDD100K, COCO, Open Images, OpenBAC/ACDC day/night variants) supports training/adaptation for robust car detection across conditions, though exact performance must be verified with on-device benchmarks.",
+    "Model Selection Completed"
+  ],
+  "last_updated": "2026-08-19T16:57:16.403315",
+  "revision": {
+    "active": null,
+    "history": []
+  }
+}

@@ -1,0 +1,196 @@
+{
+  "task": "classification",
+  "application_domain": "furniture",
+  "user_query": "I need an image classification model for a furniture marketplace that categorizes the primary product in an uploaded photo as a chair, sofa, table, cabinet and or lamp. Please use the dinov2 vits14 and LoRA. The model will run on a CPU-only system with 8 GB of RAM.",
+  "use_case_description": null,
+  "questions_list": null,
+  "classes": [
+    "chair",
+    "sofa",
+    "table",
+    "cabinet",
+    "lamp"
+  ],
+  "available_data": [
+    {
+      "class_name": "chair",
+      "sources": [
+        {
+          "dataset_name": "SOP_cls_test",
+          "count": 6226
+        },
+        {
+          "dataset_name": "SOP_cls_train",
+          "count": 5845
+        },
+        {
+          "dataset_name": "cifar100_cls_train",
+          "count": 500
+        },
+        {
+          "dataset_name": "cifar100_cls_test",
+          "count": 100
+        }
+      ]
+    },
+    {
+      "class_name": "sofa",
+      "sources": [
+        {
+          "dataset_name": "SOP_cls_test",
+          "count": 3959
+        },
+        {
+          "dataset_name": "SOP_cls_train",
+          "count": 3472
+        }
+      ]
+    },
+    {
+      "class_name": "table",
+      "sources": [
+        {
+          "dataset_name": "SOP_cls_test",
+          "count": 5638
+        },
+        {
+          "dataset_name": "SOP_cls_train",
+          "count": 5470
+        },
+        {
+          "dataset_name": "cifar100_cls_train",
+          "count": 500
+        },
+        {
+          "dataset_name": "cifar100_cls_test",
+          "count": 100
+        }
+      ]
+    },
+    {
+      "class_name": "cabinet",
+      "sources": [
+        {
+          "dataset_name": "SOP_cls_test",
+          "count": 6220
+        },
+        {
+          "dataset_name": "SOP_cls_train",
+          "count": 5848
+        }
+      ]
+    },
+    {
+      "class_name": "lamp",
+      "sources": [
+        {
+          "dataset_name": "SOP_cls_train",
+          "count": 6304
+        },
+        {
+          "dataset_name": "SOP_cls_test",
+          "count": 6226
+        },
+        {
+          "dataset_name": "cifar100_cls_train",
+          "count": 500
+        },
+        {
+          "dataset_name": "cifar100_cls_test",
+          "count": 100
+        }
+      ]
+    }
+  ],
+  "selected_data": null,
+  "performance_requirements": {
+    "primary_metric": "latency",
+    "target_value": null,
+    "target_is_hard": false,
+    "latency_category": "Low",
+    "accuracy_category": "Medium",
+    "other_constraints": null
+  },
+  "constraint_strengths": {
+    "accuracy": "unspecified",
+    "latency": "unspecified",
+    "runtime_memory": "soft",
+    "model_size": "unspecified",
+    "training_time": "unspecified"
+  },
+  "robustness_requirements": {
+    "lighting": [],
+    "weather": [],
+    "object_scale": [],
+    "scene_density": [],
+    "motion_blur": false,
+    "occlusion": false,
+    "viewpoint": [],
+    "color_semantics": false,
+    "horizontal_flip_safe": null,
+    "text_or_symbols_present": false
+  },
+  "deployment_constraints": null,
+  "available_hardware": {
+    "hardware_category": "ConsumerCPU",
+    "cpu_cores": null,
+    "gpu_type": null,
+    "gpu_count": null,
+    "vram_gb": null,
+    "ram_gb": 8.0,
+    "storage_gb": null,
+    "details": null
+  },
+  "model_requirements": [
+    {
+      "name": "dino_v2",
+      "framework": null,
+      "backbone": "vit_s14",
+      "hyperparameters": null,
+      "description": "DinoV2 with ViT-S14 backbone for image classification on CPU, LoRA training enabled.",
+      "requirement_strength": "required",
+      "training_mode": "lora",
+      "lora_rank": null,
+      "lora_alpha": null,
+      "lora_dropout": null
+    }
+  ],
+  "augmentation": null,
+  "preprocessing": null,
+  "num_qa_pairs": null,
+  "training_hardware": {
+    "profile_id": "rtx2060_6gb_ryzen5600x_16gb",
+    "accelerator": "cuda",
+    "hardware_category": "ConsumerGPU",
+    "gpu_type": "ASUS Dual NVIDIA GeForce RTX 2060 EVO 6GB",
+    "gpu_count": 1,
+    "vram_gb": 6.0,
+    "ram_gb": 16.0,
+    "unified_memory": false,
+    "training_memory_budget_gb": 5.0,
+    "max_batch_size": 4,
+    "workers": 4,
+    "supports_amp": true
+  },
+  "class_expansions": {},
+  "model_selection_graph_context": null,
+  "dataset_selection_graph_context": null,
+  "hyperparameter_graph_context": null,
+  "use_graphrag": false,
+  "selected_model_info": null,
+  "hpo_config": null,
+  "hpo_decision": null,
+  "model_selection_decision_evidence": null,
+  "dataset_selection_decision_evidence": null,
+  "hyperparameter_decision_evidence": null,
+  "dataset_profile": null,
+  "step_history": [
+    "Task Interpretation Completed",
+    "Data Availability Checked"
+  ],
+  "last_updated": "2026-08-16T17:02:54.700799",
+  "revision": {
+    "active": null,
+    "history": []
+  }
+}

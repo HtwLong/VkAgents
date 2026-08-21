@@ -1,0 +1,92 @@
+{
+  "ready": true,
+  "errors": [],
+  "warnings": [],
+  "checks": {
+    "saved_config_valid": true,
+    "prepared_dataset_matches_plan": true,
+    "splits_non_empty": true,
+    "content_isolation_valid": true,
+    "annotations_valid": true,
+    "resource_preflight_valid": true,
+    "training_memory_assessment": "fits"
+  },
+  "training_memory_estimate": {
+    "supported": true,
+    "assessment": "fits",
+    "lower_gb": 2.288,
+    "upper_gb": 3.177,
+    "budget_gb": 5.0,
+    "model_name": "yolov8_n",
+    "batch_size": 4,
+    "image_size": 640,
+    "mixed_precision": false,
+    "components_gb": {
+      "parameters_gradients_optimizer": 0.034,
+      "activations": 2.24,
+      "input_batch": 0.018,
+      "family_overhead": 0.25
+    },
+    "reason": null
+  },
+  "materialized_dataset": {
+    "counts": {
+      "train": 10698,
+      "validation": 1533,
+      "test": 1287
+    },
+    "class_image_counts": {
+      "bicycle": {
+        "train": 3029,
+        "validation": 318,
+        "test": 293
+      },
+      "bus": {
+        "train": 2419,
+        "validation": 318,
+        "test": 329
+      },
+      "car": {
+        "train": 8677,
+        "validation": 1415,
+        "test": 1224
+      },
+      "motorcycle": {
+        "train": 2602,
+        "validation": 370,
+        "test": 283
+      },
+      "pedestrian": {
+        "train": 4519,
+        "validation": 649,
+        "test": 712
+      },
+      "truck": {
+        "train": 3423,
+        "validation": 413,
+        "test": 443
+      }
+    },
+    "instance_counts": {
+      "bicycle": 6869,
+      "car": 115082,
+      "pedestrian": 27951,
+      "truck": 6905,
+      "bus": 3966,
+      "motorcycle": 5827
+    },
+    "object_size_counts": {
+      "small": 68676,
+      "medium": 68124,
+      "large": 29800
+    },
+    "content_isolation": {
+      "unique_content_hashes": 13518,
+      "duplicate_samples": 0,
+      "cross_split_duplicates": 0
+    },
+    "invalid_box_count": 0,
+    "assignment_fingerprint": "d58f4dd8539eaf2bf7dfc5d140203b9dc3ebbb3229fe14d5dd1ce9a8f8002443",
+    "manifest_sha256": "04dd28ae690b440347c51c7ad7e615d84ed239223644e294536139b7699ef60a"
+  }
+}

@@ -1,0 +1,68 @@
+{
+  "ready": true,
+  "errors": [],
+  "warnings": [],
+  "checks": {
+    "saved_config_valid": true,
+    "prepared_dataset_matches_plan": true,
+    "splits_non_empty": true,
+    "content_isolation_valid": true,
+    "annotations_valid": true,
+    "resource_preflight_valid": true,
+    "training_memory_assessment": "fits"
+  },
+  "training_memory_estimate": {
+    "supported": true,
+    "assessment": "fits",
+    "lower_gb": 1.528,
+    "upper_gb": 2.123,
+    "budget_gb": 5.0,
+    "model_name": "yolov8_n",
+    "batch_size": 4,
+    "image_size": 640,
+    "mixed_precision": true,
+    "components_gb": {
+      "parameters_gradients_optimizer": 0.05,
+      "activations": 1.389,
+      "input_batch": 0.009,
+      "family_overhead": 0.25
+    },
+    "reason": null
+  },
+  "materialized_dataset": {
+    "counts": {
+      "train": 3338,
+      "validation": 413,
+      "test": 600
+    },
+    "class_image_counts": {
+      "traffic light": {
+        "train": 2400,
+        "validation": 300,
+        "test": 300
+      },
+      "traffic sign": {
+        "train": 3037,
+        "validation": 372,
+        "test": 556
+      }
+    },
+    "instance_counts": {
+      "traffic light": 14457,
+      "traffic sign": 16964
+    },
+    "object_size_counts": {
+      "small": 25746,
+      "medium": 5455,
+      "large": 220
+    },
+    "content_isolation": {
+      "unique_content_hashes": 4351,
+      "duplicate_samples": 0,
+      "cross_split_duplicates": 0
+    },
+    "invalid_box_count": 0,
+    "assignment_fingerprint": "6ca7d70bdfa4f7e7e89814a770189ae7470a6bd2045cc1c97426b3cb2a881df6",
+    "manifest_sha256": "80a47cac0b624c79168e7d32ae210c856f27f8e28fe4c5dd148933735fcc16d7"
+  }
+}

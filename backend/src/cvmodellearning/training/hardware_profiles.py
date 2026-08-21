@@ -8,7 +8,7 @@ from typing import Final
 from cvmodellearning.schemas.interpretation_schema import TrainingHardwareSpec
 
 
-DEFAULT_TRAINING_HARDWARE_PROFILE: Final = "rtx6000_48gb"
+DEFAULT_TRAINING_HARDWARE_PROFILE: Final = "rtx2060_6gb_ryzen5600x_16gb"
 TRAINING_HARDWARE_PROFILE_ENV: Final = "CVMODEL_TRAINING_HARDWARE_PROFILE"
 
 TRAINING_HARDWARE_PROFILES: Final = {
