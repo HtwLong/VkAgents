@@ -1,0 +1,101 @@
+{
+  "task": "detection",
+  "application_domain": "Traffic",
+  "user_query": "I need an object detection model to identify traffic lights and traffic signs in dense urban street scenes. The objects may be small and far away in the image. The model will run inference locally on a server with an RTX 2060 GPU with 6 GB of memory. It should aim for a mAP@0.5:0.95 of around 0.35 or higher. Inference time is not important. Memory usage during inference should preferably remain below 6 GB.",
+  "use_case_description": "Detect traffic lights and traffic signs in dense urban street scenes; objects may be small and far away; run inference on a local RTX 2060 server with 6 GB memory; aim for mAP@0.5:0.95 around 0.35 or higher; memory usage during inference preferably below 6 GB; latency not a constraint.",
+  "questions_list": null,
+  "classes": [
+    "traffic light",
+    "traffic sign"
+  ],
+  "available_data": null,
+  "selected_data": null,
+  "performance_requirements": {
+    "primary_metric": "mAP@0.5:0.95",
+    "target_value": 0.35,
+    "target_is_hard": false,
+    "latency_category": null,
+    "accuracy_category": "MediumHigh",
+    "other_constraints": []
+  },
+  "constraint_strengths": {
+    "accuracy": "preference",
+    "latency": "unspecified",
+    "runtime_memory": "preference",
+    "model_size": "unspecified",
+    "training_time": "unspecified"
+  },
+  "robustness_requirements": {
+    "lighting": [],
+    "weather": [],
+    "object_scale": [
+      "small"
+    ],
+    "scene_density": [
+      "dense"
+    ],
+    "motion_blur": false,
+    "occlusion": false,
+    "viewpoint": [],
+    "color_semantics": false,
+    "horizontal_flip_safe": null,
+    "text_or_symbols_present": false
+  },
+  "deployment_constraints": {
+    "memory_category": "Low",
+    "max_runtime_memory_mb": 6144.0,
+    "max_model_size_mb": null,
+    "max_parameters_m": null,
+    "max_cpu_latency_ms": null,
+    "hard_limits": []
+  },
+  "available_hardware": {
+    "hardware_category": "ConsumerGPU",
+    "cpu_cores": null,
+    "gpu_type": null,
+    "gpu_count": 1,
+    "vram_gb": 6.0,
+    "ram_gb": null,
+    "storage_gb": null,
+    "details": "NVIDIA GeForce RTX 2060 (desktop/consumer GPU)"
+  },
+  "model_requirements": null,
+  "augmentation": null,
+  "preprocessing": null,
+  "num_qa_pairs": null,
+  "training_hardware": {
+    "profile_id": "rtx6000_48gb",
+    "accelerator": "cuda",
+    "hardware_category": "DataCenterGPU",
+    "gpu_type": "NVIDIA RTX 6000 Ada",
+    "gpu_count": 1,
+    "vram_gb": 48.0,
+    "ram_gb": null,
+    "unified_memory": false,
+    "training_memory_budget_gb": 44.0,
+    "max_batch_size": 16,
+    "workers": 8,
+    "supports_amp": true
+  },
+  "class_expansions": {},
+  "model_selection_graph_context": null,
+  "dataset_selection_graph_context": null,
+  "hyperparameter_graph_context": null,
+  "use_graphrag": true,
+  "selected_model_info": null,
+  "hpo_config": null,
+  "hpo_decision": null,
+  "model_selection_decision_evidence": null,
+  "dataset_selection_decision_evidence": null,
+  "hyperparameter_decision_evidence": null,
+  "dataset_profile": null,
+  "data_plan_constraints": null,
+  "step_history": [
+    "Task Interpretation Completed"
+  ],
+  "last_updated": "2026-08-19T09:12:18.143918",
+  "revision": {
+    "active": null,
+    "history": []
+  }
+}

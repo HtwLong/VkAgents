@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "job_id": "mszvgmtrty7fsnfhu3",
+  "task": "detection",
+  "assignment_fingerprint": "6ca7d70bdfa4f7e7e89814a770189ae7470a6bd2045cc1c97426b3cb2a881df6",
+  "manifest_sha256": "a6d3200c96a5b8f09cf74ec858fd6aa014a755ec51c5c22a3960be19184f4dcf",
+  "official_counts": {
+    "train": 4800,
+    "validation": 600,
+    "test": 0
+  },
+  "derived_counts": {
+    "train": 0,
+    "validation": 0,
+    "test": 600
+  },
+  "stages": {
+    "training": {
+      "splits": {
+        "train": {
+          "path": "/app/runs/mszvgmtrty7fsnfhu3/data/train_annotations.json",
+          "sha256": "bdf714eefc526929719926a6d509e9d05dd20cbe57ff33e460fff507ad1b3b82",
+          "sample_count": 4800
+        },
+        "validation": {
+          "path": "/app/runs/mszvgmtrty7fsnfhu3/data/val_annotations.json",
+          "sha256": "53e2e30bb5c60d42e652257ea4cc64215ed05f3c7722d9c4deece949475a4b14",
+          "sample_count": 600
+        }
+      }
+    },
+    "evaluation": {
+      "splits": {
+        "test": {
+          "path": "/app/runs/mszvgmtrty7fsnfhu3/data/test_annotations.json",
+          "sha256": "3cbe9a5134afab4d65c197a6808bc0ac7c668266849cd082513052522dbf0f15",
+          "sample_count": 600
+        }
+      }
+    }
+  }
+}

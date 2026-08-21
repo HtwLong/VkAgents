@@ -37,3 +37,5 @@ frontend/playwright-report/
 frontend/test-results/
 frontend/*.tsbuildinfo
 frontend/tsconfig.tsbuildinfo
+
+viewer_backend/runs/**/weights/*.pt

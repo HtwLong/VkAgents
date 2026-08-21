@@ -1,0 +1,10 @@
+[
+  {
+    "timestamp": "2026-08-20T08:05:47.410161+00:00",
+    "job_id": "mt18hpy6l9wvwoixn99",
+    "endpoint": "/api/v1/planning/select-model",
+    "status_code": 500,
+    "error_type": "UnboundLocalError",
+    "error": "Traceback (most recent call last):\n  File \"/app/src/cvmodellearning/jobs/error_persistence.py\", line 68, in handler\n    return await route_handler(request)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/.venv/lib/python3.13/site-packages/fastapi/routing.py\", line 424, in app\n    raw_response = await run_endpoint_function(\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    ...<3 lines>...\n    )\n    ^\n  File \"/app/.venv/lib/python3.13/site-packages/fastapi/routing.py\", line 312, in run_endpoint_function\n    return await dependant.call(**values)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/app/src/routers/planning.py\", line 1475, in select_model\n    and graph_context.get(\"filters\", {}).get(\"small_object_benchmark_status\")\n        ^^^^^^^^^^^^^\nUnboundLocalError: cannot access local variable 'graph_context' where it is not associated with a value\n"
+  }
+]

@@ -202,7 +202,7 @@ export const EXAMPLE_PROMPTS: ExamplePrompt[] = [
     name: "Small Traffic Object Detection (MacBook M4)",
     task: "detection",
     domain: "traffic",
-    jobIds: { withGraphRag: "msr0azgi8u5pr87dcjm", withoutGraphRag: "msrci6iveee7o687mp" },
+    jobIds: { withGraphRag: "msr0azgi8u5pr87dcjm", withoutGraphRag: "msrci6iveee7o687mpl" },
     text: "I need an object detection model to identify traffic lights and traffic signs in dense urban street scenes. The objects may be small and far away in the image. The model will run locally on a MacBook Air with an Apple M4 chip and 16 GB of unified memory, using Metal acceleration where supported. It should aim for a mAP@0.5:0.95 of around 0.30 or higher. An inference time of approximately 500 milliseconds or less per frame would be desirable, although somewhat slower processing is acceptable when it improves detection quality in difficult conditions. Memory usage during inference should preferably remain below 6 GB.",
   },
   {
@@ -210,6 +210,7 @@ export const EXAMPLE_PROMPTS: ExamplePrompt[] = [
     name: "Small Traffic Object Detection (RTX 2060)",
     task: "detection",
     domain: "traffic",
+    jobIds: { withGraphRag: "mszvgmtrty7fsnfhu3", withoutGraphRag: "mt18hpy6l9wvwoixn99" },
     text: "I need an object detection model to identify traffic lights and traffic signs in dense urban street scenes. The objects may be small and far away in the image. The model will run inference locally on a server with an RTX 2060 GPU with 6 GB of memory. It should aim for a mAP@0.5:0.95 of around 0.35 or higher. Inference time is not important. Memory usage during inference should preferably remain below 6 GB.",
   },
   {

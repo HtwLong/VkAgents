@@ -1,0 +1,11 @@
+{
+  "job_id": "mszvgmtrty7fsnfhu3",
+  "summary": {
+    "model_name": "yolov12_x",
+    "trainer_type": "yolo",
+    "agent_output_message": "\u2705 Successfully trained yolov12_x (Job ID: mszvgmtrty7fsnfhu3).",
+    "best_model_path": "/app/runs/mszvgmtrty7fsnfhu3/artifacts/best_model.pt",
+    "training_log_path": "/app/runs/mszvgmtrty7fsnfhu3/artifacts/training_log.txt",
+    "data_provenance": "/app/runs/mszvgmtrty7fsnfhu3/artifacts/data_provenance.json"
+  }
+}
