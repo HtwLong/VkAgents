@@ -1,6 +1,7 @@
 import sys
 
-from viewer_backend.hpo_planning import materialize_hpo
+from viewer_backend.hpo_planning import detection_hpo_model_id, materialize_hpo
+from viewer_backend.planning_contracts import ClassificationHPOConfig, DetectionHPOConfig
 
 
 ASSIGNMENTS = [{
@@ -16,6 +17,17 @@ ASSIGNMENTS = [{
 }]
 
 
+def test_canonicalizes_supported_yolo_selection_variants():
+    assert detection_hpo_model_id("yolo11n") == "yolov11_n"
+    assert detection_hpo_model_id("YOLOv12-X") == "yolov12_x"
+
+
+def test_canonicalizes_torchvision_ontology_model_ids():
+    assert detection_hpo_model_id("retinanet_resnet50_fpn") == "retinanet_r50"
+    assert detection_hpo_model_id("fasterrcnn_resnet50_fpn") == "faster_rcnn_r50"
+    assert detection_hpo_model_id("ssd300_vgg16") == "ssd300"
+
+
 def test_materializes_complete_classification_proposal():
     config, provenance = materialize_hpo(
         {"task": "classification", "classes": ["cat"], "selected_data": ASSIGNMENTS,
@@ -29,6 +41,7 @@ def test_materializes_complete_classification_proposal():
     assert config["criterion_name"] == "cross_entropy"
     assert config["selected_data"] == ASSIGNMENTS
     assert provenance["training_recipe_id"]["source"] == "ontology_recipe"
+    assert list(config) == list(ClassificationHPOConfig.model_json_schema()["properties"])
 
 
 def test_materializes_complete_vqa_proposal_without_ml_imports():
@@ -59,6 +72,7 @@ def test_materializes_original_detection_contract_and_canonicalizes_model_id():
     assert config["scheduler_name"] == "linear"
     assert config["loss_box"] == "ciou"
     assert config["aspect_ratio_range"] is None
+    assert list(config) == list(DetectionHPOConfig.model_json_schema()["properties"])
 
 
 def test_materializes_ssd_with_original_backend_specific_sentinels():

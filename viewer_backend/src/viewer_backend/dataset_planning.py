@@ -52,6 +52,7 @@ def availability_candidates(context: dict[str, Any]) -> list[dict[str, Any]]:
 
 def build_split_assignments(
     context: dict[str, Any], selected_dataset_ids: list[str] | None = None,
+    *, selected_plan: list[dict[str, Any]] | None = None,
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     """Build conservative assignments from reported availability only.
 
@@ -59,6 +60,11 @@ def build_split_assignments(
     made until a materialized manifest exists.
     """
     allowed = set(selected_dataset_ids or [])
+    requested_counts = {
+        (str(item.get("class_name")), str(source.get("dataset_name"))): int(source.get("count") or 0)
+        for item in selected_plan or []
+        for source in item.get("sources") or []
+    }
     assignments = []
     selected_counts = []
     for item in context.get("available_data") or []:
@@ -77,6 +83,13 @@ def build_split_assignments(
             continue
         train_source = training[0]
         available_train = int(train_source["count"])
+        requested = requested_counts.get((str(class_name), str(train_source["dataset_name"])))
+        if requested is not None:
+            available_train = min(available_train, requested)
+        if available_train < 3:
+            raise ValueError(
+                f"Selected source {train_source['dataset_name']} for class {class_name} needs at least 3 images."
+            )
         target_total = min(2000, available_train)
         validation_source = next((source for source in by_role["validation"] if dataset_family(source["dataset_name"]) == dataset_family(train_source["dataset_name"])), None)
         test_source = next((source for source in by_role["test"] if dataset_family(source["dataset_name"]) == dataset_family(train_source["dataset_name"])), None)

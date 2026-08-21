@@ -7,6 +7,11 @@ from typing import Any
 from .planning_contracts import ClassificationHPOConfig, DetectionHPOConfig, VQAHPOConfig
 
 
+DETECTION_HPO_MODEL_IDS = frozenset(
+    DetectionHPOConfig.model_json_schema()["properties"]["model_name"]["enum"]
+)
+
+
 def _recipe_number(recipe: dict[str, Any] | None, field: str, fallback: float | int):
     raw = (recipe or {}).get(field)
     if raw in (None, ""):
@@ -15,19 +20,31 @@ def _recipe_number(recipe: dict[str, Any] | None, field: str, fallback: float | 
     return int(number) if isinstance(fallback, int) else number
 
 
-def _detection_hpo_model_id(value: str) -> str:
+def detection_hpo_model_id(value: str) -> str:
     """Translate selection-layer IDs/aliases to the original HPO registry ID."""
     normalized = value.strip().lower().replace("-", "_")
+    compact = normalized.replace("_", "")
+    for generation in ("8", "10", "11", "12"):
+        for size in ("n", "s", "m", "l", "x"):
+            if compact in {f"yolo{generation}{size}", f"yolov{generation}{size}"}:
+                return f"yolov{generation}_{size}"
     aliases = {
         "yolov8": "yolov8_n", "yolov8n": "yolov8_n",
         "yolov10": "yolov10_n", "yolov10n": "yolov10_n",
         "yolov11": "yolov11_n", "yolo11": "yolov11_n", "yolo11n": "yolov11_n",
         "yolov12": "yolov12_n", "yolov12n": "yolov12_n",
         "retinanet_r50_fpn_1x_coco": "retinanet_r50",
+        "retinanet_resnet50_fpn": "retinanet_r50",
         "faster_rcnn_r50_fpn_1x_coco": "faster_rcnn_r50",
+        "fasterrcnn_resnet50_fpn": "faster_rcnn_r50",
         "ssd300_coco": "ssd300",
+        "ssd300_vgg16": "ssd300",
     }
     return aliases.get(normalized, normalized)
+
+
+def supports_detection_hpo_model(value: str) -> bool:
+    return detection_hpo_model_id(value) in DETECTION_HPO_MODEL_IDS
 
 
 def materialize_hpo(
@@ -60,7 +77,7 @@ def materialize_hpo(
         })
     elif task == "detection":
         family = str((context.get("selected_model_info") or {}).get("family") or "").lower()
-        model_id = _detection_hpo_model_id(str(common["model_name"]))
+        model_id = detection_hpo_model_id(str(common["model_name"]))
         is_rtdetr = model_id == "rtdetr_hgnetv2_l" or "rtdetr" in family.replace("-", "")
         is_retinanet = model_id == "retinanet_r50"
         is_faster_rcnn = model_id == "faster_rcnn_r50"
@@ -95,7 +112,12 @@ def materialize_hpo(
             "batch_size": int(core.get("batch_size") or _recipe_number(recipe, "batch_size_default", 2)),
             "optimizer_name": "adamw",
         })
-    config = candidate.model_dump(mode="json")
+    raw_config = candidate.model_dump(mode="json")
+    config = {
+        field: raw_config[field]
+        for field in candidate.schema_field_order
+        if field in raw_config
+    }
     provenance = {}
     for field in config:
         provenance[field] = {

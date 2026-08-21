@@ -8,7 +8,7 @@ datasets, or any other execution object.
 from __future__ import annotations
 
 import math
-from typing import Any, Literal
+from typing import Any, ClassVar, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
@@ -41,6 +41,20 @@ MAX_IMAGE_SIDE = 4096
 
 class StrictModel(BaseModel):
     model_config = ConfigDict(extra="forbid")
+
+
+class OrderedSchemaModel(StrictModel):
+    schema_field_order: ClassVar[tuple[str, ...]] = ()
+
+    @classmethod
+    def __get_pydantic_json_schema__(cls, core_schema, handler):
+        schema = handler(core_schema)
+        properties = schema.get("properties")
+        if properties and cls.schema_field_order:
+            schema["properties"] = {
+                name: properties[name] for name in cls.schema_field_order if name in properties
+            }
+        return schema
 
 
 class DatasetSourceCount(StrictModel):
@@ -340,7 +354,7 @@ class LLMFieldRationale(StrictModel):
     reason: str = Field(min_length=1)
 
 
-class CommonHPOConfig(StrictModel):
+class CommonHPOConfig(OrderedSchemaModel):
     classes: list[str] = Field(min_length=1)
     selected_data: list[ClassDataAssignment] = Field(min_length=1)
     train_data_ratio: float = Field(0.8, ge=0, lt=1)
@@ -362,6 +376,20 @@ class CommonHPOConfig(StrictModel):
 
 
 class ClassificationHPOConfig(CommonHPOConfig):
+    schema_field_order = (
+        "classes", "selected_data", "train_data_ratio", "val_data_ratio", "test_data_ratio",
+        "num_epochs", "patience", "batch_size", "image_size", "precision", "scheduler_name",
+        "min_learning_rate", "scheduler_step_size", "scheduler_gamma", "warmup_epochs",
+        "warmup_start_factor", "gradient_accumulation_steps", "gradient_clip_norm",
+        "freeze_backbone_epochs", "head_learning_rate_multiplier", "mixup_alpha", "cutmix_alpha",
+        "random_erasing", "auto_augment_policy", "random_resized_crop_scale_min",
+        "horizontal_flip_probability", "use_model_ema", "model_ema_decay", "model_ema_steps",
+        "repeated_augmentation_repetitions", "use_activation_checkpointing", "track_metric",
+        "model_name", "model_weights", "training_mode", "training_recipe_id", "lora_rank",
+        "lora_alpha", "lora_dropout", "optimizer_name", "learning_rate", "weight_decay", "eps",
+        "beta1", "beta2", "nesterov", "momentum", "alpha", "centered", "criterion_name",
+        "label_smoothing", "pos_weight", "rationale", "llm_field_rationales",
+    )
     train_data_ratio: float = Field(0.8, gt=0, lt=1)
     val_data_ratio: float = Field(0.1, gt=0, lt=1)
     test_data_ratio: float = Field(0.1, gt=0, lt=1)
@@ -473,6 +501,22 @@ def _normalize_detection_inactive_fields(value: Any) -> Any:
 
 
 class DetectionHPOConfig(CommonHPOConfig):
+    schema_field_order = (
+        "task_type", "classes", "selected_data", "train_data_ratio", "val_data_ratio",
+        "test_data_ratio", "num_epochs", "patience", "batch_size", "input_size",
+        "aspect_ratio_range", "track_metric", "model_name", "model_weights", "training_recipe_id",
+        "optimizer_name", "learning_rate", "weight_decay", "beta1", "momentum", "scheduler_name",
+        "lr_milestones", "scheduler_gamma", "final_learning_rate_factor", "data_plan_constraints",
+        "training_mode", "lora_rank", "lora_alpha", "lora_dropout", "lora_target_profile",
+        "train_detection_head", "warmup_epochs", "warmup_momentum", "amp", "loss_box", "loss_cls",
+        "lambda_box", "lambda_cls", "lambda_giou", "lambda_dfl", "mosaic", "mixup", "cutmix",
+        "copy_paste", "degrees", "translate", "scale", "fliplr", "hsv_h", "hsv_s", "hsv_v",
+        "close_mosaic", "single_cls", "rect", "multi_scale", "confidence_threshold",
+        "nms_iou_threshold", "max_detections", "workers", "seed", "max_size",
+        "trainable_backbone_layers", "horizontal_flip_probability", "augmentation_policy",
+        "topk_candidates", "positive_fraction", "matching_iou_threshold", "freeze", "rationale",
+        "llm_field_rationales",
+    )
     task_type: Literal["detection"]
     model_name: DetectionHPOModelId
     batch_size: int = Field(16, ge=-1)
@@ -543,6 +587,13 @@ class DetectionHPOConfig(CommonHPOConfig):
 
 
 class VQAHPOConfig(CommonHPOConfig):
+    schema_field_order = (
+        "task_type", "classes", "selected_data", "train_data_ratio", "val_data_ratio",
+        "test_data_ratio", "num_epochs", "patience", "batch_size", "max_seq_length", "track_metric",
+        "model_name", "precision", "use_lora", "lora_r", "lora_alpha", "lora_dropout",
+        "optimizer_name", "learning_rate", "weight_decay", "eps", "beta1", "beta2", "nesterov",
+        "momentum", "alpha", "centered", "rationale",
+    )
     task_type: Literal["visual question answering"] = "visual question answering"
     classes: list[str]
     batch_size: int = Field(2, ge=1)

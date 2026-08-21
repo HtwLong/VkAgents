@@ -1,5 +1,6 @@
 import sys
 import json
+import ast
 from pathlib import Path
 import pytest
 from pydantic import ValidationError
@@ -35,6 +36,26 @@ def test_hpo_contracts_are_not_reduced_to_basic_fields():
     assert {"scheduler_name", "criterion_name", "llm_field_rationales"} <= ClassificationHPOConfig.model_fields.keys()
     assert {"loss_box", "lambda_dfl", "mosaic", "nms_iou_threshold"} <= DetectionHPOConfig.model_fields.keys()
     assert {"max_seq_length", "use_lora", "lora_r", "precision"} <= VQAHPOConfig.model_fields.keys()
+
+
+def test_hpo_json_schema_field_order_matches_original_source():
+    root = Path(__file__).resolve().parents[2]
+    cases = (
+        ("classification_hpo.py", "ClassificationConfigFields", ClassificationHPOConfig),
+        ("detection_hpo.py", "DetectionConfigDraft", DetectionHPOConfig),
+        ("vqa_hpo.py", "VQAConfigModel", VQAHPOConfig),
+    )
+    for filename, class_name, viewer_model in cases:
+        tree = ast.parse((root / "backend" / "src" / "cvmodellearning" / "schemas" / filename).read_text())
+        original = next(node for node in tree.body if isinstance(node, ast.ClassDef) and node.name == class_name)
+        expected = [
+            node.target.id
+            for node in original.body
+            if isinstance(node, ast.AnnAssign)
+            and isinstance(node.target, ast.Name)
+            and node.target.id != "enforce_executable_contract"
+        ]
+        assert list(viewer_model.model_json_schema()["properties"]) == expected
 
 
 def test_classification_contract_uses_original_defaults_literals_and_bounds():

@@ -92,30 +92,32 @@ def test_graphrag_planning_routes_ground_and_validate_decisions(tmp_path, monkey
         model = kwargs["response_model"]
         if model is schemas.ModelPlan:
             return model(
-                model_id="yolo11n",
-                display_name="YOLO11n",
-                family="YOLO11",
+                selected_candidate_id="yolo11n",
+                model={"model_architecture": "yolov11", "description": "Efficient detector."},
                 rationale="Small ontology candidate suitable for the latency constraint.",
+                evaluated_candidates=[{
+                    "candidate_id": "yolo11n", "advantages": ["low latency"],
+                    "risks": ["small-object evidence unavailable"], "constraint_status": "feasible",
+                }],
             )
         if model is schemas.DatasetPlan:
             return model(
-                sources=[{
-                    "dataset_name": "BDD100K detection train",
-                    "classes": ["traffic light"],
-                    "rationale": "Ontology-aligned street-scene source.",
+                selected_data=[{
+                    "class_name": "traffic light",
+                    "sources": [{"dataset_name": "BDD100K detection train", "count": 1500}],
                 }],
                 rationale="Use domain-aligned evidence without claiming availability.",
             )
-        if model is schemas.HyperparameterPlan:
-            return model(
-                model_name="yolo11n",
-                epochs=100,
-                batch_size=16,
-                learning_rate=0.01,
-                optimizer="auto",
-                image_size=640,
-                rationale="Values remain within the selected ontology recipe.",
-            )
+        contracts = importlib.import_module("viewer_backend.planning_contracts")
+        if model is contracts.DetectionHPOConfig:
+            materializer = importlib.import_module("viewer_backend.hpo_planning")
+            config, _ = materializer.materialize_hpo(context, {
+                "model_name": "yolo11n",
+                "epochs": 100, "batch_size": 16, "learning_rate": 0.01,
+                "optimizer": "auto", "image_size": 640,
+                "rationale": "Values remain within the selected ontology recipe.",
+            }, None)
+            return model.model_validate(config)
         raise AssertionError(model)
 
     monkeypatch.setattr(planning, "structured_call", fake_structured_call)
@@ -140,6 +142,10 @@ def test_graphrag_planning_routes_ground_and_validate_decisions(tmp_path, monkey
     context = model_response.json()["context"]
     assert context["selected_model_info"]["id"] == "yolo11n"
     assert context["model_selection_graph_context"]["candidate_models"]
+    assert all(
+        candidate["id"] != "rtdetr_r18"
+        for candidate in context["model_selection_graph_context"]["candidate_models"]
+    )
     evidence = context["model_selection_decision_evidence"]
     assert evidence["selected_id"] == "yolo11n"
     assert evidence["evaluated_candidates"]
@@ -188,6 +194,30 @@ def test_graphrag_planning_routes_ground_and_validate_decisions(tmp_path, monkey
     rationale = (planning_dir / "planning_rationales.txt").read_text()
     assert "Model Selection Rationale" in rationale
     assert "Hyperparameter decision" in rationale
+
+
+def test_hpo_rejects_historical_ontology_only_model_before_calling_llm(tmp_path, monkeypatch):
+    client = make_client(tmp_path, monkeypatch)
+    planning = sys.modules["viewer_backend.routers.planning"]
+
+    async def unexpected_structured_call(**kwargs):
+        raise AssertionError("Unsupported saved models must be rejected before an LLM call.")
+
+    monkeypatch.setattr(planning, "structured_call", unexpected_structured_call)
+    response = client.post("/api/v1/planning/choose-hyperparameters", json={
+        "job_id": "historical-rtdetr",
+        "context": {
+            "task": "detection",
+            "classes": ["person"],
+            "selected_model_info": {"id": "rtdetr_r18", "family": "RT-DETR"},
+            "selected_data": [],
+        },
+        "use_graphrag": True,
+    })
+    assert response.status_code == 422
+    detail = response.json()["detail"]
+    assert detail["selected_model_id"] == "rtdetr_r18"
+    assert "not supported" in detail["message"]
 
 
 def test_ontology_recipe_bounds_reject_invalid_values():
@@ -248,5 +278,12 @@ def test_all_llm_response_models_have_strict_openai_schemas():
         schemas.HyperparameterPlan,
         schemas.RevisionPlan,
         schemas.AssessmentDraft,
+    ):
+        assert_strict(to_strict_json_schema(model))
+    contracts = importlib.import_module("viewer_backend.planning_contracts")
+    for model in (
+        contracts.ClassificationHPOConfig,
+        contracts.DetectionHPOConfig,
+        contracts.VQAHPOConfig,
     ):
         assert_strict(to_strict_json_schema(model))

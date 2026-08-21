@@ -7,7 +7,6 @@ from uuid import uuid4
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 from .planning_contracts import (
-    ClassDataAssignment,
     ClassDataSelection,
     ConstraintStrengths as ContractConstraintStrengths,
     DeploymentConstraints as ContractDeploymentConstraints,
@@ -68,7 +67,7 @@ class VerifyRevisionRequest(BaseModel):
 class CompletenessDecision(BaseModel):
     accept: bool
     reason: str | None = None
-    suggestions: list[str] = Field(default_factory=list)
+    suggestions: list[str] | None = None
 
 
 class PerformanceRequirements(BaseModel):
@@ -132,45 +131,54 @@ class ModelRequirement(BaseModel):
 
 class TaskInterpretation(BaseModel):
     model_config = {"extra": "forbid"}
-    task: Literal["classification", "detection", "visual question answering"] | None = None
-    classes: list[str] = Field(default_factory=list)
+    task: Literal["classification", "detection", "visual question answering"]
     application_domain: str | None = None
     use_case_description: str | None = None
     questions_list: list[str] | None = None
-    available_data: list[ClassDataSelection] | None = None
-    selected_data: list[ClassDataAssignment] | None = None
+    classes: list[str] = Field(default_factory=list)
     performance_requirements: ContractPerformanceSpec | None = None
+    constraint_strengths: ContractConstraintStrengths = Field(default_factory=ContractConstraintStrengths)
+    robustness_requirements: ContractRobustnessSpec = Field(default_factory=ContractRobustnessSpec)
     deployment_constraints: ContractDeploymentConstraints | None = None
     available_hardware: ContractHardwareSpec | None = None
-    robustness_requirements: ContractRobustnessSpec = Field(default_factory=ContractRobustnessSpec)
-    constraint_strengths: ContractConstraintStrengths = Field(default_factory=ContractConstraintStrengths)
     # OpenAI strict structured outputs cannot represent the original contract's
     # arbitrary hyperparameters dictionary. The persisted PipelineState validates
     # against ContractModelRequirement after extraction.
     model_requirements: list[ModelRequirement] | None = None
-    augmentation: str | None = None
-    preprocessing: str | None = None
-    num_qa_pairs: int | None = None
+
+
+class CandidateComparison(BaseModel):
+    model_config = {"extra": "forbid"}
+    candidate_id: str = Field(min_length=1)
+    advantages: list[str] = Field(default_factory=list)
+    risks: list[str] = Field(default_factory=list)
+    constraint_status: Literal["feasible", "uncertain"]
+
+
+class AgentModelSpec(BaseModel):
+    model_config = {"extra": "forbid"}
+    model_architecture: str = Field(min_length=1)
+    description: str = Field(min_length=1)
 
 
 class ModelPlan(BaseModel):
-    model_id: str
-    display_name: str
-    family: str
+    model_config = {"extra": "forbid"}
+    selected_candidate_id: str | None = Field(None, min_length=1)
+    model: AgentModelSpec
     rationale: str
+    evaluated_candidates: list[CandidateComparison] = Field(default_factory=list)
     uncertainties: list[str] = Field(default_factory=list)
 
 
-class DatasetSource(BaseModel):
-    dataset_name: str
-    classes: list[str] = Field(default_factory=list)
-    rationale: str
+    @property
+    def model_id(self) -> str:
+        return self.selected_candidate_id or self.model.model_architecture
 
 
 class DatasetPlan(BaseModel):
-    sources: list[DatasetSource] = Field(default_factory=list)
+    model_config = {"extra": "forbid"}
+    selected_data: list[ClassDataSelection]
     rationale: str
-    uncertainties: list[str] = Field(default_factory=list)
 
 
 class HyperparameterPlan(BaseModel):

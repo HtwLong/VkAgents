@@ -16,7 +16,6 @@ from ..schemas import (
     CompletenessDecision,
     CompletenessRequest,
     DatasetPlan,
-    HyperparameterPlan,
     ModelPlan,
     PlanRevisionRequest,
     ActivateRevisionRequest,
@@ -27,12 +26,20 @@ from ..schemas import (
     TaskInterpretation,
 )
 from ..store import planning_dir, read_json, run_dir, write_json
-from ..registries import get_registry
+from ..registries import get_registry, is_planning_model_supported
 from ..visionkg import query_class_availability
 from ..dataset_planning import availability_candidates, build_split_assignments, preprocessing_plan
-from ..hpo_planning import materialize_hpo
+from ..hpo_planning import detection_hpo_model_id
+from ..planning_contracts import ClassificationHPOConfig, DetectionHPOConfig, VQAHPOConfig
 from ..hpo_evaluation import decision_from_findings, evaluate_hpo, repair_hpo
 from ..data_strategy import build_data_plan_conflicts, build_data_strategy
+from ..agent_prompts import (
+    HYPERPARAMETER_INSTRUCTIONS,
+    INTERPRETATION_INSTRUCTIONS,
+    READINESS_INSTRUCTIONS,
+    dataset_selection_instructions,
+    model_selection_instructions,
+)
 
 
 router = APIRouter(prefix="/planning", tags=["Planning"])
@@ -206,6 +213,7 @@ async def completeness_check(request: CompletenessRequest):
         job_id=request.job_id,
         operation="completeness_check",
         response_model=CompletenessDecision,
+        system_prompt=READINESS_INSTRUCTIONS,
         prompt=(
             "Determine whether this request contains enough information to begin a high-level "
             "computer-vision plan. At minimum, the intended visual task or outcome must be clear. "
@@ -232,6 +240,7 @@ async def task_interpret(request: StateRequest):
         job_id=request.job_id,
         operation="task_interpretation",
         response_model=TaskInterpretation,
+        system_prompt=INTERPRETATION_INSTRUCTIONS,
         prompt=(
             "Interpret the complete computer-vision planning request. Use 'visual question answering' "
             "exactly for VQA. Extract only explicitly requested or directly entailed classes. Preserve "
@@ -283,6 +292,17 @@ async def select_model(request: StateRequest):
     task = str(context.get("task") or "")
     graph_context = get_ontology().model_context(context) if request.use_graphrag else None
     graph_candidates = (graph_context or {}).get("candidate_models") or []
+    if graph_context:
+        all_graph_candidates = graph_candidates
+        graph_candidates = [
+            item for item in all_graph_candidates
+            if is_planning_model_supported(task, str(item.get("id") or ""))
+        ]
+        graph_context = dict(graph_context)
+        graph_context["candidate_models"] = graph_candidates
+        rejected_counts = dict(graph_context.get("rejected_counts") or {})
+        rejected_counts["not_executable_by_viewer_contract"] = len(all_graph_candidates) - len(graph_candidates)
+        graph_context["rejected_counts"] = rejected_counts
     candidates = [
         {
             "id": item["id"],
@@ -298,6 +318,7 @@ async def select_model(request: StateRequest):
         job_id=request.job_id,
         operation="model_selection",
         response_model=ModelPlan,
+        system_prompt=model_selection_instructions(task),
         prompt=(
             "Select exactly one model from CANDIDATES. The model_id and displayed metadata must "
             "match a candidate. Treat runtime and accuracy as estimates, not measurements.\n\n"
@@ -348,6 +369,7 @@ async def select_datasets(request: StateRequest):
         job_id=request.job_id,
         operation="dataset_selection",
         response_model=DatasetPlan,
+        system_prompt=dataset_selection_instructions(str(context.get("task") or "")),
         prompt=(
             "Select dataset sources for this request. Use only exact dataset_id values from "
             "CANDIDATES. VisionKG counts are availability evidence, not proof of unique images.\n\n"
@@ -357,9 +379,8 @@ async def select_datasets(request: StateRequest):
         ),
     )
     if planning_candidates:
-        candidates = planning_candidates
         references: dict[str, set[str]] = {}
-        for item in candidates:
+        for item in planning_candidates:
             for reference in (item["dataset_id"], item.get("display_name") or ""):
                 references.setdefault(_canonical_reference(reference), set()).add(item["dataset_id"])
         live_ids = {item["dataset_id"] for item in live_candidates}
@@ -367,21 +388,36 @@ async def select_datasets(request: StateRequest):
             if item.get("dataset_id") in live_ids:
                 for reference in (item["dataset_id"], item.get("display_name") or ""):
                     references.setdefault(_canonical_reference(reference), set()).add(item["dataset_id"])
-        normalized_sources = []
+        available_by_class = {
+            item["class_name"]: {
+                source["dataset_name"]: int(source["count"])
+                for source in item.get("sources") or []
+            }
+            for item in context.get("available_data") or []
+        }
+        normalized_selected_data = []
         unknown = []
-        for source in plan.sources:
-            matches = references.get(_canonical_reference(source.dataset_name), set())
-            if len(matches) != 1:
-                unknown.append(source.dataset_name)
-                continue
-            normalized_sources.append(source.model_copy(update={"dataset_name": next(iter(matches))}))
+        for selection in plan.selected_data:
+            normalized_sources = []
+            allowed_for_class = available_by_class.get(selection.class_name, {})
+            for source in selection.sources:
+                matches = references.get(_canonical_reference(source.dataset_name), set())
+                dataset_id = next(iter(matches)) if len(matches) == 1 else None
+                if dataset_id is None or dataset_id not in allowed_for_class or source.count > allowed_for_class[dataset_id]:
+                    unknown.append(f"{selection.class_name}:{source.dataset_name}")
+                    continue
+                normalized_sources.append(source.model_copy(update={"dataset_name": dataset_id}))
+            normalized_selected_data.append(selection.model_copy(update={"sources": normalized_sources}))
         if unknown:
             raise HTTPException(
                 status_code=502,
-                detail={"message": "Planning model selected datasets outside the GraphRAG candidates.", "dataset_ids": unknown},
+                detail={"message": "Planning model selected unavailable class/dataset/count combinations.", "dataset_ids": unknown},
             )
-        plan = plan.model_copy(update={"sources": normalized_sources})
-    selected_sources = [item.model_dump(mode="json") for item in plan.sources]
+        plan = plan.model_copy(update={"selected_data": normalized_selected_data})
+    selected_plan = [item.model_dump(mode="json") for item in plan.selected_data]
+    selected_dataset_ids = list(dict.fromkeys(
+        source["dataset_name"] for item in selected_plan for source in item.get("sources") or []
+    ))
     if live_candidates:
         strategy = build_data_strategy(context)
         conflicts = build_data_plan_conflicts(context)
@@ -404,7 +440,7 @@ async def select_datasets(request: StateRequest):
             })
         try:
             assignments, profile = build_split_assignments(
-                context, [source.dataset_name for source in plan.sources] + sorted(required_includes)
+                context, selected_dataset_ids + sorted(required_includes), selected_plan=selected_plan,
             )
         except ValueError as exc:
             raise HTTPException(status_code=422, detail=str(exc)) from exc
@@ -414,19 +450,19 @@ async def select_datasets(request: StateRequest):
         context["preprocessing_plan"] = preprocessing
         context["preprocessing"] = json.dumps(preprocessing, separators=(",", ":"))
     else:
-        context["selected_data"] = selected_sources
+        context["selected_data"] = selected_plan
         context["dataset_profile"] = {
             "status": "conceptual_no_visionkg_availability",
             "total_selected_images": 0,
-            "number_of_sources": len(selected_sources),
+            "number_of_sources": len(selected_dataset_ids),
             "limitations": ["Run check-data before dataset planning to produce split assignments."],
         }
     if graph_context:
         context["dataset_selection_graph_context"] = graph_context
     evidence = decision_evidence(
-        decision_type="dataset_selection", selected_id=selected_sources[0]["dataset_name"] if selected_sources else None,
+        decision_type="dataset_selection", selected_id=selected_dataset_ids[0] if selected_dataset_ids else None,
         rationale=plan.rationale, candidates=planning_candidates, graph_context=graph_context,
-        uncertainties=plan.uncertainties, decision=context.get("selected_data") or selected_sources,
+        uncertainties=[], decision=context.get("selected_data") or selected_plan,
     )
     context["dataset_selection_decision_evidence"] = evidence
     _history(context, f"Data Selection Rationale: {plan.rationale}")
@@ -447,32 +483,76 @@ async def choose_hyperparameters(request: StateRequest):
     selected = context.get("selected_model_info") or {}
     if not selected.get("id"):
         raise HTTPException(status_code=422, detail="Model selection is required first.")
+    selected_model_id = str(selected["id"])
+    task = str(context.get("task") or "")
+    if not is_planning_model_supported(task, selected_model_id):
+        raise HTTPException(status_code=422, detail={
+            "message": "The selected model is not supported by the viewer HPO contract.",
+            "selected_model_id": selected_model_id,
+            "reason": (
+                "The model is available as ontology evidence, but the original backend has no "
+                "corresponding executable HPO schema entry for it."
+            ),
+            "action": "Run model selection again to choose a model supported by the planning contract.",
+        })
+    expected_model_id = (
+        detection_hpo_model_id(selected_model_id)
+        if task == "detection" else selected_model_id
+    )
     graph_context = get_ontology().recipe_context(context) if request.use_graphrag else None
     recipes = (graph_context or {}).get("candidate_recipes") or []
     selected_recipe = recipes[0] if recipes else None
+    hpo_schema = {
+        "classification": ClassificationHPOConfig,
+        "detection": DetectionHPOConfig,
+        "visual question answering": VQAHPOConfig,
+    }.get(str(context.get("task") or ""))
+    if hpo_schema is None:
+        raise HTTPException(status_code=422, detail="A supported interpreted task is required before HPO.")
     plan = await structured_call(
         job_id=request.job_id,
         operation="hyperparameter_planning",
-        response_model=HyperparameterPlan,
+        response_model=hpo_schema,
+        system_prompt=HYPERPARAMETER_INSTRUCTIONS,
         prompt=(
-            "Create a conservative illustrative fine-tuning configuration. model_name must equal "
-            "the selected model id. The configuration will be displayed but cannot be executed by "
-            "this service.\n\n"
+            "Complete every field in the full task-specific HPO draft. Treat classes, selected_data, "
+            "model_name, task_type, data_plan_constraints, and training_recipe_id as pipeline-owned and "
+            "copy their supplied values exactly. Explain active configurable fields in llm_field_rationales "
+            "when that field exists. The configuration is a planning deliverable and will not be executed.\n\n"
             f"CONTEXT: {json.dumps(context, default=str)}\n"
             f"ONTOLOGY RECIPES: {json.dumps(graph_context, default=str)}\n"
             "When an ontology recipe is supplied, keep every numeric value within its documented bounds."
         ),
     )
-    if plan.model_name != selected["id"]:
+    if str(plan.model_name) != expected_model_id:
         raise HTTPException(status_code=502, detail="Hyperparameter plan changed the selected model.")
-    core = plan.model_dump(mode="json")
-    try:
-        config, field_provenance = materialize_hpo(context, core, selected_recipe)
-    except (ValueError, TypeError) as exc:
-        raise HTTPException(
-            status_code=422,
-            detail={"message": "A complete split-aware dataset plan is required before HPO.", "reason": str(exc)},
-        ) from exc
+    raw_config = plan.model_dump(mode="json")
+    config = {
+        field: raw_config[field]
+        for field in hpo_schema.schema_field_order
+        if field in raw_config
+    }
+    pipeline_owned = {
+        "classes": context.get("classes") or [],
+        "selected_data": context.get("selected_data") or [],
+        "model_name": expected_model_id,
+    }
+    if context.get("task") == "detection":
+        pipeline_owned["task_type"] = "detection"
+        pipeline_owned["data_plan_constraints"] = {
+            key: value for key, value in (context.get("data_plan_constraints") or {}).items()
+            if key in {"minimum_unique_pool_images", "preferred_unique_pool_images", "preferred_target_is_strict", "group_isolation_keys"}
+        }
+    if selected_recipe:
+        pipeline_owned["training_recipe_id"] = selected_recipe.get("id", "")
+    config.update(pipeline_owned)
+    field_provenance = {
+        field: {
+            "source": "pipeline_state" if field in pipeline_owned else "planning_llm",
+            "recipe_id": (selected_recipe or {}).get("id"),
+        }
+        for field in config
+    }
     for change in _revision_changes(context, "choose-hyperparameters", "required"):
         if change.get("operation") == "set":
             field = str(change["field"]).removeprefix("hpo_config.")
@@ -498,7 +578,7 @@ async def choose_hyperparameters(request: StateRequest):
     evidence = decision_evidence(
         decision_type="hyperparameter_selection", selected_id=selected_recipe.get("id") if selected_recipe else selected["id"],
         rationale=plan.rationale, candidates=recipes or [{"id": selected["id"]}],
-        graph_context=graph_context, uncertainties=plan.uncertainties,
+        graph_context=graph_context, uncertainties=[],
         decision=config, field_provenance=field_provenance,
     )
     context["hyperparameter_decision_evidence"] = evidence

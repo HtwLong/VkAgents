@@ -11,6 +11,27 @@ from functools import lru_cache
 from typing import Any
 
 from .graphrag.ontology import TASK_IDS, OntologyStore, get_ontology
+from .hpo_planning import detection_hpo_model_id, supports_detection_hpo_model
+
+
+EXECUTABLE_CLASSIFICATION_IDS = frozenset({
+    "resnet50", "mobilenet_v2", "mobilenet_v3_large", "mobilenet_v3_small",
+    "efficientnet_b0", "efficientnet_b1", "efficientnet_b2", "efficientnet_b3",
+    "efficientnet_b4", "efficientnet_b5", "efficientnet_b6", "efficientnet_b7",
+    "densenet121", "convnext_tiny", "clip_vit_b16", "dinov2_vits14",
+    "dinov2_vitb14", "vit_b_16", "swin_v2_t", "swin_v2_s",
+})
+EXECUTABLE_VQA_IDS = frozenset({"Qwen3-VL-2B-Instruct"})
+
+
+def is_planning_model_supported(task: str, value: str) -> bool:
+    if task == "detection":
+        return supports_detection_hpo_model(value)
+    if task == "classification":
+        return value in EXECUTABLE_CLASSIFICATION_IDS
+    if task == "visual question answering":
+        return value in EXECUTABLE_VQA_IDS
+    return False
 
 
 def canonical_reference(value: str) -> str:
@@ -115,7 +136,18 @@ class MetadataRegistry:
     def resolve_model(self, value: str, task: str | None = None) -> ModelMetadata | None:
         task_id = TASK_IDS.get(task or "", task or "")
         entries = {key: item for key, item in self.models.items() if not task_id or item.task_id == task_id}
-        return self._resolve(value, entries, lambda item: (item.id, item.display_name, *item.aliases))
+        if task == "detection":
+            executable_id = detection_hpo_model_id(value)
+            matches = [
+                item for item in entries.values()
+                if supports_detection_hpo_model(item.id)
+                and detection_hpo_model_id(item.id) == executable_id
+            ]
+            return matches[0] if len(matches) == 1 else None
+        resolved = self._resolve(value, entries, lambda item: (item.id, item.display_name, *item.aliases))
+        if resolved is None or (task and not is_planning_model_supported(task, resolved.id)):
+            return None
+        return resolved
 
     def resolve_dataset(self, value: str, task: str | None = None) -> DatasetMetadata | None:
         task_id = TASK_IDS.get(task or "", task or "")

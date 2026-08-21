@@ -15,7 +15,8 @@ T = TypeVar("T", bound=BaseModel)
 
 
 async def structured_call(
-    *, job_id: str, operation: str, prompt: str, response_model: type[T], model: str | None = None
+    *, job_id: str, operation: str, prompt: str, response_model: type[T], model: str | None = None,
+    system_prompt: str | None = None,
 ) -> T:
     if not os.getenv("OPENAI_API_KEY"):
         raise HTTPException(status_code=503, detail="OPENAI_API_KEY is not configured.")
@@ -25,7 +26,7 @@ async def structured_call(
             messages=[
                 {
                     "role": "system",
-                    "content": (
+                    "content": system_prompt or (
                         "You are a conservative computer-vision planning assistant. Use only the "
                         "supplied evidence, state uncertainty explicitly, and never claim that "
                         "training, downloading, evaluation, or inference was executed."
@@ -88,4 +89,3 @@ def _bucket() -> dict:
         "total_tokens": 0,
         "calculated_cost_usd": None,
     }
-
